@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,15 +31,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Search, Edit, Trash2, Building2, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Building2, Eye, Loader2, RefreshCw } from 'lucide-react';
 import { useDataStore } from '@/stores/useDataStore';
 import { useToast } from '@/hooks/use-toast';
 import { ClientDetailsModal } from '@/components/modals/ClientDetailsModal';
+import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from '@/hooks/useClientApi';
+import type { ClientFormData } from '@/services/clientApi';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Clients = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { clients, apartments, addClient, updateClient, deleteClient, products } = useDataStore();
+  const { apartments, products } = useDataStore();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -49,22 +52,29 @@ const Clients = () => {
   const [viewingClientId, setViewingClientId] = useState<string | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   
-  const [formData, setFormData] = useState({
+  // API hooks
+  const { data: clientsData, isLoading, error, refetch } = useClients({
+    search: searchTerm || undefined,
+    account_status: statusFilter !== 'all' ? statusFilter : undefined,
+    type: typeFilter !== 'all' ? typeFilter : undefined,
+  });
+  const createClientMutation = useCreateClient();
+  const updateClientMutation = useUpdateClient();
+  const deleteClientMutation = useDeleteClient();
+  
+  const clients = clientsData?.results || [];
+  
+  const [formData, setFormData] = useState<ClientFormData>({
     name: '',
     email: '',
     phone: '',
-    accountStatus: 'Active' as 'Active' | 'Inactive',
-    type: 'Investor' as 'Investor' | 'Buy2Rent Internal',
+    account_status: 'Active',
+    type: 'Individual',
     notes: '',
   });
 
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || client.accountStatus === statusFilter;
-    const matchesType = typeFilter === 'all' || client.type === typeFilter;
-    return matchesSearch && matchesStatus && matchesType;
-  });
+  // Clients are already filtered by the API based on search params
+  const filteredClients = clients;
 
   const getClientApartmentCount = (clientId: string) => {
     return apartments.filter(apt => apt.clientId === clientId).length;
@@ -78,8 +88,8 @@ const Clients = () => {
         setFormData({
           name: client.name,
           email: client.email,
-          phone: client.phone,
-          accountStatus: client.accountStatus,
+          phone: client.phone || '',
+          account_status: client.account_status,
           type: client.type,
           notes: client.notes || '',
         });
@@ -90,15 +100,15 @@ const Clients = () => {
         name: '',
         email: '',
         phone: '',
-        accountStatus: 'Active',
-        type: 'Investor',
-        notes: '',
+        account_status: 'Active',
+        type: 'Individual',
+        notes: ''
       });
     }
     setDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim() || !formData.email.trim()) {
@@ -110,24 +120,32 @@ const Clients = () => {
       return;
     }
 
-    if (editingClient) {
-      updateClient(editingClient, formData);
-      toast({
-        title: 'Client updated',
-        description: `${formData.name} has been updated successfully.`,
+    try {
+      if (editingClient) {
+        await updateClientMutation.mutateAsync({
+          id: editingClient,
+          data: formData,
+        });
+      } else {
+        await createClientMutation.mutateAsync(formData);
+      }
+      setDialogOpen(false);
+      setEditingClient(null);
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        account_status: 'Active',
+        type: 'Individual',
+        notes: '',
       });
-    } else {
-      addClient(formData);
-      toast({
-        title: 'Client created',
-        description: `${formData.name} has been created successfully.`,
-      });
+    } catch (error) {
+      // Error is handled by the mutation hook
     }
-    
-    setDialogOpen(false);
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     const apartmentCount = getClientApartmentCount(id);
     if (apartmentCount > 0) {
       toast({
@@ -139,11 +157,11 @@ const Clients = () => {
     }
 
     if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      deleteClient(id);
-      toast({
-        title: 'Client deleted',
-        description: `${name} has been deleted successfully.`,
-      });
+      try {
+        await deleteClientMutation.mutateAsync({ id, name });
+      } catch (error) {
+        // Error is handled by the mutation hook
+      }
     }
   };
 
@@ -152,13 +170,60 @@ const Clients = () => {
     setDetailsModalOpen(true);
   };
 
+  // Adapt API client to match the store client type for the modal
   const viewingClient = viewingClientId ? clients.find(c => c.id === viewingClientId) : null;
+  const adaptedClient = viewingClient ? {
+    ...viewingClient,
+    accountStatus: viewingClient.account_status,
+    type: viewingClient.type === 'Individual' ? 'Investor' : 'Buy2Rent Internal',
+  } as any : null;
 
   const getStatusColor = (status: string) => {
     return status === 'Active' 
       ? 'bg-success/10 text-success border-success/20' 
       : 'bg-muted text-muted-foreground border-border/50';
   };
+  
+  // Show loading skeleton
+  if (isLoading) {
+    return (
+      <PageLayout title="Clients">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </PageLayout>
+    );
+  }
+  
+  // Show error state
+  if (error) {
+    return (
+      <PageLayout title="Clients">
+        <div className="flex flex-col items-center justify-center py-12">
+          <p className="text-destructive mb-4">Failed to load clients: {error.message}</p>
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry
+          </Button>
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout title="Clients">
@@ -192,8 +257,8 @@ const Clients = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="Investor">Investor</SelectItem>
-                  <SelectItem value="Buy2Rent Internal">Internal</SelectItem>
+                  <SelectItem value="Individual">Individual</SelectItem>
+                  <SelectItem value="Company">Company</SelectItem>
                 </SelectContent>
               </Select>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -250,20 +315,21 @@ const Clients = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Investor">Investor</SelectItem>
-                              <SelectItem value="Buy2Rent Internal">Buy2Rent Internal</SelectItem>
+                              <SelectItem value="Individual">Individual</SelectItem>
+                              <SelectItem value="Company">Company</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="status">Account Status</Label>
-                          <Select value={formData.accountStatus} onValueChange={(value: any) => setFormData({ ...formData, accountStatus: value })}>
+                          <Select value={formData.account_status} onValueChange={(value: any) => setFormData({ ...formData, account_status: value })}>
                             <SelectTrigger id="status">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Active">Active</SelectItem>
                               <SelectItem value="Inactive">Inactive</SelectItem>
+                              <SelectItem value="Suspended">Suspended</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -342,8 +408,8 @@ const Clients = () => {
                           <TableCell className="text-muted-foreground py-4">{client.email}</TableCell>
                           <TableCell className="text-muted-foreground py-4">{client.phone}</TableCell>
                           <TableCell className="py-4">
-                            <Badge className={getStatusColor(client.accountStatus)}>
-                              {client.accountStatus}
+                            <Badge className={getStatusColor(client.account_status)}>
+                              {client.account_status}
                             </Badge>
                           </TableCell>
                           <TableCell className="py-4">
@@ -400,7 +466,7 @@ const Clients = () => {
         <ClientDetailsModal
           open={detailsModalOpen}
           onOpenChange={setDetailsModalOpen}
-          client={viewingClient}
+          client={adaptedClient}
           apartments={apartments}
           products={products}
         />
