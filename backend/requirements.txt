@@ -1,0 +1,43 @@
+# Core Django Framework
+Django
+djangorestframework
+djangorestframework-simplejwt
+
+# API Documentation
+drf-spectacular
+
+# Database & ORM
+psycopg2-binary
+dj-database-url
+
+# CORS & Security
+django-cors-headers
+
+# Filtering & Search
+django-filter
+
+# Configuration Management
+python-decouple
+
+# File & Image Handling
+Pillow
+pandas
+openpyxl
+xlrd
+
+# Production Server
+gunicorn
+
+# Static Files Management
+whitenoise
+
+# Development & Testing
+django-extensions
+requests
+
+# Optional: For better development experience
+ipython
+django-debug-toolbar
+
+# Optional: For API testing
+httpie
