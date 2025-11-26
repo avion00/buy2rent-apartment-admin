@@ -16,28 +16,36 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { useDataStore } from "@/stores/useDataStore";
 import { useToast } from "@/hooks/use-toast";
+import { useApartment, useUpdateApartment } from "@/hooks/useApartmentApi";
+import { useClients } from "@/hooks/useClientApi";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
 
 const ApartmentEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { clients } = useDataStore();
-  const apartment = useDataStore((state) => state.getApartment(id || ""));
-  const updateApartment = useDataStore((state) => state.updateApartment);
+  
+  // Fetch apartment data from API
+  const { data: apartment, isLoading, error } = useApartment(id || null);
+  
+  // Fetch clients list from API
+  const { data: clientsData, isLoading: isLoadingClients } = useClients({});
+  const clients = clientsData?.results || [];
+  
+  // Update apartment mutation
+  const updateApartmentMutation = useUpdateApartment();
 
   const [formData, setFormData] = useState({
     name: "",
     type: "furnishing" as "furnishing" | "renovating",
-    clientId: "",
-    owner: "",
+    client: "",
     address: "",
     designer: "",
-    status: "Planning",
-    startDate: "",
-    dueDate: "",
+    status: "Planning" as "Planning" | "Design Approved" | "Ordering" | "Delivery" | "Installation" | "Completed",
+    start_date: "",
+    due_date: "",
     notes: "",
     progress: 0,
   });
@@ -49,20 +57,41 @@ const ApartmentEdit = () => {
       setFormData({
         name: apartment.name,
         type: apartment.type,
-        clientId: apartment.clientId || "",
-        owner: apartment.owner,
+        client: apartment.client || apartment.client_id || "",
         address: apartment.address,
         designer: apartment.designer,
         status: apartment.status,
-        startDate: apartment.startDate,
-        dueDate: apartment.dueDate,
+        start_date: apartment.start_date,
+        due_date: apartment.due_date,
         notes: apartment.notes || "",
         progress: apartment.progress,
       });
     }
   }, [apartment]);
 
-  if (!apartment) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <PageLayout title="Loading...">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Error or not found state
+  if (error || !apartment) {
     return (
       <PageLayout title="Apartment Not Found">
         <Card>
@@ -81,15 +110,15 @@ const ApartmentEdit = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) newErrors.name = "Apartment name is required";
-    if (!formData.clientId) newErrors.clientId = "Client selection is required";
+    if (!formData.client) newErrors.client = "Client selection is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.designer.trim()) newErrors.designer = "Designer is required";
-    if (!formData.startDate) newErrors.startDate = "Start date is required";
-    if (!formData.dueDate) newErrors.dueDate = "Due date is required";
+    if (!formData.start_date) newErrors.start_date = "Start date is required";
+    if (!formData.due_date) newErrors.due_date = "Due date is required";
 
-    if (formData.startDate && formData.dueDate) {
-      if (new Date(formData.dueDate) < new Date(formData.startDate)) {
-        newErrors.dueDate = "Due date must be after start date";
+    if (formData.start_date && formData.due_date) {
+      if (new Date(formData.due_date) < new Date(formData.start_date)) {
+        newErrors.due_date = "Due date must be after start date";
       }
     }
 
@@ -97,7 +126,7 @@ const ApartmentEdit = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -109,21 +138,20 @@ const ApartmentEdit = () => {
       return;
     }
 
-    // Get client name from selected client
-    const selectedClient = clients.find((c) => c.id === formData.clientId);
-    const updatedData = {
-      ...formData,
-      owner: selectedClient?.name || formData.owner,
-    };
-
-    updateApartment(apartment.id, updatedData);
-
-    toast({
-      title: "Apartment updated",
-      description: `${formData.name} has been updated successfully.`,
-    });
-
-    navigate(`/apartments/${apartment.id}`);
+    try {
+      await updateApartmentMutation.mutateAsync({
+        id: apartment.id,
+        data: formData,
+      });
+      
+      navigate("/apartments");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update apartment. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -196,13 +224,14 @@ const ApartmentEdit = () => {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="clientId">Client/Owner *</Label>
+                  <Label htmlFor="client">Client/Owner *</Label>
                   <Select
-                    value={formData.clientId}
-                    onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+                    value={formData.client}
+                    onValueChange={(value) => setFormData({ ...formData, client: value })}
+                    disabled={isLoadingClients}
                   >
-                    <SelectTrigger id="clientId">
-                      <SelectValue placeholder="Select client" />
+                    <SelectTrigger id="client">
+                      <SelectValue placeholder={isLoadingClients ? "Loading clients..." : "Select client"} />
                     </SelectTrigger>
                     <SelectContent>
                       {clients.map((client) => (
@@ -212,23 +241,17 @@ const ApartmentEdit = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.clientId && <p className="text-sm text-destructive">{errors.clientId}</p>}
+                  {errors.client && <p className="text-sm text-destructive">{errors.client}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="designer">Assigned Designer *</Label>
-                  <Select
+                  <Input
+                    id="designer"
                     value={formData.designer}
-                    onValueChange={(value) => setFormData({ ...formData, designer: value })}
-                  >
-                    <SelectTrigger id="designer">
-                      <SelectValue placeholder="Select designer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Barbara Kovács">Barbara Kovács</SelectItem>
-                      <SelectItem value="Maria Weber">Maria Weber</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => setFormData({ ...formData, designer: e.target.value })}
+                    placeholder="Enter designer name"
+                  />
                   {errors.designer && <p className="text-sm text-destructive">{errors.designer}</p>}
                 </div>
               </div>
@@ -249,7 +272,7 @@ const ApartmentEdit = () => {
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value })}
+                    onValueChange={(value) => setFormData({ ...formData, status: value as any })}
                   >
                     <SelectTrigger id="status">
                       <SelectValue />
@@ -266,25 +289,25 @@ const ApartmentEdit = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="startDate">Start Date *</Label>
+                  <Label htmlFor="start_date">Start Date *</Label>
                   <Input
-                    id="startDate"
+                    id="start_date"
                     type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                   />
-                  {errors.startDate && <p className="text-sm text-destructive">{errors.startDate}</p>}
+                  {errors.start_date && <p className="text-sm text-destructive">{errors.start_date}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dueDate">Due Date *</Label>
+                  <Label htmlFor="due_date">Due Date *</Label>
                   <Input
-                    id="dueDate"
+                    id="due_date"
                     type="date"
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    value={formData.due_date}
+                    onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                   />
-                  {errors.dueDate && <p className="text-sm text-destructive">{errors.dueDate}</p>}
+                  {errors.due_date && <p className="text-sm text-destructive">{errors.due_date}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -315,7 +338,9 @@ const ApartmentEdit = () => {
                 <Button type="button" variant="outline" onClick={() => navigate(`/apartments/${apartment.id}`)}>
                   Cancel
                 </Button>
-                <Button type="submit">Save Changes</Button>
+                <Button type="submit" disabled={updateApartmentMutation.isPending}>
+                  {updateApartmentMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
               </div>
             </CardContent>
           </Card>

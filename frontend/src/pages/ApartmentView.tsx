@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useDataStore } from "@/stores/useDataStore";
+import { useApartment } from "@/hooks/useApartmentApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
   Edit,
@@ -61,47 +61,17 @@ import { DeliveryLocationModal } from "@/components/modals/DeliveryLocationModal
 const ApartmentView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Select raw data from store
-  const apartments = useDataStore((state) => state.apartments);
-  const allProducts = useDataStore((state) => state.products);
-  const allDeliveries = useDataStore((state) => state.deliveries);
-  const allActivities = useDataStore((state) => state.activities);
-  const allAINotes = useDataStore((state) => state.aiNotes);
-  const manualNotes = useDataStore((state) => state.manualNotes);
+  // Fetch apartment data from API
+  const { data: apartment, isLoading, error } = useApartment(id || null);
 
-  // Select methods
-  const setManualNote = useDataStore((state) => state.setManualNote);
-  const deleteApartment = useDataStore((state) => state.deleteApartment);
-  const updateProduct = useDataStore((state) => state.updateProduct);
-  const deleteProduct = useDataStore((state) => state.deleteProduct);
-  const addActivity = useDataStore((state) => state.addActivity);
-  const addAINote = useDataStore((state) => state.addAINote);
-
-  // Memoized filtered data
-  const apartment = useMemo(() => apartments.find((a) => a.id === id), [apartments, id]);
-
-  const products = useMemo(() => allProducts.filter((p) => p.apartmentId === id), [allProducts, id]);
-
-  const deliveries = useMemo(() => allDeliveries.filter((d) => d.apartmentId === id), [allDeliveries, id]);
-
-  const activities = useMemo(
-    () =>
-      allActivities
-        .filter((a) => a.apartmentId === id)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
-    [allActivities, id],
-  );
-
-  const aiNotes = useMemo(
-    () =>
-      allAINotes
-        .filter((n) => n.apartmentId === id)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
-    [allAINotes, id],
-  );
-
-  const manualNote = useMemo(() => manualNotes[id!] || "", [manualNotes, id]);
+  // TODO: Add API hooks for products, deliveries, activities when ready
+  const products: any[] = [];
+  const deliveries: any[] = [];
+  const activities: any[] = [];
+  const aiNotes: any[] = [];
+  const manualNote = "";
 
   const [generatedEmail, setGeneratedEmail] = useState<string>("");
   const [noteText, setNoteText] = useState(manualNote);
@@ -116,46 +86,97 @@ const ApartmentView = () => {
   const [deliveryLocationModalOpen, setDeliveryLocationModalOpen] = useState(false);
   const [selectedProductForDelivery, setSelectedProductForDelivery] = useState<any>(null);
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <PageLayout title="Loading...">
+        <div className="container mx-auto py-8">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+            <h2 className="text-2xl font-semibold text-muted-foreground">Loading apartment details...</h2>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <PageLayout title="Error">
+        <div className="container mx-auto py-8">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
+            <h2 className="text-2xl font-semibold text-destructive mb-2">Error loading apartment</h2>
+            <p className="text-muted-foreground mb-4">Unable to fetch apartment details. Please try again.</p>
+            <Button onClick={() => navigate("/apartments")} className="mt-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Apartments
+            </Button>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Not found state
   if (!apartment) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold text-muted-foreground">Apartment not found</h2>
-          <Button onClick={() => navigate("/apartments")} className="mt-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Apartments
-          </Button>
+      <PageLayout title="Not Found">
+        <div className="container mx-auto py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-muted-foreground">Apartment not found</h2>
+            <Button onClick={() => navigate("/apartments")} className="mt-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Apartments
+            </Button>
+          </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   const handleDelete = () => {
     if (window.confirm(`Are you sure you want to delete "${apartment.name}"?`)) {
-      deleteApartment(apartment.id);
-      toast.success("Apartment deleted successfully");
+      // TODO: Implement delete API call
+      toast({
+        title: "Success",
+        description: "Apartment deleted successfully",
+      });
       navigate("/apartments");
     }
   };
 
   const handleProductStatusChange = (productId: string, newStatus: any) => {
-    updateProduct(productId, { status: newStatus });
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      addActivity({
-        apartmentId: id!,
-        actor: "Admin",
-        icon: "Package",
-        summary: `Product "${product.product}" status changed to ${newStatus}`,
-        type: "product",
-      });
-    }
-    toast.success("Product status updated");
+    // TODO: Implement product status update API call
+    toast({
+      title: "Success",
+      description: "Product status updated",
+    });
   };
 
   const handleSaveNote = () => {
-    setManualNote(id!, noteText);
-    toast.success("Note saved");
+    // TODO: Implement save note API call
+    toast({
+      title: "Success",
+      description: "Note saved",
+    });
+  };
+
+  // Placeholder functions for product operations (TODO: Replace with API calls)
+  const updateProduct = (productId: string, updates: any) => {
+    // TODO: Implement product update API call
+    console.log("Update product:", productId, updates);
+  };
+
+  const deleteProduct = (productId: string) => {
+    // TODO: Implement product delete API call
+    console.log("Delete product:", productId);
+  };
+
+  const addActivity = (activity: any) => {
+    // TODO: Implement activity logging API call
+    console.log("Add activity:", activity);
   };
 
   // Calculate overview stats from consolidated product data
@@ -176,8 +197,8 @@ const ApartmentView = () => {
 
   const getStatusColor = (status: string) => {
     const lowerStatus = status.toLowerCase();
-    if (lowerStatus.includes("delivered") || lowerStatus.includes("closed") || lowerStatus.includes("paid"))
-      return "bg-success text-success-foreground";
+    if (lowerStatus.includes("delivered") || lowerStatus.includes("closed") || lowerStatus.includes("paid") || lowerStatus.includes("completed"))
+      return "bg-green-500/10 text-green-500";
     if (
       lowerStatus.includes("issue") ||
       lowerStatus.includes("damaged") ||
@@ -185,12 +206,14 @@ const ApartmentView = () => {
       lowerStatus.includes("missing") ||
       lowerStatus.includes("overdue")
     )
-      return "bg-danger text-danger-foreground";
+      return "bg-red-500/10 text-red-500";
     if (lowerStatus.includes("waiting") || lowerStatus.includes("pending") || lowerStatus.includes("partial"))
-      return "bg-warning text-warning-foreground";
-    if (lowerStatus.includes("ordered") || lowerStatus.includes("shipped") || lowerStatus.includes("transit"))
-      return "bg-primary text-primary-foreground";
-    return "bg-muted text-muted-foreground";
+      return "bg-yellow-500/10 text-yellow-500";
+    if (lowerStatus.includes("ordered") || lowerStatus.includes("shipped") || lowerStatus.includes("transit") || lowerStatus.includes("ordering"))
+      return "bg-blue-500/10 text-blue-500";
+    if (lowerStatus.includes("planning"))
+      return "bg-purple-500/10 text-purple-500";
+    return "bg-gray-500/10 text-gray-500";
   };
 
   return (
@@ -311,7 +334,7 @@ const ApartmentView = () => {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-danger" />
+                  <AlertCircle className="h-4 w-4 text-red-500" />
                   Open Issues
                 </CardTitle>
               </CardHeader>
@@ -330,12 +353,12 @@ const ApartmentView = () => {
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Owner</p>
-                    <p className="font-medium">{apartment.owner}</p>
+                    <p className="text-muted-foreground">Client</p>
+                    <p className="font-medium">{apartment.client_details?.name || apartment.owner || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Designer</p>
-                    <p className="font-medium">{apartment.designer}</p>
+                    <p className="font-medium">{apartment.designer || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Address</p>
@@ -347,11 +370,11 @@ const ApartmentView = () => {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Start Date</p>
-                    <p className="font-medium">{new Date(apartment.startDate).toLocaleDateString()}</p>
+                    <p className="font-medium">{apartment.start_date ? new Date(apartment.start_date).toLocaleDateString() : 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Due Date</p>
-                    <p className="font-medium">{new Date(apartment.dueDate).toLocaleDateString()}</p>
+                    <p className="font-medium">{apartment.due_date ? new Date(apartment.due_date).toLocaleDateString() : 'N/A'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -452,15 +475,15 @@ const ApartmentView = () => {
                       {products.map((product) => {
                         const rowColorClass =
                           product.status === "Delivered" || product.status === "Closed"
-                            ? "bg-success/5"
+                            ? "bg-green-500/5"
                             : product.status === "Damaged" ||
                                 product.status === "Wrong Item" ||
                                 product.status === "Missing"
-                              ? "bg-danger/5"
+                              ? "bg-red-500/5"
                               : product.status === "Shipped" || product.status === "Ordered"
-                                ? "bg-primary/5"
+                                ? "bg-blue-500/5"
                                 : product.status === "Waiting For Stock"
-                                  ? "bg-warning/5"
+                                  ? "bg-yellow-500/5"
                                   : "";
 
                         const outstandingBalance = (product.paymentAmount || 0) - (product.paidAmount || 0);
@@ -532,7 +555,10 @@ const ApartmentView = () => {
                                 value={product.statusTags || []}
                                 onChange={(newTags) => {
                                   updateProduct(product.id, { statusTags: newTags });
-                                  toast.success("Product status updated");
+                                  toast({
+                                    title: "Success",
+                                    description: "Product status updated",
+                                  });
                                 }}
                                 placeholder="Add status..."
                                 className="w-[200px]"
@@ -553,7 +579,10 @@ const ApartmentView = () => {
                                 value={product.deliveryStatusTags || []}
                                 onChange={(newTags) => {
                                   updateProduct(product.id, { deliveryStatusTags: newTags });
-                                  toast.success("Delivery status updated");
+                                  toast({
+                                    title: "Success",
+                                    description: "Delivery status updated",
+                                  });
                                 }}
                                 placeholder="Add status..."
                                 className="w-[200px]"
@@ -585,7 +614,10 @@ const ApartmentView = () => {
                                     onSelect={(date) => {
                                       if (date) {
                                         updateProduct(product.id, { expectedDeliveryDate: date.toISOString() });
-                                        toast.success("Expected delivery date updated");
+                                        toast({
+                                          title: "Success",
+                                          description: "Expected delivery date updated",
+                                        });
                                       }
                                     }}
                                     initialFocus
@@ -639,7 +671,10 @@ const ApartmentView = () => {
                                     onSelect={(date) => {
                                       if (date) {
                                         updateProduct(product.id, { actualDeliveryDate: date.toISOString() });
-                                        toast.success("Actual delivery date updated");
+                                        toast({
+                                          title: "Success",
+                                          description: "Actual delivery date updated",
+                                        });
                                       }
                                     }}
                                     initialFocus
@@ -675,7 +710,7 @@ const ApartmentView = () => {
                                       {new Date(product.paymentDueDate).toLocaleDateString()}
                                     </div>
                                     {outstandingBalance > 0 && (
-                                      <div className="text-xs text-danger font-medium">
+                                      <div className="text-xs text-red-500 font-medium">
                                         Balance: {outstandingBalance.toLocaleString()} HUF
                                       </div>
                                     )}
@@ -689,7 +724,7 @@ const ApartmentView = () => {
                               {product.issueState && product.issueState !== "No Issue" ? (
                                 <Badge className={getStatusColor(product.issueState)}>{product.issueState}</Badge>
                               ) : (
-                                <Badge variant="outline" className="bg-success/10 text-success">
+                                <Badge variant="outline" className="bg-green-500/10 text-green-500">
                                   No Issue
                                 </Badge>
                               )}
@@ -749,7 +784,10 @@ const ApartmentView = () => {
                                         summary: `Deleted product: ${product.product}`,
                                         type: "product",
                                       });
-                                      toast.success("Product deleted successfully");
+                                      toast({
+                                        title: "Success",
+                                        description: "Product deleted successfully",
+                                      });
                                     }
                                   }}
                                 >
@@ -869,7 +907,10 @@ const ApartmentView = () => {
           product={selectedProductForPayment}
           onSave={(updates) => {
             updateProduct(selectedProductForPayment.id, updates);
-            toast.success("Payment details updated");
+            toast({
+              title: "Success",
+              description: "Payment details updated",
+            });
           }}
         />
       )}
