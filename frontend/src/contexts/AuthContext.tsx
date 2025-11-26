@@ -1,9 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authApi, tokenManager, type UserProfile } from '@/services/authApi';
 
 interface User {
   id: string;
   email: string;
-  name?: string;
+  username: string;
+  first_name?: string;
+  last_name?: string;
+  name?: string; // Computed field
 }
 
 interface AuthContextType {
@@ -17,6 +21,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,69 +37,116 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      // TODO: Replace with your backend API call
-      const token = localStorage.getItem('auth_token');
+      const token = tokenManager.getAccessToken();
       if (token) {
-        // Validate token with backend
-        const response = await fetch('/api/auth/verify', {
-          headers: { Authorization: `Bearer ${token}` }
+        // Validate token and get user profile
+        const profile = await authApi.getProfile();
+        setUser({
+          ...profile,
+          name: profile.first_name && profile.last_name 
+            ? `${profile.first_name} ${profile.last_name}`
+            : profile.username,
         });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        } else {
-          localStorage.removeItem('auth_token');
-        }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      tokenManager.clearTokens();
     } finally {
       setLoading(false);
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const profile = await authApi.getProfile();
+      setUser({
+        ...profile,
+        name: profile.first_name && profile.last_name 
+          ? `${profile.first_name} ${profile.last_name}`
+          : profile.username,
+      });
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      throw error;
+    }
+  };
+
   const login = async (email: string, password: string) => {
     try {
-      // TODO: Replace with your backend API call
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      // Backend uses email field
+      const response = await authApi.login({
+        email,
+        password,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Login failed');
-      }
+      // Store tokens
+      tokenManager.setTokens(response.access, response.refresh);
 
-      const data = await response.json();
-      localStorage.setItem('auth_token', data.token);
-      setUser(data.user);
-    } catch (error) {
-      throw error;
+      // Set user data
+      setUser({
+        ...response.user,
+        name: response.user.first_name && response.user.last_name
+          ? `${response.user.first_name} ${response.user.last_name}`
+          : response.user.username,
+      });
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.detail 
+        || error.response?.data?.error
+        || error.message 
+        || 'Login failed';
+      throw new Error(errorMessage);
     }
   };
 
   const signup = async (email: string, password: string, name?: string) => {
     try {
-      // TODO: Replace with your backend API call
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name })
+      // Parse name into first_name and last_name
+      const nameParts = name?.split(' ') || [];
+      const first_name = nameParts[0] || 'User';
+      const last_name = nameParts.slice(1).join(' ') || 'Name';
+
+      const response = await authApi.register({
+        username: email.split('@')[0], // Use email prefix as username
+        email,
+        password,
+        password_confirm: password, // Backend requires password confirmation
+        first_name,
+        last_name,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Signup failed');
-      }
+      // Store tokens
+      tokenManager.setTokens(response.access, response.refresh);
 
-      const data = await response.json();
-      localStorage.setItem('auth_token', data.token);
-      setUser(data.user);
-    } catch (error) {
-      throw error;
+      // Set user data
+      setUser({
+        ...response.user,
+        name: response.user.first_name && response.user.last_name
+          ? `${response.user.first_name} ${response.user.last_name}`
+          : response.user.username,
+      });
+    } catch (error: any) {
+      console.error('Signup failed:', error);
+      // Extract validation errors if present
+      const errors = error.response?.data?.details || error.response?.data?.errors;
+      let errorMessage = error.response?.data?.message 
+        || error.response?.data?.detail 
+        || error.response?.data?.error
+        || error.message 
+        || 'Signup failed';
+      
+      // If there are field-specific errors, show the first one
+      if (errors && typeof errors === 'object') {
+        const firstError = Object.values(errors)[0];
+        if (Array.isArray(firstError)) {
+          errorMessage = firstError[0];
+        } else if (typeof firstError === 'string') {
+          errorMessage = firstError;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
   };
 
@@ -127,44 +179,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      localStorage.removeItem('auth_token');
+      const refreshToken = tokenManager.getRefreshToken();
+      if (refreshToken) {
+        await authApi.logout(refreshToken);
+      }
+      tokenManager.clearTokens();
       setUser(null);
     } catch (error) {
-      throw error;
+      console.error('Logout failed:', error);
+      // Clear tokens anyway
+      tokenManager.clearTokens();
+      setUser(null);
     }
   };
 
   const resetPassword = async (email: string) => {
     try {
-      // TODO: Replace with your backend API call
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Password reset failed');
-      }
-    } catch (error) {
-      throw error;
+      await authApi.requestPasswordReset({ email });
+    } catch (error: any) {
+      console.error('Password reset failed:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Password reset failed');
     }
   };
 
   const verifyEmail = async (token: string) => {
     try {
-      // TODO: Replace with your backend API call
-      const response = await fetch('/api/auth/verify-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Email verification failed');
-      }
+      // Email verification endpoint not in backend API yet
+      // This is a placeholder for future implementation
+      console.warn('Email verification not implemented yet');
     } catch (error) {
       throw error;
     }
@@ -182,7 +224,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginWithTwitter,
         logout,
         resetPassword,
-        verifyEmail
+        verifyEmail,
+        refreshUser,
       }}
     >
       {children}

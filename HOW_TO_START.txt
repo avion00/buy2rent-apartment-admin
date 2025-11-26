@@ -1,0 +1,59 @@
+========================================
+HOW TO START DEVELOPMENT SERVERS
+========================================
+
+OPTION 1: Automatic (Recommended)
+----------------------------------
+Double-click: start-dev.bat
+
+This will:
+- Start Django backend on http://localhost:8000
+- Start Vite frontend on http://localhost:8080
+- Both servers will auto-reload on file changes
+- No need to restart manually!
+
+
+OPTION 2: Manual
+----------------------------------
+Terminal 1 - Backend:
+  cd backend
+  python manage.py runserver
+
+Terminal 2 - Frontend:
+  cd frontend
+  npm run dev
+
+
+========================================
+AUTO-RELOAD IS ENABLED
+========================================
+
+Frontend (Vite):
+- Changes to .tsx, .ts, .css files → Auto-reload ✓
+- Hot Module Replacement (HMR) enabled
+- Instant updates in browser
+
+Backend (Django):
+- Changes to .py files → Auto-reload ✓
+- Django's built-in auto-reloader
+- Server restarts automatically
+
+
+========================================
+IMPORTANT URLS
+========================================
+
+Frontend:  http://localhost:8080
+Backend:   http://localhost:8000
+API Docs:  http://localhost:8000/api/docs/
+Admin:     http://localhost:8000/admin/
+
+
+========================================
+NO MANUAL RESTART NEEDED!
+========================================
+
+Just edit your files and save:
+- Frontend updates instantly in browser
+- Backend restarts automatically
+- Keep coding without interruption!

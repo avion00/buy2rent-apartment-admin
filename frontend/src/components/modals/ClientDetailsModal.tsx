@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Mail,
   Phone,
@@ -13,38 +14,60 @@ import {
   Calendar,
   ExternalLink,
   MapPin,
+  Loader2,
 } from 'lucide-react';
-import { Client, Apartment, Product } from '@/stores/useDataStore';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { clientApi } from '@/services/clientApi';
+import { useEffect } from 'react';
 
 interface ClientDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  client: Client | null;
-  apartments: Apartment[];
-  products: Product[];
+  clientId: string | null;
 }
 
 export const ClientDetailsModal = ({
   open,
   onOpenChange,
-  client,
-  apartments,
-  products,
+  clientId,
 }: ClientDetailsModalProps) => {
   const navigate = useNavigate();
 
-  if (!client) return null;
+  // Fetch client details from API
+  const { data: clientDetails, isLoading, error, refetch } = useQuery({
+    queryKey: ['clientDetails', clientId],
+    queryFn: () => clientApi.getClientDetails(clientId!),
+    enabled: !!clientId && open,
+  });
 
-  const clientApartments = apartments.filter((apt) => apt.clientId === client.id);
-  const clientProducts = products.filter((product) =>
-    clientApartments.some((apt) => apt.id === product.apartmentId)
-  );
+  // Refetch when modal opens
+  useEffect(() => {
+    if (open && clientId) {
+      refetch();
+    }
+  }, [open, clientId, refetch]);
 
-  const totalProductValue = clientProducts.reduce(
-    (sum, product) => sum + product.unitPrice * product.qty,
-    0
-  );
+  if (!clientId) return null;
+
+  const client = clientDetails;
+  
+  // Extract apartments data
+  // Details API returns: { count: number, data: [...] }
+  const apartmentsResponse = clientDetails?.apartments;
+  const clientApartments = apartmentsResponse?.data || [];
+  const apartmentsCount = apartmentsResponse?.count || 0;
+  
+  // Extract products data
+  // Details API returns: { count: number, total_value: number, data: [...] }
+  const productsResponse = clientDetails?.products;
+  const clientProducts = productsResponse?.data || [];
+  const productsCount = productsResponse?.count || 0;
+  const totalProductValue = productsResponse?.total_value || 0;
+  
+  console.log('Client Details Full:', clientDetails);
+  console.log('Apartments Response:', apartmentsResponse);
+  console.log('Products Response:', productsResponse);
 
   const getStatusColor = (status: string) => {
     return status === 'Active'
@@ -73,6 +96,25 @@ export const ClientDetailsModal = ({
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-100px)] pr-4">
+          {isLoading ? (
+            <div className="space-y-6">
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 text-destructive">
+              <p>Error loading client details</p>
+              <Button onClick={() => refetch()} className="mt-4">Retry</Button>
+            </div>
+          ) : !client ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>No client data found</p>
+            </div>
+          ) : (
           <div className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
@@ -83,8 +125,8 @@ export const ClientDetailsModal = ({
                     <Badge variant="outline" className="capitalize">
                       {client.type}
                     </Badge>
-                    <Badge className={getStatusColor(client.accountStatus)}>
-                      {client.accountStatus}
+                    <Badge className={getStatusColor(client.account_status)}>
+                      {client.account_status}
                     </Badge>
                   </div>
                 </div>
@@ -130,11 +172,15 @@ export const ClientDetailsModal = ({
               </h4>
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                  <p className="text-2xl font-bold text-primary">{clientApartments.length}</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {apartmentsCount}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">Apartments</p>
                 </div>
                 <div className="p-4 rounded-lg bg-accent/5 border border-accent/20">
-                  <p className="text-2xl font-bold text-accent">{clientProducts.length}</p>
+                  <p className="text-2xl font-bold text-accent">
+                    {productsCount}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">Products</p>
                 </div>
                 <div className="p-4 rounded-lg bg-success/5 border border-success/20">
@@ -152,7 +198,7 @@ export const ClientDetailsModal = ({
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                Apartments ({clientApartments.length})
+                Apartments ({apartmentsCount})
               </h4>
               {clientApartments.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-lg border border-border/50">
@@ -161,10 +207,7 @@ export const ClientDetailsModal = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {clientApartments.map((apartment) => {
-                    const apartmentProducts = products.filter(
-                      (p) => p.apartmentId === apartment.id
-                    );
+                  {clientApartments.map((apartment: any) => {
                     return (
                       <div
                         key={apartment.id}
@@ -188,19 +231,15 @@ export const ClientDetailsModal = ({
                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/30">
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <div className="flex items-center gap-1">
-                              <Package className="h-3 w-3" />
-                              <span>{apartmentProducts.length} products</span>
-                            </div>
-                            <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              <span>Due: {apartment.dueDate}</span>
+                              <span>Due: {apartment.due_date || 'N/A'}</span>
                             </div>
                           </div>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => {
-                              navigate(`/apartments/${apartment.id}`);
+                              navigate(`/apartments`);
                               onOpenChange(false);
                             }}
                             className="h-7 text-xs"
@@ -222,7 +261,7 @@ export const ClientDetailsModal = ({
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Package className="h-4 w-4" />
-                Products ({clientProducts.length})
+                Products ({productsCount})
               </h4>
               {clientProducts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-lg border border-border/50">
@@ -231,37 +270,70 @@ export const ClientDetailsModal = ({
                 </div>
               ) : (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {clientProducts.map((product) => {
-                    const apartment = apartments.find((apt) => apt.id === product.apartmentId);
+                  {clientProducts.map((product: any) => {
+                    const productImage = product.product_image || product.image_url || product.thumbnail_url;
+                    const categoryName = product.category_name || product.category_details?.name;
+                    const room = product.room;
+                    
                     return (
                       <div
                         key={product.id}
                         className="p-3 rounded-lg border border-border/50 bg-card hover:bg-muted/20 transition-colors"
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <p className="font-medium text-sm text-foreground">
+                        <div className="flex items-start gap-3">
+                          {/* Product Image */}
+                          {productImage ? (
+                            <img 
+                              src={productImage} 
+                              alt={product.product}
+                              className="w-12 h-12 rounded object-cover flex-shrink-0"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                              <Package className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
+                          
+                          {/* Product Details */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-foreground truncate">
                               {product.product}
                             </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs text-muted-foreground">
-                                {apartment?.name}
-                              </span>
-                              <span className="text-xs text-muted-foreground">•</span>
-                              <span className="text-xs text-muted-foreground">
-                                {product.vendor}
-                              </span>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              {categoryName && (
+                                <Badge variant="outline" className="text-xs">
+                                  {categoryName}
+                                </Badge>
+                              )}
+                              {room && (
+                                <span className="text-xs text-muted-foreground">
+                                  📍 {room}
+                                </span>
+                              )}
+                              {product.vendor_name && (
+                                <>
+                                  <span className="text-xs text-muted-foreground">•</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {product.vendor_name}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
-                          <div className="text-right">
+                          
+                          {/* Price */}
+                          <div className="text-right flex-shrink-0">
                             <p className="text-sm font-semibold text-foreground">
                               {new Intl.NumberFormat('hu-HU').format(
-                                product.unitPrice * product.qty
+                                parseFloat(product.unit_price || 0) * product.qty
                               )}{' '}
                               Ft
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {product.qty} × {new Intl.NumberFormat('hu-HU').format(product.unitPrice)} Ft
+                              {product.qty} × {new Intl.NumberFormat('hu-HU').format(parseFloat(product.unit_price || 0))} Ft
                             </p>
                           </div>
                         </div>
@@ -272,6 +344,7 @@ export const ClientDetailsModal = ({
               )}
             </div>
           </div>
+          )}
         </ScrollArea>
       </DialogContent>
     </Dialog>

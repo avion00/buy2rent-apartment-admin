@@ -40,10 +40,14 @@ This Django REST Framework backend provides comprehensive APIs for managing apar
 |--------|----------|-------------|------------------|--------------|
 | GET | `/` | List all clients | `search`, `account_status`, `type`, `ordering`, `page` | - |
 | POST | `/` | Create client | - | Client data |
-| GET | `/{id}/` | Get client details | - | - |
+| GET | `/{id}/` | Get client details (with apartments & products) | - | - |
 | PATCH | `/{id}/` | Update client | - | Partial client data |
 | PUT | `/{id}/` | Replace client | - | Complete client data |
 | DELETE | `/{id}/` | Delete client | - | - |
+| GET | `/{id}/apartments/` | Get client apartments | - | - |
+| GET | `/{id}/products/` | Get client products | - | - |
+| GET | `/{id}/statistics/` | Get client statistics | - | - |
+| GET | `/{id}/details/` | Get complete client profile | - | - |
 
 **Client Model Fields**:
 - `id` (UUID)

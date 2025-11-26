@@ -32,7 +32,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Plus, Search, Edit, Trash2, Building2, Eye, Loader2, RefreshCw } from 'lucide-react';
-import { useDataStore } from '@/stores/useDataStore';
 import { useToast } from '@/hooks/use-toast';
 import { ClientDetailsModal } from '@/components/modals/ClientDetailsModal';
 import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from '@/hooks/useClientApi';
@@ -42,7 +41,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 const Clients = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { apartments, products } = useDataStore();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -75,10 +73,6 @@ const Clients = () => {
 
   // Clients are already filtered by the API based on search params
   const filteredClients = clients;
-
-  const getClientApartmentCount = (clientId: string) => {
-    return apartments.filter(apt => apt.clientId === clientId).length;
-  };
 
   const handleOpenDialog = (clientId?: string) => {
     if (clientId) {
@@ -146,7 +140,10 @@ const Clients = () => {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    const apartmentCount = getClientApartmentCount(id);
+    // Find client and get apartments_count from API
+    const client = clients.find(c => c.id === id);
+    const apartmentCount = client?.apartments_count ?? 0;
+    
     if (apartmentCount > 0) {
       toast({
         title: 'Cannot delete client',
@@ -169,14 +166,6 @@ const Clients = () => {
     setViewingClientId(clientId);
     setDetailsModalOpen(true);
   };
-
-  // Adapt API client to match the store client type for the modal
-  const viewingClient = viewingClientId ? clients.find(c => c.id === viewingClientId) : null;
-  const adaptedClient = viewingClient ? {
-    ...viewingClient,
-    accountStatus: viewingClient.account_status,
-    type: viewingClient.type === 'Individual' ? 'Investor' : 'Buy2Rent Internal',
-  } as any : null;
 
   const getStatusColor = (status: string) => {
     return status === 'Active' 
@@ -393,7 +382,8 @@ const Clients = () => {
                     </TableRow>
                   ) : (
                     filteredClients.map((client) => {
-                      const apartmentCount = getClientApartmentCount(client.id);
+                      // Use apartments_count from API instead of local calculation
+                      const apartmentCount = client.apartments_count ?? 0;
                       return (
                         <TableRow 
                           key={client.id} 
@@ -466,9 +456,7 @@ const Clients = () => {
         <ClientDetailsModal
           open={detailsModalOpen}
           onOpenChange={setDetailsModalOpen}
-          client={adaptedClient}
-          apartments={apartments}
-          products={products}
+          clientId={viewingClientId}
         />
       </div>
     </PageLayout>

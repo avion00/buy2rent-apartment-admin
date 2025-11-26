@@ -26,30 +26,6 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Simple retry logic for network errors
-const retryRequest = async (error: AxiosError, retries = 3): Promise<any> => {
-  const config = error.config as InternalAxiosRequestConfig & { _retryCount?: number };
-  
-  if (!config || !retries) {
-    return Promise.reject(error);
-  }
-  
-  config._retryCount = config._retryCount || 0;
-  
-  if (config._retryCount >= retries) {
-    return Promise.reject(error);
-  }
-  
-  config._retryCount += 1;
-  
-  // Exponential backoff
-  const delay = Math.min(1000 * Math.pow(2, config._retryCount - 1), 10000);
-  
-  await new Promise(resolve => setTimeout(resolve, delay));
-  
-  return axiosInstance(config);
-};
-
 // Request interceptor to add auth token
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -59,9 +35,7 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor to handle token refresh
@@ -166,6 +140,7 @@ export interface Client {
   account_status: 'Active' | 'Inactive' | 'Suspended';
   type: 'Individual' | 'Company';
   notes?: string;
+  apartments_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -256,5 +231,23 @@ export const clientApi = {
     } catch {
       return false;
     }
+  },
+
+  // Get client apartments
+  async getClientApartments(clientId: string): Promise<any> {
+    const response = await axiosInstance.get(`/clients/${clientId}/apartments/`);
+    return response.data;
+  },
+
+  // Get client products
+  async getClientProducts(clientId: string): Promise<any> {
+    const response = await axiosInstance.get(`/clients/${clientId}/products/`);
+    return response.data;
+  },
+
+  // Get client details (overview with apartments, products, statistics)
+  async getClientDetails(clientId: string): Promise<any> {
+    const response = await axiosInstance.get(`/clients/${clientId}/details/`);
+    return response.data;
   },
 };

@@ -34,6 +34,7 @@ whitenoise
 # Development & Testing
 django-extensions
 requests
+watchdog[watchmedo]
 
 # Optional: For better development experience
 ipython

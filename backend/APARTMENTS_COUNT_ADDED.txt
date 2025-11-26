@@ -1,0 +1,53 @@
+========================================
+APARTMENTS COUNT ADDED TO CLIENT API
+========================================
+
+WHAT WAS ADDED:
+- New field: apartments_count
+- Shows number of apartments for each client
+- Optimized with database annotation (no N+1 queries)
+
+API ENDPOINT:
+GET /api/clients/
+
+RESPONSE EXAMPLE:
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "e8c28a63-50ce-432c-b67a-d127a0eb51b7",
+      "name": "sagar owner/client",
+      "email": "imsagar462@gmail.com",
+      "phone": "+977982433882",
+      "account_status": "Active",
+      "type": "Buy2Rent Internal",
+      "notes": "",
+      "apartments_count": 3,  // <-- NEW FIELD
+      "created_at": "2025-11-13T09:12:19.667961Z",
+      "updated_at": "2025-11-21T15:30:45.711610Z"
+    }
+  ]
+}
+
+TECHNICAL DETAILS:
+- Field added to ClientSerializer
+- Query optimized with Count annotation
+- No additional database queries
+- Automatic in all client list/retrieve endpoints
+
+FILES MODIFIED:
+1. backend/clients/serializers.py
+   - Added apartments_count field
+   - Added get_apartments_count method
+
+2. backend/clients/views.py
+   - Optimized queryset with annotation
+   - Prevents N+1 query problem
+
+TESTING:
+Run: python test_apartments_count.py
+
+The frontend will now receive apartments_count
+in the API response automatically!
