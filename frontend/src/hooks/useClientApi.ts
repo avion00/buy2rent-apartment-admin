@@ -53,6 +53,7 @@ export function useClients(params?: {
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     refetchOnWindowFocus: false, // Don't refetch on window focus for better UX
     retry: 2, // Retry failed requests twice
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching
     ...options,
   });
 }
@@ -85,6 +86,7 @@ export function useCreateClient() {
       const optimisticClient: Client = {
         id: `temp-${Date.now()}`,
         ...newClientData,
+        apartments_count: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };

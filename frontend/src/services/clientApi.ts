@@ -138,7 +138,7 @@ export interface Client {
   phone: string;
   address?: string;
   account_status: 'Active' | 'Inactive' | 'Suspended';
-  type: 'Individual' | 'Company';
+  type: 'Investor' | 'Buy2Rent Internal';
   notes?: string;
   apartments_count: number;
   created_at: string;
@@ -151,7 +151,7 @@ export interface ClientFormData {
   phone: string;
   address?: string;
   account_status: 'Active' | 'Inactive' | 'Suspended';
-  type: 'Individual' | 'Company';
+  type: 'Investor' | 'Buy2Rent Internal';
   notes?: string;
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +31,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Search, Edit, Trash2, Building2, Eye, Loader2, RefreshCw } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Plus, Search, Edit, Trash2, Building2, Eye, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ClientDetailsModal } from '@/components/modals/ClientDetailsModal';
 import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from '@/hooks/useClientApi';
@@ -49,8 +59,10 @@ const Clients = () => {
   const [editingClient, setEditingClient] = useState<string | null>(null);
   const [viewingClientId, setViewingClientId] = useState<string | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<{ id: string; name: string } | null>(null);
   
-  // API hooks
+  // API hooks (debouncing is handled inside useClients hook)
   const { data: clientsData, isLoading, error, refetch } = useClients({
     search: searchTerm || undefined,
     account_status: statusFilter !== 'all' ? statusFilter : undefined,
@@ -60,19 +72,25 @@ const Clients = () => {
   const updateClientMutation = useUpdateClient();
   const deleteClientMutation = useDeleteClient();
   
-  const clients = clientsData?.results || [];
+  // Memoize clients to prevent unnecessary re-renders
+  const clients = useMemo(() => clientsData?.results || [], [clientsData?.results]);
   
   const [formData, setFormData] = useState<ClientFormData>({
     name: '',
     email: '',
     phone: '',
     account_status: 'Active',
-    type: 'Individual',
+    type: 'Investor',
     notes: '',
   });
 
   // Clients are already filtered by the API based on search params
   const filteredClients = clients;
+  
+  // Memoize search handler to prevent re-creation
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, []);
 
   const handleOpenDialog = (clientId?: string) => {
     if (clientId) {
@@ -95,7 +113,7 @@ const Clients = () => {
         email: '',
         phone: '',
         account_status: 'Active',
-        type: 'Individual',
+        type: 'Investor',
         notes: ''
       });
     }
@@ -104,6 +122,8 @@ const Clients = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('Form submitted with data:', formData);
     
     if (!formData.name.trim() || !formData.email.trim()) {
       toast({
@@ -116,12 +136,22 @@ const Clients = () => {
 
     try {
       if (editingClient) {
+        console.log('Updating client:', editingClient);
         await updateClientMutation.mutateAsync({
           id: editingClient,
           data: formData,
         });
+        toast({
+          title: 'Success',
+          description: 'Client updated successfully',
+        });
       } else {
+        console.log('Creating new client:', formData);
         await createClientMutation.mutateAsync(formData);
+        toast({
+          title: 'Success',
+          description: 'Client created successfully',
+        });
       }
       setDialogOpen(false);
       setEditingClient(null);
@@ -131,15 +161,16 @@ const Clients = () => {
         email: '',
         phone: '',
         account_status: 'Active',
-        type: 'Individual',
+        type: 'Investor',
         notes: '',
       });
     } catch (error) {
+      console.error('Error submitting form:', error);
       // Error is handled by the mutation hook
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleDeleteClick = (id: string, name: string) => {
     // Find client and get apartments_count from API
     const client = clients.find(c => c.id === id);
     const apartmentCount = client?.apartments_count ?? 0;
@@ -153,12 +184,28 @@ const Clients = () => {
       return;
     }
 
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      try {
-        await deleteClientMutation.mutateAsync({ id, name });
-      } catch (error) {
-        // Error is handled by the mutation hook
-      }
+    // Open delete confirmation dialog
+    setClientToDelete({ id, name });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!clientToDelete) return;
+
+    try {
+      await deleteClientMutation.mutateAsync({ 
+        id: clientToDelete.id, 
+        name: clientToDelete.name 
+      });
+      toast({
+        title: 'Success',
+        description: `Client "${clientToDelete.name}" deleted successfully`,
+      });
+    } catch (error) {
+      // Error is handled by the mutation hook
+    } finally {
+      setDeleteDialogOpen(false);
+      setClientToDelete(null);
     }
   };
 
@@ -221,12 +268,14 @@ const Clients = () => {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70 pointer-events-none z-10" />
               <Input
+                key="client-search-input"
                 placeholder="Search by name or email..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 className="pl-10 h-11 bg-muted/30 border-border/50 focus:bg-background transition-colors"
+                autoComplete="off"
               />
             </div>
             <div className="flex gap-2 flex-wrap sm:flex-nowrap">
@@ -304,8 +353,8 @@ const Clients = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Individual">Individual</SelectItem>
-                              <SelectItem value="Company">Company</SelectItem>
+                              <SelectItem value="Investor">Investor</SelectItem>
+                              <SelectItem value="Buy2Rent Internal">Buy2Rent Internal</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -434,7 +483,7 @@ const Clients = () => {
                               <Button 
                                 size="sm" 
                                 variant="ghost" 
-                                onClick={() => handleDelete(client.id, client.name)}
+                                onClick={() => handleDeleteClick(client.id, client.name)}
                                 className="hover:bg-destructive/10 hover:text-destructive"
                                 title="Delete Client"
                               >
@@ -458,6 +507,42 @@ const Clients = () => {
           onOpenChange={setDetailsModalOpen}
           clientId={viewingClientId}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <AlertDialogTitle className="text-xl">Delete Client</AlertDialogTitle>
+                  <AlertDialogDescription className="mt-1">
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </div>
+              </div>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete{' '}
+                <span className="font-semibold text-foreground">"{clientToDelete?.name}"</span>?
+                This will permanently remove the client from the system.
+              </p>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel autoFocus={false}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                autoFocus
+              >
+                Delete Client
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PageLayout>
   );
