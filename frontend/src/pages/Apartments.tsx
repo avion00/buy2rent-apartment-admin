@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Eye, Edit, Trash2, Search, Loader2, RefreshCw, Upload, Download, Cloud, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Search, Loader2, RefreshCw, Upload, Download, Cloud, X, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useApartments, useDeleteApartment } from '@/hooks/useApartmentApi';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -788,19 +788,32 @@ const Apartments = () => {
         <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, id: '', name: '' })}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Apartment</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete "{deleteDialog.name}"? This will also delete all associated products. This action cannot be undone.
-              </AlertDialogDescription>
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <AlertDialogTitle className="text-xl">Delete Apartment</AlertDialogTitle>
+                  <AlertDialogDescription className="mt-1">
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </div>
+              </div>
             </AlertDialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete{' '}
+                <span className="font-semibold text-foreground">"{deleteDialog.name}"</span>? This will permanently remove the apartment and all associated products from the system.
+              </p>
+            </div>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel autoFocus={false}>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmDelete}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 autoFocus
               >
-                Delete
+                Delete Apartment
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -36,7 +36,7 @@ const ApartmentEdit = () => {
   
   // Update apartment mutation
   const updateApartmentMutation = useUpdateApartment();
-
+  
   const [formData, setFormData] = useState({
     name: "",
     type: "furnishing" as "furnishing" | "renovating",

@@ -1,5 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useApartment } from "@/hooks/useApartmentApi";
+import { useProductsByApartment } from "@/hooks/useProductApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,8 +67,21 @@ const ApartmentView = () => {
   // Fetch apartment data from API
   const { data: apartment, isLoading, error } = useApartment(id || null);
 
-  // TODO: Add API hooks for products, deliveries, activities when ready
-  const products: any[] = [];
+  // Fetch products for this apartment
+  const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProductsByApartment(id || null);
+  // API returns array directly, not paginated response
+  const products = productsData || [];
+  
+  // Debug logging
+  console.log('=== PRODUCTS DEBUG ===');
+  console.log('Apartment ID:', id);
+  console.log('Products Data:', productsData);
+  console.log('Products Array:', products);
+  console.log('Products Length:', products.length);
+  console.log('Is Loading:', isLoadingProducts);
+  console.log('Error:', productsError);
+
+  // TODO: Add API hooks for deliveries, activities when ready
   const deliveries: any[] = [];
   const activities: any[] = [];
   const aiNotes: any[] = [];
@@ -183,15 +197,15 @@ const ApartmentView = () => {
   const totalItems = products.length;
   const orderedItems = products.filter((p) => ["Ordered", "Shipped", "Delivered"].includes(p.status)).length;
   const deliveredItems = products.filter((p) => p.status === "Delivered").length;
-  const openIssues = products.filter((p) => p.issueState && !["No Issue", "Resolved"].includes(p.issueState)).length;
-  const totalValue = products.reduce((sum, p) => sum + p.unitPrice * p.qty, 0);
-  const totalPayable = products.reduce((sum, p) => sum + (p.paymentAmount || 0), 0);
-  const totalPaid = products.reduce((sum, p) => sum + (p.paidAmount || 0), 0);
+  const openIssues = products.filter((p) => p.issue_state && !["No Issue", "Resolved"].includes(p.issue_state)).length;
+  const totalValue = products.reduce((sum, p) => sum + parseFloat(p.unit_price) * p.qty, 0);
+  const totalPayable = products.reduce((sum, p) => sum + parseFloat(p.payment_amount || '0'), 0);
+  const totalPaid = products.reduce((sum, p) => sum + parseFloat(p.paid_amount || '0'), 0);
   const outstandingBalance = totalPayable - totalPaid;
   const overduePayments = products.filter((p) => {
-    if (!p.paymentDueDate || !p.paymentAmount) return false;
-    const outstanding = (p.paymentAmount || 0) - (p.paidAmount || 0);
-    const isOverdue = new Date(p.paymentDueDate) < new Date() && outstanding > 0;
+    if (!p.payment_due_date || !p.payment_amount) return false;
+    const outstanding = parseFloat(p.payment_amount || '0') - parseFloat(p.paid_amount || '0');
+    const isOverdue = new Date(p.payment_due_date) < new Date() && outstanding > 0;
     return isOverdue;
   }).length;
 
@@ -432,7 +446,14 @@ const ApartmentView = () => {
             </div>
           </div>
 
-          {products.length === 0 ? (
+          {isLoadingProducts ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <RefreshCw className="mx-auto h-12 w-12 text-muted-foreground mb-4 animate-spin" />
+                <h3 className="text-lg font-semibold mb-2">Loading products...</h3>
+              </CardContent>
+            </Card>
+          ) : products.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -486,14 +507,14 @@ const ApartmentView = () => {
                                   ? "bg-yellow-500/5"
                                   : "";
 
-                        const outstandingBalance = (product.paymentAmount || 0) - (product.paidAmount || 0);
+                        const outstandingBalance = parseFloat(product.payment_amount || '0') - parseFloat(product.paid_amount || '0');
 
                         return (
                           <TableRow key={product.id} className={rowColorClass}>
                             <TableCell>
-                              {product.imageUrl ? (
+                              {product.image_url ? (
                                 <img
-                                  src={product.imageUrl}
+                                  src={product.image_url}
                                   alt={product.product}
                                   className="h-10 w-10 rounded object-cover"
                                 />
@@ -504,9 +525,9 @@ const ApartmentView = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              {product.vendorLink ? (
+                              {product.vendor_link ? (
                                 <a
-                                  href={product.vendorLink}
+                                  href={product.vendor_link}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="font-medium text-primary hover:underline flex items-center gap-1"
@@ -532,10 +553,10 @@ const ApartmentView = () => {
                               </Button>
                             </TableCell>
                             <TableCell className="font-mono text-xs">{product.sku}</TableCell>
-                            <TableCell className="text-right">{product.unitPrice.toLocaleString()} HUF</TableCell>
+                            <TableCell className="text-right">{parseFloat(product.unit_price).toLocaleString()} HUF</TableCell>
                             <TableCell className="text-center">{product.qty}</TableCell>
                             <TableCell className="text-right font-semibold">
-                              {(product.unitPrice * product.qty).toLocaleString()} HUF
+                              {(parseFloat(product.unit_price) * product.qty).toLocaleString()} HUF
                             </TableCell>
                             <TableCell>
                               <MultiSelectTags
@@ -552,7 +573,7 @@ const ApartmentView = () => {
                                   "Incorrect Quantity",
                                   "Replacement Ordered",
                                 ]}
-                                value={product.statusTags || []}
+                                value={product.status_tags || []}
                                 onChange={(newTags) => {
                                   updateProduct(product.id, { statusTags: newTags });
                                   toast({
@@ -576,7 +597,7 @@ const ApartmentView = () => {
                                   "Return Scheduled",
                                   "Return Received",
                                 ]}
-                                value={product.deliveryStatusTags || []}
+                                value={product.delivery_status_tags || []}
                                 onChange={(newTags) => {
                                   updateProduct(product.id, { deliveryStatusTags: newTags });
                                   toast({
@@ -596,12 +617,12 @@ const ApartmentView = () => {
                                     size="sm"
                                     className={cn(
                                       "w-[140px] justify-start text-left font-normal",
-                                      !product.expectedDeliveryDate && "text-muted-foreground",
+                                      !product.expected_delivery_date && "text-muted-foreground",
                                     )}
                                   >
                                     <CalendarIcon className="mr-2 h-3 w-3" />
-                                    {product.expectedDeliveryDate
-                                      ? format(new Date(product.expectedDeliveryDate), "PP")
+                                    {product.expected_delivery_date
+                                      ? format(new Date(product.expected_delivery_date), "PP")
                                       : "Pick date"}
                                   </Button>
                                 </PopoverTrigger>
@@ -609,7 +630,7 @@ const ApartmentView = () => {
                                   <Calendar
                                     mode="single"
                                     selected={
-                                      product.expectedDeliveryDate ? new Date(product.expectedDeliveryDate) : undefined
+                                      product.expected_delivery_date ? new Date(product.expected_delivery_date) : undefined
                                     }
                                     onSelect={(date) => {
                                       if (date) {
@@ -626,7 +647,7 @@ const ApartmentView = () => {
                               </Popover>
                             </TableCell>
                             <TableCell>
-                              {product.deliveryAddress || product.deliveryCity ? (
+                              {product.delivery_address || product.delivery_city ? (
                                 <Button
                                   variant="link"
                                   size="sm"
@@ -638,7 +659,7 @@ const ApartmentView = () => {
                                 >
                                   <MapPin className="h-3 w-3 flex-shrink-0" />
                                   <span className="line-clamp-2">
-                                    {product.deliveryCity ? `${product.deliveryCity}${product.deliveryAddress ? ', ' + product.deliveryAddress.split(',')[0] : ''}` : product.deliveryAddress}
+                                    {product.delivery_city ? `${product.delivery_city}${product.delivery_address ? ', ' + product.delivery_address.split(',')[0] : ''}` : product.delivery_address}
                                   </span>
                                 </Button>
                               ) : (
@@ -653,12 +674,12 @@ const ApartmentView = () => {
                                     size="sm"
                                     className={cn(
                                       "w-[140px] justify-start text-left font-normal",
-                                      !product.actualDeliveryDate && "text-muted-foreground",
+                                      !product.actual_delivery_date && "text-muted-foreground",
                                     )}
                                   >
                                     <CalendarIcon className="mr-2 h-3 w-3" />
-                                    {product.actualDeliveryDate
-                                      ? format(new Date(product.actualDeliveryDate), "PP")
+                                    {product.actual_delivery_date
+                                      ? format(new Date(product.actual_delivery_date), "PP")
                                       : "Pick date"}
                                   </Button>
                                 </PopoverTrigger>
@@ -666,7 +687,7 @@ const ApartmentView = () => {
                                   <Calendar
                                     mode="single"
                                     selected={
-                                      product.actualDeliveryDate ? new Date(product.actualDeliveryDate) : undefined
+                                      product.actual_delivery_date ? new Date(product.actual_delivery_date) : undefined
                                     }
                                     onSelect={(date) => {
                                       if (date) {
@@ -692,9 +713,9 @@ const ApartmentView = () => {
                                   setPaymentModalOpen(true);
                                 }}
                               >
-                                {product.paymentStatus ? (
-                                  <Badge className={getStatusColor(product.paymentStatus)}>
-                                    {product.paymentStatus}
+                                {product.payment_status ? (
+                                  <Badge className={getStatusColor(product.payment_status)}>
+                                    {product.payment_status}
                                   </Badge>
                                 ) : (
                                   <span className="text-muted-foreground">Set Payment</span>
@@ -704,10 +725,10 @@ const ApartmentView = () => {
                             </TableCell>
                             <TableCell>
                               <div className="space-y-1">
-                                {product.paymentDueDate ? (
+                                {product.payment_due_date ? (
                                   <>
                                     <div className="text-xs">
-                                      {new Date(product.paymentDueDate).toLocaleDateString()}
+                                      {new Date(product.payment_due_date).toLocaleDateString()}
                                     </div>
                                     {outstandingBalance > 0 && (
                                       <div className="text-xs text-red-500 font-medium">
@@ -721,8 +742,8 @@ const ApartmentView = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              {product.issueState && product.issueState !== "No Issue" ? (
-                                <Badge className={getStatusColor(product.issueState)}>{product.issueState}</Badge>
+                              {product.issue_state && product.issue_state !== "No Issue" ? (
+                                <Badge className={getStatusColor(product.issue_state)}>{product.issue_state}</Badge>
                               ) : (
                                 <Badge variant="outline" className="bg-green-500/10 text-green-500">
                                   No Issue
@@ -733,29 +754,29 @@ const ApartmentView = () => {
                               <Button
                                 size="sm"
                                 variant={
-                                  product.issueState && product.issueState !== "No Issue" ? "default" : "outline"
+                                  product.issue_state && product.issue_state !== "No Issue" ? "default" : "outline"
                                 }
                                 onClick={() => {
                                   setSelectedProductForIssue(product);
                                   setIssueModalOpen(true);
                                 }}
-                                className={cn(product.issueState === "AI Resolving" && "animate-pulse")}
+                                className={cn(product.issue_state === "AI Resolving" && "animate-pulse")}
                               >
                                 <Bot
                                   className={cn(
                                     "mr-1 h-3 w-3",
-                                    product.issueState === "AI Resolving" && "animate-spin",
+                                    product.issue_state === "AI Resolving" && "animate-spin",
                                   )}
                                 />
-                                {product.issueState === "AI Resolving"
+                                {product.issue_state === "AI Resolving"
                                   ? "AI Active"
-                                  : product.issueState && product.issueState !== "No Issue"
+                                  : product.issue_state && product.issue_state !== "No Issue"
                                     ? "Manage Issue"
                                     : "Report Issue"}
                               </Button>
                             </TableCell>
                             <TableCell>
-                              {product.orderedOn ? new Date(product.orderedOn).toLocaleDateString() : "-"}
+                              {product.ordered_on ? new Date(product.ordered_on).toLocaleDateString() : "-"}
                             </TableCell>
 
                             <TableCell className="text-right">
