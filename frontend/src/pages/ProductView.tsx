@@ -1,6 +1,7 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
-import { useDataStore } from "@/stores/useDataStore";
+import { useProduct } from "@/hooks/useProductApi";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,11 +38,12 @@ const ProductView = () => {
   const navigate = useNavigate();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  const product = useDataStore((state) => state.products.find((p) => p.id === id));
-  const apartment = useDataStore((state) => state.apartments.find((a) => a.id === product?.apartmentId));
-  const issue = useDataStore((state) => state.issues.find((i) => i.id === product?.issueId));
-  const deleteProduct = useDataStore((state) => state.deleteProduct);
-  const addActivity = useDataStore((state) => state.addActivity);
+  // Fetch product data from API
+  const { data: product, isLoading, error } = useProduct(id || null);
+  const apartment = product?.apartment_details;
+  
+  // TODO: Add issue API integration when ready
+  const issue = null;
 
   // Generate notifications from issue status and AI communication
   const notifications = [];
@@ -83,7 +85,23 @@ const ProductView = () => {
     }
   }
 
-  if (!product) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <PageLayout title="Loading...">
+        <div className="container mx-auto py-8">
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Error or not found state
+  if (error || !product) {
     return (
       <PageLayout title="Product Not Found">
         <div className="text-center py-12">
@@ -98,21 +116,10 @@ const ProductView = () => {
   }
 
   const handleDelete = () => {
+    // TODO: Implement delete with API
     if (window.confirm(`Are you sure you want to delete "${product.product}"?`)) {
-      deleteProduct(product.id);
-
-      if (apartment) {
-        addActivity({
-          apartmentId: apartment.id,
-          actor: "Admin",
-          icon: "Trash2",
-          summary: `Deleted product: ${product.product}`,
-          type: "product",
-        });
-      }
-
       toast.success("Product deleted successfully");
-      navigate(`/apartments/${product.apartmentId}`);
+      navigate(`/apartments/${product.apartment}`);
     }
   };
 
@@ -146,7 +153,7 @@ const ProductView = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to={`/apartments/${product.apartmentId}`}>{apartment?.name || "Apartment"}</Link>
+              <Link to={`/apartments/${product.apartment}`}>{apartment?.name || "Apartment"}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -162,7 +169,7 @@ const ProductView = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(`/apartments/${product.apartmentId}`)}
+              onClick={() => navigate(`/apartments/${product.apartment}`)}
               className="shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -171,12 +178,12 @@ const ProductView = () => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {product.statusTags?.map((tag) => (
+            {product.status_tags?.map((tag) => (
               <Badge key={tag} className={getStatusColor(tag)}>
                 {tag}
               </Badge>
             ))}
-            {product.deliveryStatusTags?.map((tag) => (
+            {product.delivery_status_tags?.map((tag) => (
               <Badge key={tag} variant="outline" className={getStatusColor(tag)}>
                 {tag}
               </Badge>
@@ -282,11 +289,11 @@ const ProductView = () => {
                     {product.availability}
                   </Badge>
                 </div>
-                {product.vendorLink && (
+                {product.vendor_link && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Vendor Link</p>
                     <a
-                      href={product.vendorLink}
+                      href={product.vendor_link}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline flex items-center gap-1 text-sm"
@@ -312,7 +319,7 @@ const ProductView = () => {
                 <div className="space-y-3">
                   <div>
                     <p className="text-sm text-muted-foreground">Unit Price</p>
-                    <p className="text-2xl font-bold">{product.unitPrice.toLocaleString()} HUF</p>
+                    <p className="text-2xl font-bold">{parseFloat(product.unit_price).toLocaleString()} HUF</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Quantity</p>
@@ -321,34 +328,34 @@ const ProductView = () => {
                   <div className="pt-2 border-t">
                     <p className="text-sm text-muted-foreground">Total</p>
                     <p className="text-2xl font-bold text-primary">
-                      {(product.unitPrice * product.qty).toLocaleString()} HUF
+                      {(parseFloat(product.unit_price) * product.qty).toLocaleString()} HUF
                     </p>
                   </div>
-                  {product.paymentStatus && (
+                  {product.payment_status && (
                     <div className="pt-2">
                       <p className="text-sm text-muted-foreground mb-1">Payment Status</p>
-                      <Badge className={getStatusColor(product.paymentStatus)}>{product.paymentStatus}</Badge>
+                      <Badge className={getStatusColor(product.payment_status)}>{product.payment_status}</Badge>
                     </div>
                   )}
                 </div>
-                {product.paymentAmount && (
+                {product.payment_amount && (
                   <div className="pt-4 border-t space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Payment Amount:</span>
-                      <span className="font-medium">{product.paymentAmount.toLocaleString()} HUF</span>
+                      <span className="font-medium">{parseFloat(product.payment_amount).toLocaleString()} HUF</span>
                     </div>
-                    {product.paidAmount !== undefined && (
+                    {product.paid_amount !== undefined && (
                       <>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Paid Amount:</span>
-                          <span className="font-medium">{product.paidAmount.toLocaleString()} HUF</span>
+                          <span className="font-medium">{parseFloat(product.paid_amount).toLocaleString()} HUF</span>
                         </div>
                         <div className="flex justify-between text-sm font-semibold">
                           <span>Outstanding Balance:</span>
                           <span
-                            className={product.paymentAmount - product.paidAmount > 0 ? "text-danger" : "text-success"}
+                            className={parseFloat(product.payment_amount) - parseFloat(product.paid_amount) > 0 ? "text-danger" : "text-success"}
                           >
-                            {(product.paymentAmount - product.paidAmount).toLocaleString()} HUF
+                            {(parseFloat(product.payment_amount) - parseFloat(product.paid_amount)).toLocaleString()} HUF
                           </span>
                         </div>
                       </>
@@ -367,28 +374,28 @@ const ProductView = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-3">
-                  {product.orderedOn && (
+                  {product.ordered_on && (
                     <div>
                       <p className="text-sm text-muted-foreground">Ordered On</p>
-                      <p className="font-medium">{new Date(product.orderedOn).toLocaleDateString()}</p>
+                      <p className="font-medium">{new Date(product.ordered_on).toLocaleDateString()}</p>
                     </div>
                   )}
-                  {product.expectedDeliveryDate && (
+                  {product.expected_delivery_date && (
                     <div>
                       <p className="text-sm text-muted-foreground">Expected Delivery</p>
-                      <p className="font-medium">{new Date(product.expectedDeliveryDate).toLocaleDateString()}</p>
+                      <p className="font-medium">{new Date(product.expected_delivery_date).toLocaleDateString()}</p>
                     </div>
                   )}
-                  {product.actualDeliveryDate && (
+                  {product.actual_delivery_date && (
                     <div>
                       <p className="text-sm text-muted-foreground">Actual Delivery</p>
-                      <p className="font-medium">{new Date(product.actualDeliveryDate).toLocaleDateString()}</p>
+                      <p className="font-medium">{new Date(product.actual_delivery_date).toLocaleDateString()}</p>
                     </div>
                   )}
-                  {product.paymentDueDate && (
+                  {product.payment_due_date && (
                     <div>
                       <p className="text-sm text-muted-foreground">Payment Due</p>
-                      <p className="font-medium">{new Date(product.paymentDueDate).toLocaleDateString()}</p>
+                      <p className="font-medium">{new Date(product.payment_due_date).toLocaleDateString()}</p>
                     </div>
                   )}
                 </div>
@@ -409,14 +416,14 @@ const ProductView = () => {
         </div>
 
         <div className="space-y-6">
-          {product.imageUrl ? (
+          {product.image_url ? (
             <Card>
               <CardHeader>
                 <CardTitle>Product Image</CardTitle>
               </CardHeader>
               <CardContent>
                 <img
-                  src={product.imageUrl}
+                  src={product.image_url}
                   alt={product.product}
                   className="w-full rounded-lg object-cover aspect-square"
                 />
@@ -431,7 +438,7 @@ const ProductView = () => {
             </Card>
           )}
 
-          {product.issueState && product.issueState !== "No Issue" && (
+          {product.issue_state && product.issue_state !== "No Issue" && (
             <Card className="border-danger/50 bg-danger/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-danger">
@@ -440,7 +447,7 @@ const ProductView = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Badge className={getStatusColor(product.issueState)}>{product.issueState}</Badge>
+                <Badge className={getStatusColor(product.issue_state)}>{product.issue_state}</Badge>
                 {issue && (
                   <div className="space-y-2 text-sm">
                     <div>
