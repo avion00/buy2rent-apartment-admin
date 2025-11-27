@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useApartment } from "@/hooks/useApartmentApi";
-import { useProductsByApartment } from "@/hooks/useProductApi";
+import { useProductsByApartment, useDeleteProduct } from "@/hooks/useProductApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
@@ -72,6 +82,12 @@ const ApartmentView = () => {
   // API returns array directly, not paginated response
   const products = productsData || [];
   
+  // Delete product mutation
+  const deleteProductMutation = useDeleteProduct();
+  
+  // State for delete confirmation dialog
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: '', name: '', apartmentId: '' });
+  
   // Debug logging
   console.log('=== PRODUCTS DEBUG ===');
   console.log('Apartment ID:', id);
@@ -99,6 +115,25 @@ const ApartmentView = () => {
   const [selectedProductForIssue, setSelectedProductForIssue] = useState<any>(null);
   const [deliveryLocationModalOpen, setDeliveryLocationModalOpen] = useState(false);
   const [selectedProductForDelivery, setSelectedProductForDelivery] = useState<any>(null);
+
+  // Delete handlers
+  const handleDeleteClick = (productId: string, productName: string) => {
+    setDeleteDialog({ open: true, id: productId, name: productName, apartmentId: id || '' });
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deleteProductMutation.mutateAsync({
+        id: deleteDialog.id,
+        name: deleteDialog.name,
+        apartmentId: deleteDialog.apartmentId
+      });
+      setDeleteDialog({ open: false, id: '', name: '', apartmentId: '' });
+    } catch (error) {
+      // Error is handled by the mutation hook
+      setDeleteDialog({ open: false, id: '', name: '', apartmentId: '' });
+    }
+  };
 
   // Loading state
   if (isLoading) {
@@ -512,9 +547,9 @@ const ApartmentView = () => {
                         return (
                           <TableRow key={product.id} className={rowColorClass}>
                             <TableCell>
-                              {product.image_url ? (
+                              {(product.product_image || product.image_url || product.imageUrl) ? (
                                 <img
-                                  src={product.image_url}
+                                  src={product.product_image || product.image_url || product.imageUrl}
                                   alt={product.product}
                                   className="h-10 w-10 rounded object-cover"
                                 />
@@ -525,18 +560,19 @@ const ApartmentView = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              {product.vendor_link ? (
+                              {product.link ? (
                                 <a
-                                  href={product.vendor_link}
+                                  href={product.link}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="font-medium text-primary hover:underline flex items-center gap-1"
+                                  className="font-medium text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                                  title="Click to view product page"
                                 >
                                   {product.product}
-                                  <ExternalLink className="h-3 w-3" />
+                                  <ExternalLink className="h-3 w-3 flex-shrink-0" />
                                 </a>
                               ) : (
-                                <span className="font-medium">{product.product}</span>
+                                <span className="font-medium text-muted-foreground">{product.product}</span>
                               )}
                             </TableCell>
                             <TableCell>
@@ -544,11 +580,11 @@ const ApartmentView = () => {
                                 variant="link"
                                 className="p-0 h-auto text-primary hover:underline"
                                 onClick={() => {
-                                  setSelectedVendorName(product.vendor);
+                                  setSelectedVendorName(product.vendor_name);
                                   setVendorModalOpen(true);
                                 }}
                               >
-                                {product.vendor}
+                                {product.vendor_name}
                                 <Settings className="ml-1 h-3 w-3" />
                               </Button>
                             </TableCell>
@@ -795,22 +831,7 @@ const ApartmentView = () => {
                                   size="sm"
                                   variant="ghost"
                                   className="text-destructive hover:text-destructive"
-                                  onClick={() => {
-                                    if (window.confirm(`Delete "${product.product}"?`)) {
-                                      deleteProduct(product.id);
-                                      addActivity({
-                                        apartmentId: id!,
-                                        actor: "Admin",
-                                        icon: "Trash2",
-                                        summary: `Deleted product: ${product.product}`,
-                                        type: "product",
-                                      });
-                                      toast({
-                                        title: "Success",
-                                        description: "Product deleted successfully",
-                                      });
-                                    }
-                                  }}
+                                  onClick={() => handleDeleteClick(product.id, product.product)}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -952,6 +973,37 @@ const ApartmentView = () => {
         onOpenChange={setDeliveryLocationModalOpen}
         product={selectedProductForDelivery}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, id: '', name: '', apartmentId: '' })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                <Trash2 className="h-5 w-5 text-destructive" />
+              </div>
+              <div className="flex-1">
+                <AlertDialogTitle>Delete Product</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete "{deleteDialog.name}"? This action cannot be undone.
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialog({ open: false, id: '', name: '', apartmentId: '' })}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              autoFocus
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 };

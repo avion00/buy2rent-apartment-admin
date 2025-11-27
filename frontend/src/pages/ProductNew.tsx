@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,48 +15,78 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { useDataStore } from "@/stores/useDataStore";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { useCreateProduct, useProductCategories } from "@/hooks/useProductApi";
+import { useApartment } from "@/hooks/useApartmentApi";
+import { useVendors } from "@/hooks/useVendorApi";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 const ProductNew = () => {
   const [searchParams] = useSearchParams();
   const apartmentId = searchParams.get("apartmentId");
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { apartments, vendors, addProduct, addActivity } = useDataStore();
-  const apartment = apartments.find((a) => a.id === apartmentId);
-
+  
+  // State must be declared before any conditional returns
   const [formData, setFormData] = useState({
+    // API fields (snake_case)
     product: "",
+    description: "",
+    category: "",
     vendor: "",
+    vendor_link: "",
     sku: "",
-    unitPrice: "",
-    qty: "",
-    status: "Design Approved" as const,
-    expectedDeliveryDate: "",
-    actualDeliveryDate: "",
-    paymentStatus: "Unpaid" as const,
-    paymentDueDate: "",
-    issueState: "No Issue" as const,
-    orderedOn: "",
-    imageUrl: "",
+    unit_price: "",
+    qty: 1,
+    availability: "In Stock",
+    status: "Design Approved",
+    room: "",
+    link: "",
+    eta: "",
+    ordered_on: "",
+    expected_delivery_date: "",
+    actual_delivery_date: "",
+    payment_status: "Unpaid",
+    payment_due_date: "",
+    payment_amount: "",
+    paid_amount: "0",
+    currency: "HUF",
+    delivery_type: "",
+    issue_state: "No Issue",
     notes: "",
-    deliveryType: "",
-    deliveryAddress: "",
-    deliveryCity: "",
-    deliveryPostalCode: "",
-    deliveryCountry: "",
-    deliveryInstructions: "",
-    deliveryContactPerson: "",
-    deliveryContactPhone: "",
-    deliveryContactEmail: "",
-    trackingNumber: "",
-    deliveryTimeWindow: "",
-    deliveryNotes: "",
+    // UI-only fields (for display, not sent to API)
+    tracking_number: "",
+    delivery_address: "",
+    delivery_city: "",
+    delivery_postal_code: "",
+    delivery_country: "",
+    delivery_time_window: "",
+    delivery_instructions: "",
+    delivery_contact_person: "",
+    delivery_contact_phone: "",
+    delivery_contact_email: "",
+    delivery_notes: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  
+  // Fetch apartment data
+  const { data: apartment, isLoading: isLoadingApartment } = useApartment(apartmentId);
+  
+  // Fetch categories for this apartment (only if apartmentId exists)
+  const { data: categoriesData, isLoading: isLoadingCategories, error: categoriesError } = useProductCategories(apartmentId);
+  // API returns array directly, not wrapped in results
+  const categories = Array.isArray(categoriesData) ? categoriesData : [];
+  
+  
+  // Fetch vendors
+  const { data: vendorsData, isLoading: isLoadingVendors, error: vendorsError } = useVendors();
+  const vendors = vendorsData?.results || [];
+  
+  // Create product mutation
+  const createProductMutation = useCreateProduct();
 
   useEffect(() => {
     if (!apartmentId) {
@@ -68,21 +98,75 @@ const ProductNew = () => {
       navigate("/apartments");
     }
   }, [apartmentId, navigate, toast]);
+  
+  // Show warning if categories fail to load
+  useEffect(() => {
+    if (categoriesError && !isLoadingCategories) {
+      toast({
+        title: "Warning",
+        description: "Failed to load categories. You can still add a product by entering the category ID manually.",
+        variant: "destructive",
+      });
+    }
+  }, [categoriesError, isLoadingCategories, toast]);
+  
+  // Show warning if vendors fail to load
+  useEffect(() => {
+    if (vendorsError && !isLoadingVendors) {
+      toast({
+        title: "Warning",
+        description: "Failed to load vendors. You can still add a product by entering the vendor ID manually.",
+        variant: "destructive",
+      });
+    }
+  }, [vendorsError, isLoadingVendors, toast]);
+  
+  // Show loading state (only wait for apartment, categories can load in background)
+  if (isLoadingApartment) {
+    return (
+      <PageLayout title="Loading...">
+        <div className="container mx-auto py-8">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+            <h2 className="text-2xl font-semibold text-muted-foreground">Loading apartment details...</h2>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.product.trim()) newErrors.product = "Product name is required";
+    if (!formData.category) newErrors.category = "Category is required";
     if (!formData.vendor) newErrors.vendor = "Vendor is required";
-    if (!formData.sku.trim()) newErrors.sku = "SKU is required";
-    if (!formData.unitPrice || parseFloat(formData.unitPrice) <= 0) newErrors.unitPrice = "Valid unit price is required";
-    if (!formData.qty || parseInt(formData.qty) <= 0) newErrors.qty = "Valid quantity is required";
+    if (!formData.unit_price || parseFloat(formData.unit_price) <= 0) newErrors.unit_price = "Valid unit price is required";
+    if (!formData.qty || formData.qty <= 0) newErrors.qty = "Valid quantity is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -94,62 +178,88 @@ const ProductNew = () => {
       return;
     }
 
-    const unitPrice = parseFloat(formData.unitPrice);
-    const qty = parseInt(formData.qty);
-    const total = unitPrice * qty;
+    try {
+      // Use FormData if image is present, otherwise use JSON
+      if (imageFile) {
+        const formDataToSend = new FormData();
+        formDataToSend.append('apartment', apartmentId!);
+        formDataToSend.append('category', formData.category);
+        formDataToSend.append('product', formData.product);
+        formDataToSend.append('vendor', formData.vendor);
+        formDataToSend.append('unit_price', formData.unit_price);
+        formDataToSend.append('qty', formData.qty.toString());
+        formDataToSend.append('availability', formData.availability);
+        formDataToSend.append('status', formData.status);
+        formDataToSend.append('payment_status', formData.payment_status);
+        formDataToSend.append('paid_amount', formData.paid_amount);
+        formDataToSend.append('currency', formData.currency);
+        formDataToSend.append('issue_state', formData.issue_state);
+        formDataToSend.append('image_file', imageFile);
+        
+        // Debug: Log FormData contents
+        console.log('📤 Sending FormData with image:');
+        console.log('  - Image file:', imageFile);
+        console.log('  - File name:', imageFile.name);
+        console.log('  - File size:', imageFile.size);
+        console.log('  - File type:', imageFile.type);
+        for (let pair of formDataToSend.entries()) {
+          console.log(`  - ${pair[0]}:`, pair[1]);
+        }
+        
+        // Optional fields
+        if (formData.description) formDataToSend.append('description', formData.description);
+        if (formData.vendor_link) formDataToSend.append('vendor_link', formData.vendor_link);
+        if (formData.sku) formDataToSend.append('sku', formData.sku);
+        if (formData.room) formDataToSend.append('room', formData.room);
+        if (formData.link) formDataToSend.append('link', formData.link);
+        if (formData.eta) formDataToSend.append('eta', formData.eta);
+        if (formData.ordered_on) formDataToSend.append('ordered_on', formData.ordered_on);
+        if (formData.expected_delivery_date) formDataToSend.append('expected_delivery_date', formData.expected_delivery_date);
+        if (formData.actual_delivery_date) formDataToSend.append('actual_delivery_date', formData.actual_delivery_date);
+        if (formData.payment_due_date) formDataToSend.append('payment_due_date', formData.payment_due_date);
+        if (formData.payment_amount) formDataToSend.append('payment_amount', formData.payment_amount);
+        if (formData.delivery_type) formDataToSend.append('delivery_type', formData.delivery_type);
+        if (formData.notes) formDataToSend.append('notes', formData.notes);
 
-    const newProduct = {
-      apartmentId: apartmentId!,
-      product: formData.product,
-      vendor: formData.vendor,
-      vendorLink: "",
-      sku: formData.sku,
-      unitPrice,
-      qty,
-      availability: "In Stock" as const,
-      status: formData.status,
-      statusTags: [formData.status],
-      deliveryStatusTags: [],
-      expectedDeliveryDate: formData.expectedDeliveryDate || undefined,
-      actualDeliveryDate: formData.actualDeliveryDate || undefined,
-      paymentStatus: formData.paymentStatus,
-      paymentDueDate: formData.paymentDueDate || undefined,
-      paymentAmount: total,
-      paidAmount: 0,
-      issueState: formData.issueState,
-      orderedOn: formData.orderedOn || new Date().toISOString().split("T")[0],
-      imageUrl: formData.imageUrl || undefined,
-      notes: formData.notes || undefined,
-      deliveryType: formData.deliveryType || undefined,
-      deliveryAddress: formData.deliveryAddress || undefined,
-      deliveryCity: formData.deliveryCity || undefined,
-      deliveryPostalCode: formData.deliveryPostalCode || undefined,
-      deliveryCountry: formData.deliveryCountry || undefined,
-      deliveryInstructions: formData.deliveryInstructions || undefined,
-      deliveryContactPerson: formData.deliveryContactPerson || undefined,
-      deliveryContactPhone: formData.deliveryContactPhone || undefined,
-      deliveryContactEmail: formData.deliveryContactEmail || undefined,
-      trackingNumber: formData.trackingNumber || undefined,
-      deliveryTimeWindow: formData.deliveryTimeWindow || undefined,
-      deliveryNotes: formData.deliveryNotes || undefined,
-    };
+        // Call API with FormData
+        await createProductMutation.mutateAsync(formDataToSend as any);
+      } else {
+        // Use JSON when no image
+        const productData = {
+          apartment: apartmentId!,
+          category: formData.category,
+          product: formData.product,
+          description: formData.description || undefined,
+          vendor: formData.vendor,
+          vendor_link: formData.vendor_link || undefined,
+          sku: formData.sku || undefined,
+          unit_price: formData.unit_price,
+          qty: formData.qty,
+          availability: formData.availability,
+          status: formData.status,
+          room: formData.room || undefined,
+          link: formData.link || undefined,
+          eta: formData.eta || null,
+          ordered_on: formData.ordered_on || null,
+          expected_delivery_date: formData.expected_delivery_date || null,
+          actual_delivery_date: formData.actual_delivery_date || null,
+          payment_status: formData.payment_status,
+          payment_due_date: formData.payment_due_date || null,
+          payment_amount: formData.payment_amount || null,
+          paid_amount: formData.paid_amount,
+          currency: formData.currency,
+          delivery_type: formData.delivery_type || undefined,
+          issue_state: formData.issue_state,
+          notes: formData.notes || undefined,
+        };
 
-    addProduct(newProduct);
-
-    addActivity({
-      apartmentId: apartmentId!,
-      actor: "Admin",
-      icon: "Plus",
-      summary: `Added product: ${formData.product} (${qty} units)`,
-      type: "product",
-    });
-
-    toast({
-      title: "Product added",
-      description: `${formData.product} has been added successfully.`,
-    });
-
-    navigate(`/apartments/${apartmentId}`);
+        await createProductMutation.mutateAsync(productData);
+      }
+      
+      navigate(`/apartments/${apartmentId}`);
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
   };
 
   if (!apartment) {
@@ -167,7 +277,7 @@ const ProductNew = () => {
     );
   }
 
-  const total = formData.unitPrice && formData.qty ? parseFloat(formData.unitPrice) * parseInt(formData.qty) : 0;
+  const total = formData.unit_price && formData.qty ? parseFloat(formData.unit_price) * formData.qty : 0;
 
   return (
     <PageLayout title="Add Product">
@@ -213,20 +323,72 @@ const ProductNew = () => {
                   {errors.product && <p className="text-sm text-destructive">{errors.product}</p>}
                 </div>
 
+               <div className="space-y-2">
+                  <Label htmlFor="category">Category *</Label>
+                  {isLoadingCategories ? (
+                    <div className="flex items-center gap-2 h-10 px-3 py-2 rounded-md border border-input bg-muted">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-muted-foreground">Loading categories...</span>
+                    </div>
+                  ) : categories.length > 0 ? (
+                    <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                      <SelectTrigger id="category">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat: any) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      id="category"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      placeholder="Enter category UUID"
+                    />
+                  )}
+                  {errors.category && <p className="text-sm text-destructive">{errors.category}</p>}
+                </div>
+              </div>
+
+
+            
+
+
+
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="vendor">Vendor *</Label>
-                  <Select value={formData.vendor} onValueChange={(value) => setFormData({ ...formData, vendor: value })}>
-                    <SelectTrigger id="vendor">
-                      <SelectValue placeholder="Select vendor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vendors.map((vendor) => (
-                        <SelectItem key={vendor.id} value={vendor.name}>
-                          {vendor.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {isLoadingVendors ? (
+                    <div className="flex items-center gap-2 h-10 px-3 py-2 rounded-md border border-input bg-muted">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-muted-foreground">Loading vendors...</span>
+                    </div>
+                  ) : vendors.length > 0 ? (
+                    <Select value={formData.vendor} onValueChange={(value) => setFormData({ ...formData, vendor: value })}>
+                      <SelectTrigger id="vendor">
+                        <SelectValue placeholder="Select vendor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vendors.map((vendor: any) => (
+                          <SelectItem key={vendor.id} value={vendor.id}>
+                            {vendor.company_name} - {vendor.website}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      id="vendor"
+                      value={formData.vendor}
+                      onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                      placeholder="Enter vendor UUID"
+                    />
+                  )}
                   {errors.vendor && <p className="text-sm text-destructive">{errors.vendor}</p>}
                 </div>
               </div>
@@ -244,13 +406,41 @@ const ProductNew = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="imageUrl">Image URL</Label>
-                  <Input
-                    id="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                    placeholder="https://example.com/image.jpg"
-                  />
+                  <Label htmlFor="imageFile">Product Image</Label>
+                  {imagePreview ? (
+                    <div className="space-y-2">
+                      <div className="relative w-full h-48 border rounded-md overflow-hidden bg-muted">
+                        <img 
+                          src={imagePreview} 
+                          alt="Product preview" 
+                          className="w-full h-full object-contain"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={handleRemoveImage}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{imageFile?.name}</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="imageFile"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="cursor-pointer"
+                      />
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Upload a product image (JPG, PNG, GIF, etc.)
+                  </p>
                 </div>
               </div>
 
@@ -262,8 +452,8 @@ const ProductNew = () => {
                     type="number"
                     min="0"
                     step="0.01"
-                    value={formData.unitPrice}
-                    onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
+                    value={formData.unit_price}
+                    onChange={(e) => setFormData({ ...formData, unit_price: e.target.value })}
                     placeholder="150000"
                   />
                   {errors.unitPrice && <p className="text-sm text-destructive">{errors.unitPrice}</p>}
@@ -276,7 +466,7 @@ const ProductNew = () => {
                     type="number"
                     min="1"
                     value={formData.qty}
-                    onChange={(e) => setFormData({ ...formData, qty: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, qty: parseInt(e.target.value) || 1 })}
                     placeholder="1"
                   />
                   {errors.qty && <p className="text-sm text-destructive">{errors.qty}</p>}
@@ -313,8 +503,8 @@ const ProductNew = () => {
                 <div className="space-y-2">
                   <Label htmlFor="issueState">Issue State</Label>
                   <Select
-                    value={formData.issueState}
-                    onValueChange={(value: any) => setFormData({ ...formData, issueState: value })}
+                    value={formData.issue_state}
+                    onValueChange={(value: any) => setFormData({ ...formData, issue_state: value })}
                   >
                     <SelectTrigger id="issueState">
                       <SelectValue />
@@ -335,8 +525,8 @@ const ProductNew = () => {
                   <Input
                     id="orderedOn"
                     type="date"
-                    value={formData.orderedOn}
-                    onChange={(e) => setFormData({ ...formData, orderedOn: e.target.value })}
+                    value={formData.ordered_on}
+                    onChange={(e) => setFormData({ ...formData, ordered_on: e.target.value })}
                   />
                 </div>
 
@@ -345,8 +535,8 @@ const ProductNew = () => {
                   <Input
                     id="expectedDeliveryDate"
                     type="date"
-                    value={formData.expectedDeliveryDate}
-                    onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e.target.value })}
+                    value={formData.expected_delivery_date}
+                    onChange={(e) => setFormData({ ...formData, expected_delivery_date: e.target.value })}
                   />
                 </div>
 
@@ -355,8 +545,8 @@ const ProductNew = () => {
                   <Input
                     id="actualDeliveryDate"
                     type="date"
-                    value={formData.actualDeliveryDate}
-                    onChange={(e) => setFormData({ ...formData, actualDeliveryDate: e.target.value })}
+                    value={formData.actual_delivery_date}
+                    onChange={(e) => setFormData({ ...formData, actual_delivery_date: e.target.value })}
                   />
                 </div>
 
@@ -365,8 +555,8 @@ const ProductNew = () => {
                   <Input
                     id="paymentDueDate"
                     type="date"
-                    value={formData.paymentDueDate}
-                    onChange={(e) => setFormData({ ...formData, paymentDueDate: e.target.value })}
+                    value={formData.payment_due_date}
+                    onChange={(e) => setFormData({ ...formData, payment_due_date: e.target.value })}
                   />
                 </div>
               </div>
@@ -374,8 +564,8 @@ const ProductNew = () => {
               <div className="space-y-2">
                 <Label htmlFor="paymentStatus">Payment Status</Label>
                 <Select
-                  value={formData.paymentStatus}
-                  onValueChange={(value: any) => setFormData({ ...formData, paymentStatus: value })}
+                  value={formData.payment_status}
+                  onValueChange={(value: any) => setFormData({ ...formData, payment_status: value })}
                 >
                   <SelectTrigger id="paymentStatus">
                     <SelectValue />
@@ -396,8 +586,8 @@ const ProductNew = () => {
                     <div className="space-y-2">
                       <Label htmlFor="deliveryType">Delivery Service</Label>
                       <Select
-                        value={formData.deliveryType}
-                        onValueChange={(value) => setFormData({ ...formData, deliveryType: value })}
+                        value={formData.delivery_type}
+                        onValueChange={(value) => setFormData({ ...formData, delivery_type: value })}
                       >
                         <SelectTrigger id="deliveryType">
                           <SelectValue placeholder="Select delivery service" />
@@ -414,8 +604,8 @@ const ProductNew = () => {
                       <Label htmlFor="trackingNumber">Tracking Number</Label>
                       <Input
                         id="trackingNumber"
-                        value={formData.trackingNumber}
-                        onChange={(e) => setFormData({ ...formData, trackingNumber: e.target.value })}
+                        value={formData.tracking_number}
+                        onChange={(e) => setFormData({ ...formData, tracking_number: e.target.value })}
                         placeholder="DPD-HU-2025-1234"
                       />
                     </div>
@@ -426,8 +616,8 @@ const ProductNew = () => {
                       <Label htmlFor="deliveryAddress">Delivery Address</Label>
                       <Input
                         id="deliveryAddress"
-                        value={formData.deliveryAddress}
-                        onChange={(e) => setFormData({ ...formData, deliveryAddress: e.target.value })}
+                        value={formData.delivery_address}
+                        onChange={(e) => setFormData({ ...formData, delivery_address: e.target.value })}
                         placeholder="Street address, floor, apartment"
                       />
                     </div>
@@ -436,8 +626,8 @@ const ProductNew = () => {
                       <Label htmlFor="deliveryCity">City</Label>
                       <Input
                         id="deliveryCity"
-                        value={formData.deliveryCity}
-                        onChange={(e) => setFormData({ ...formData, deliveryCity: e.target.value })}
+                        value={formData.delivery_city}
+                        onChange={(e) => setFormData({ ...formData, delivery_city: e.target.value })}
                         placeholder="Budapest"
                       />
                     </div>
@@ -448,8 +638,8 @@ const ProductNew = () => {
                       <Label htmlFor="deliveryPostalCode">Postal Code</Label>
                       <Input
                         id="deliveryPostalCode"
-                        value={formData.deliveryPostalCode}
-                        onChange={(e) => setFormData({ ...formData, deliveryPostalCode: e.target.value })}
+                        value={formData.delivery_postal_code}
+                        onChange={(e) => setFormData({ ...formData, delivery_postal_code: e.target.value })}
                         placeholder="1061"
                       />
                     </div>
@@ -458,8 +648,8 @@ const ProductNew = () => {
                       <Label htmlFor="deliveryCountry">Country</Label>
                       <Input
                         id="deliveryCountry"
-                        value={formData.deliveryCountry}
-                        onChange={(e) => setFormData({ ...formData, deliveryCountry: e.target.value })}
+                        value={formData.delivery_country}
+                        onChange={(e) => setFormData({ ...formData, delivery_country: e.target.value })}
                         placeholder="Hungary"
                       />
                     </div>
@@ -469,8 +659,8 @@ const ProductNew = () => {
                     <Label htmlFor="deliveryTimeWindow">Delivery Time Window</Label>
                     <Input
                       id="deliveryTimeWindow"
-                      value={formData.deliveryTimeWindow}
-                      onChange={(e) => setFormData({ ...formData, deliveryTimeWindow: e.target.value })}
+                      value={formData.delivery_time_window}
+                      onChange={(e) => setFormData({ ...formData, delivery_time_window: e.target.value })}
                       placeholder="09:00 - 12:00"
                     />
                   </div>
@@ -479,8 +669,8 @@ const ProductNew = () => {
                     <Label htmlFor="deliveryInstructions">Delivery Instructions</Label>
                     <EnhancedTextarea
                       id="deliveryInstructions"
-                      value={formData.deliveryInstructions}
-                      onChange={(e) => setFormData({ ...formData, deliveryInstructions: e.target.value })}
+                      value={formData.delivery_instructions}
+                      onChange={(e) => setFormData({ ...formData, delivery_instructions: e.target.value })}
                       placeholder="How to receive the delivery (e.g., ring doorbell, use elevator, call before arrival)..."
                       rows={3}
                     />
@@ -493,8 +683,8 @@ const ProductNew = () => {
                         <Label htmlFor="deliveryContactPerson">Contact Person</Label>
                         <Input
                           id="deliveryContactPerson"
-                          value={formData.deliveryContactPerson}
-                          onChange={(e) => setFormData({ ...formData, deliveryContactPerson: e.target.value })}
+                          value={formData.delivery_contact_person}
+                          onChange={(e) => setFormData({ ...formData, delivery_contact_person: e.target.value })}
                           placeholder="John Doe"
                         />
                       </div>
@@ -503,8 +693,8 @@ const ProductNew = () => {
                         <Label htmlFor="deliveryContactPhone">Contact Phone</Label>
                         <Input
                           id="deliveryContactPhone"
-                          value={formData.deliveryContactPhone}
-                          onChange={(e) => setFormData({ ...formData, deliveryContactPhone: e.target.value })}
+                          value={formData.delivery_contact_phone}
+                          onChange={(e) => setFormData({ ...formData, delivery_contact_phone: e.target.value })}
                           placeholder="+36 20 123 4567"
                         />
                       </div>
@@ -514,8 +704,8 @@ const ProductNew = () => {
                         <Input
                           id="deliveryContactEmail"
                           type="email"
-                          value={formData.deliveryContactEmail}
-                          onChange={(e) => setFormData({ ...formData, deliveryContactEmail: e.target.value })}
+                          value={formData.delivery_contact_email}
+                          onChange={(e) => setFormData({ ...formData, delivery_contact_email: e.target.value })}
                           placeholder="contact@example.com"
                         />
                       </div>
@@ -526,8 +716,8 @@ const ProductNew = () => {
                     <Label htmlFor="deliveryNotes">Additional Delivery Notes</Label>
                     <EnhancedTextarea
                       id="deliveryNotes"
-                      value={formData.deliveryNotes}
-                      onChange={(e) => setFormData({ ...formData, deliveryNotes: e.target.value })}
+                      value={formData.delivery_notes}
+                      onChange={(e) => setFormData({ ...formData, delivery_notes: e.target.value })}
                       placeholder="Any special notes about the delivery..."
                       rows={2}
                     />
@@ -550,7 +740,10 @@ const ProductNew = () => {
                 <Button type="button" variant="outline" onClick={() => navigate(`/apartments/${apartmentId}`)}>
                   Cancel
                 </Button>
-                <Button type="submit">Add Product</Button>
+                <Button type="submit" disabled={createProductMutation.isPending}>
+                  {createProductMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {createProductMutation.isPending ? "Adding..." : "Add Product"}
+                </Button>
               </div>
             </CardContent>
           </Card>

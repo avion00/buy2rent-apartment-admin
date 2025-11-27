@@ -209,7 +209,10 @@ export function useProductCategories(apartmentId: string | null) {
     queryKey: QUERY_KEYS.categories(apartmentId!),
     queryFn: () => productApi.getProductCategories(apartmentId!),
     enabled: !!apartmentId,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
+    retry: 1, // Only retry once on failure
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 }
 

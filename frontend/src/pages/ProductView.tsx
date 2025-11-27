@@ -416,14 +416,14 @@ const ProductView = () => {
         </div>
 
         <div className="space-y-6">
-          {product.image_url ? (
+          {(product.product_image || product.image_url || product.imageUrl) ? (
             <Card>
               <CardHeader>
                 <CardTitle>Product Image</CardTitle>
               </CardHeader>
               <CardContent>
                 <img
-                  src={product.image_url}
+                  src={product.product_image || product.image_url || product.imageUrl}
                   alt={product.product}
                   className="w-full rounded-lg object-cover aspect-square"
                 />

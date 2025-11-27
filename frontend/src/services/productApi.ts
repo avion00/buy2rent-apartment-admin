@@ -188,6 +188,22 @@ export interface Product {
   created_by: string;
   created_at: string;
   updated_at: string;
+  // CamelCase versions (returned by backend for compatibility)
+  imageUrl?: string;
+  vendorLink?: string;
+  unitPrice?: string;
+  expectedDeliveryDate?: string | null;
+  actualDeliveryDate?: string | null;
+  paymentAmount?: string | null;
+  paidAmount?: string;
+  paymentStatus?: string;
+  paymentDueDate?: string | null;
+  issueState?: string;
+  orderedOn?: string | null;
+  deliveryAddress?: string;
+  deliveryCity?: string;
+  statusTags?: string[];
+  deliveryStatusTags?: string[];
 }
 
 // Product form data for creating/updating
@@ -284,8 +300,15 @@ export const productApi = {
   },
 
   // Create product
-  createProduct: async (data: ProductFormData): Promise<Product> => {
-    const response = await axiosInstance.post('/products/', data);
+  createProduct: async (data: ProductFormData | FormData): Promise<Product> => {
+    // For FormData, don't set Content-Type - let browser set it with boundary
+    const config = data instanceof FormData ? {
+      headers: {
+        'Content-Type': undefined, // Let browser set multipart/form-data with boundary
+      },
+    } : {};
+    
+    const response = await axiosInstance.post('/products/', data, config);
     return response.data;
   },
 
@@ -301,9 +324,9 @@ export const productApi = {
   },
 
   // Get product categories for an apartment
-  getProductCategories: async (apartmentId: string): Promise<CategoryListResponse> => {
+  getProductCategories: async (apartmentId: string): Promise<Category[]> => {
     const response = await axiosInstance.get('/products/categories/', {
-      params: { apartment: apartmentId }
+      params: { apartment_id: apartmentId }
     });
     return response.data;
   },
