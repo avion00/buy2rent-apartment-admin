@@ -909,7 +909,7 @@ const ProductNew = () => {
                               delivery_notes: e.target.value,
                             })
                           }
-                          placeholder="Any special notes about the delivery..."
+                          placeholder="AnyDA special notes about the delivery..."
                           rows={2}
                         />
                       </div>
