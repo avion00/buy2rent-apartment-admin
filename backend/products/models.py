@@ -127,8 +127,9 @@ class Product(models.Model):
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
-    # Delivery
-    delivery_type = models.CharField(max_length=100, blank=True)
+    # Delivery - Basic Information
+    delivery_type = models.CharField(max_length=100, blank=True, help_text="Type of delivery: home_courier, parcel_locker, pickup_point, international, same_day")
+    delivery_status_tags = models.CharField(max_length=255, blank=True, help_text="Comma-separated delivery status tags")
     delivery_address = models.TextField(blank=True)
     delivery_city = models.CharField(max_length=100, blank=True)
     delivery_postal_code = models.CharField(max_length=20, blank=True)
@@ -141,6 +142,37 @@ class Product(models.Model):
     delivery_notes = models.TextField(blank=True)
     tracking_number = models.CharField(max_length=100, blank=True)
     condition_on_arrival = models.CharField(max_length=100, blank=True)
+    
+    # Delivery - Sender Information (for courier/international)
+    sender = models.CharField(max_length=255, blank=True, help_text="Sender name")
+    sender_address = models.TextField(blank=True, help_text="Sender full address")
+    sender_phone = models.CharField(max_length=20, blank=True, help_text="Sender phone number")
+    
+    # Delivery - Recipient Information (for all delivery types)
+    recipient = models.CharField(max_length=255, blank=True, help_text="Recipient name")
+    recipient_address = models.TextField(blank=True, help_text="Recipient full address")
+    recipient_phone = models.CharField(max_length=20, blank=True, help_text="Recipient phone number")
+    recipient_email = models.EmailField(blank=True, help_text="Recipient email address")
+    
+    # Delivery - Parcel Locker Specific
+    locker_provider = models.CharField(max_length=100, blank=True, help_text="Locker provider name (e.g., Packeta, GLS ParcelShop)")
+    locker_id = models.CharField(max_length=100, blank=True, help_text="Locker ID or code")
+    
+    # Delivery - Pickup Point Specific
+    pickup_provider = models.CharField(max_length=100, blank=True, help_text="Pickup point provider (e.g., DPD Pickup, GLS Point)")
+    pickup_location = models.CharField(max_length=255, blank=True, help_text="Pickup point location or address")
+    
+    # Delivery - International Specific
+    customs_description = models.TextField(blank=True, help_text="Customs declaration description")
+    item_value = models.CharField(max_length=100, blank=True, help_text="Declared item value for customs")
+    hs_category = models.CharField(max_length=100, blank=True, help_text="HS (Harmonized System) category code")
+    
+    # Delivery - Additional Options
+    insurance = models.CharField(max_length=10, default='no', blank=True, help_text="Insurance: yes or no")
+    cod = models.CharField(max_length=100, blank=True, help_text="Cash on Delivery amount")
+    pickup_time = models.CharField(max_length=100, blank=True, help_text="Pickup time for same-day delivery")
+    delivery_deadline = models.CharField(max_length=100, blank=True, help_text="Delivery deadline")
+    special_instructions = models.TextField(blank=True, help_text="Special delivery instructions")
     
     # Issues
     issue_state = models.CharField(max_length=30, choices=ISSUE_STATE_CHOICES, default='No Issue')
@@ -201,9 +233,8 @@ class Product(models.Model):
             tags.append(self.issue_state)
         return tags
     
-    @property
-    def delivery_status_tags(self):
-        """For compatibility with frontend"""
+    def get_auto_delivery_status_tags(self):
+        """Auto-generate delivery status tags based on dates and state"""
         tags = []
         if self.actual_delivery_date:
             tags.append('Delivered')

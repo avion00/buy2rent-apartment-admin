@@ -14,7 +14,6 @@ class ProductSerializer(serializers.ModelSerializer):
     total_amount = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     outstanding_balance = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     status_tags = serializers.ListField(read_only=True)
-    delivery_status_tags = serializers.ListField(read_only=True)
     
     # Enhanced image URL fields that provide full URLs
     image_url = serializers.SerializerMethodField()
@@ -35,7 +34,7 @@ class ProductSerializer(serializers.ModelSerializer):
     deliveryAddress = serializers.CharField(source='delivery_address', read_only=True)
     deliveryCity = serializers.CharField(source='delivery_city', read_only=True)
     statusTags = serializers.ListField(source='status_tags', read_only=True)
-    deliveryStatusTags = serializers.ListField(source='delivery_status_tags', read_only=True)
+    deliveryStatusTags = serializers.CharField(source='delivery_status_tags', read_only=True)
     
     def validate_replacement_of(self, value):
         """
@@ -148,10 +147,18 @@ class ProductSerializer(serializers.ModelSerializer):
             'room', 'brand', 'country_of_origin', 'payment_status', 
             'payment_due_date', 'payment_amount', 'paid_amount', 'currency', 
             'shipping_cost', 'discount', 'total_amount', 'outstanding_balance',
-            'delivery_type', 'delivery_address', 'delivery_city', 'delivery_postal_code',
-            'delivery_country', 'delivery_instructions', 'delivery_contact_person',
-            'delivery_contact_phone', 'delivery_contact_email', 'delivery_time_window',
-            'delivery_notes', 'tracking_number', 'condition_on_arrival',
+            'delivery_type', 'delivery_status_tags', 'delivery_address', 'delivery_city', 
+            'delivery_postal_code', 'delivery_country', 'delivery_instructions', 
+            'delivery_contact_person', 'delivery_contact_phone', 'delivery_contact_email', 
+            'delivery_time_window', 'delivery_notes', 'tracking_number', 'condition_on_arrival',
+            # Delivery - Sender/Recipient
+            'sender', 'sender_address', 'sender_phone',
+            'recipient', 'recipient_address', 'recipient_phone', 'recipient_email',
+            # Delivery - Type Specific
+            'locker_provider', 'locker_id', 'pickup_provider', 'pickup_location',
+            'customs_description', 'item_value', 'hs_category',
+            # Delivery - Additional Options
+            'insurance', 'cod', 'pickup_time', 'delivery_deadline', 'special_instructions',
             'issue_state', 'issue_type', 'issue_description', 'replacement_requested',
             'replacement_approved', 'replacement_eta', 'replacement_of',
             'image_url', 'image_file', 'thumbnail_url', 'gallery_images', 'attachments', 

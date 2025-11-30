@@ -21,10 +21,15 @@ class ProductAdmin(admin.ModelAdmin):
         # Payment Details
         'payment_amount', 'paid_amount', 'currency', 'shipping_cost', 'discount', 'outstanding_balance',
         # Delivery Details
-        'delivery_type', 'delivery_address', 'delivery_city', 'delivery_postal_code', 
+        'delivery_type', 'delivery_status_tags', 'delivery_address', 'delivery_city', 'delivery_postal_code', 
         'delivery_country', 'delivery_contact_person', 'delivery_contact_phone', 
         'delivery_contact_email', 'tracking_number', 'delivery_instructions', 
         'delivery_time_window', 'delivery_notes', 'condition_on_arrival',
+        'sender', 'sender_address', 'sender_phone',
+        'recipient', 'recipient_address', 'recipient_phone', 'recipient_email',
+        'locker_provider', 'locker_id', 'pickup_provider', 'pickup_location',
+        'customs_description', 'item_value', 'hs_category', 'insurance', 'cod',
+        'pickup_time', 'delivery_deadline', 'special_instructions',
         # Issues
         'issue_state', 'issue_type', 'issue_description', 'replacement_requested', 
         'replacement_approved', 'replacement_eta',
@@ -73,13 +78,34 @@ class ProductAdmin(admin.ModelAdmin):
         ('Payment', {
             'fields': ('payment_amount', 'paid_amount', 'outstanding_balance')
         }),
-        ('Delivery', {
+        ('Delivery - Basic', {
             'fields': (
-                'delivery_type', 'delivery_address', 'delivery_city', 'delivery_postal_code',
-                'delivery_country', 'delivery_instructions', 'delivery_time_window', 
-                'delivery_notes', 'delivery_contact_person', 'delivery_contact_phone',
-                'delivery_contact_email', 'tracking_number', 'condition_on_arrival'
+                'delivery_type', 'delivery_status_tags', 'delivery_address', 'delivery_city', 
+                'delivery_postal_code', 'delivery_country', 'delivery_instructions', 
+                'delivery_time_window', 'delivery_notes', 'delivery_contact_person', 
+                'delivery_contact_phone', 'delivery_contact_email', 'tracking_number', 
+                'condition_on_arrival'
             )
+        }),
+        ('Delivery - Sender/Recipient', {
+            'fields': (
+                'sender', 'sender_address', 'sender_phone',
+                'recipient', 'recipient_address', 'recipient_phone', 'recipient_email'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Delivery - Type Specific', {
+            'fields': (
+                'locker_provider', 'locker_id', 'pickup_provider', 'pickup_location',
+                'customs_description', 'item_value', 'hs_category'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Delivery - Additional Options', {
+            'fields': (
+                'insurance', 'cod', 'pickup_time', 'delivery_deadline', 'special_instructions'
+            ),
+            'classes': ('collapse',)
         }),
         ('Issues', {
             'fields': (
