@@ -111,7 +111,8 @@
   }
 
   html {
-    overflow-y: scroll;
+    /* overflow-y: scroll; */
+    overflow-y: hidden;
     overflow-x: hidden;
   }
 
@@ -125,7 +126,7 @@
     @apply bg-background text-foreground font-sans text-sm;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     letter-spacing: -0.01em;
-    overflow-y: scroll;
+    /* overflow-y: scroll; */
   }
 
   /* Typography */
