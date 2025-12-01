@@ -244,14 +244,25 @@ class ProductCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(ImportSession)
 class ImportSessionAdmin(admin.ModelAdmin):
-    list_display = ['file_name', 'apartment', 'status', 'total_products', 'successful_imports', 'failed_imports', 'started_at']
+    list_display = ['file_name', 'apartment', 'status', 'total_products', 'successful_imports', 'failed_imports', 'started_at', 'download_file_link']
     list_filter = ['status', 'file_type', 'started_at', 'apartment']
     search_fields = ['file_name', 'apartment__name']
-    readonly_fields = ['started_at', 'completed_at']
+    readonly_fields = ['started_at', 'completed_at', 'download_file_link']
+    
+    def download_file_link(self, obj):
+        """Display download link for uploaded file"""
+        if obj.uploaded_file:
+            from django.utils.html import format_html
+            return format_html(
+                '<a href="{}" target="_blank">Download File</a>',
+                obj.uploaded_file.url
+            )
+        return "No file"
+    download_file_link.short_description = "Download"
     
     fieldsets = (
         ('File Information', {
-            'fields': ('apartment', 'file_name', 'file_size', 'file_type')
+            'fields': ('apartment', 'file_name', 'file_size', 'file_type', 'uploaded_file', 'download_file_link')
         }),
         ('Import Results', {
             'fields': ('total_sheets', 'total_products', 'successful_imports', 'failed_imports', 'status')

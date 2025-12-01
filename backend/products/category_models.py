@@ -73,6 +73,12 @@ class ImportSession(models.Model):
     file_name = models.CharField(max_length=255)
     file_size = models.BigIntegerField()
     file_type = models.CharField(max_length=50)  # 'xlsx', 'xls', 'csv'
+    uploaded_file = models.FileField(
+        upload_to='import_files/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        help_text="Uploaded Excel/CSV file stored on server"
+    )
     
     # Import Results
     total_sheets = models.IntegerField(default=0)

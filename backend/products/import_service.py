@@ -55,17 +55,20 @@ class ProductImportService:
             # Get apartment
             apartment = Apartment.objects.get(id=apartment_id)
             
-            # Create import session
+            # Create import session and save the uploaded file permanently
             import_session = ImportSession.objects.create(
                 apartment=apartment,
                 file_name=file.name,
                 file_size=file.size,
                 file_type=os.path.splitext(file.name)[1].lower().replace('.', ''),
+                uploaded_file=file,  # Save the file permanently
                 status='processing'
             )
             
-            # Save file temporarily
-            file_path = self._save_temp_file(file)
+            logger.info(f"Saved uploaded file to: {import_session.uploaded_file.path}")
+            
+            # Use the saved file path for processing
+            file_path = import_session.uploaded_file.path
             
             try:
                 # Process file based on type
@@ -85,10 +88,12 @@ class ProductImportService:
                 
                 return result
                 
-            finally:
-                # Clean up temp file
-                if os.path.exists(file_path):
-                    os.remove(file_path)
+            except Exception as e:
+                logger.error(f"Error during import processing: {str(e)}")
+                import_session.status = 'failed'
+                import_session.error_log = [str(e)]
+                import_session.save()
+                raise
                     
         except Exception as e:
             logger.error(f"Import error: {str(e)}")
@@ -293,7 +298,6 @@ class ProductImportService:
         # Excel specific fields
         data['sn'] = self._get_value(row, column_mapping, 'sn', '')
         data['room'] = self._get_value(row, column_mapping, 'room', '')
-        data['product_image'] = self._get_value(row, column_mapping, 'product_image', '')
         data['cost'] = self._get_value(row, column_mapping, 'cost', '')
         data['total_cost'] = self._get_value(row, column_mapping, 'total_cost', '')
         data['link'] = self._get_value(row, column_mapping, 'link', '')
@@ -341,6 +345,7 @@ class ProductImportService:
         # Handle image URLs - all image columns now map to product_image
         image_url = self._get_value(row, column_mapping, 'product_image', '')
         data['image_url'] = image_url
+        data['product_image'] = image_url  # Also set product_image field
         data['vendor_link'] = self._get_value(row, column_mapping, 'vendor_link', '')
         
         return data
@@ -498,21 +503,33 @@ class ProductImportService:
                         try:
                             # Get the row number from image anchor
                             row_num = img.anchor._from.row + 1  # Convert to 1-based indexing
+                            logger.info(f"Processing image {i+1} at row {row_num} in sheet '{sheet_name}'")
+                            
+                            # Get image data first
+                            if not hasattr(img, '_data'):
+                                logger.warning(f"Image {i+1} in sheet '{sheet_name}' has no _data attribute, skipping")
+                                continue
+                            
+                            img_data = img._data()
+                            if not img_data:
+                                logger.warning(f"Image {i+1} in sheet '{sheet_name}' has empty data, skipping")
+                                continue
                             
                             # Determine image extension
                             if hasattr(img, 'format') and img.format:
                                 extension = f".{img.format.lower()}"
-                            elif hasattr(img, '_data'):
+                                logger.info(f"Image format from attribute: {extension}")
+                            else:
                                 # Try to detect format from image data
-                                img_data = img._data()
                                 if img_data.startswith(b'\x89PNG'):
                                     extension = '.png'
                                 elif img_data.startswith(b'\xff\xd8'):
                                     extension = '.jpg'
+                                elif img_data.startswith(b'GIF'):
+                                    extension = '.gif'
                                 else:
                                     extension = '.png'  # Default
-                            else:
-                                extension = '.png'  # Default
+                                logger.info(f"Image format detected from data: {extension}")
                             
                             # Create media folder structure
                             folder_path = os.path.join(
@@ -522,29 +539,31 @@ class ProductImportService:
                                 sheet_name.replace(' ', '_').lower()
                             )
                             os.makedirs(folder_path, exist_ok=True)
+                            logger.info(f"Created/verified folder: {folder_path}")
                             
                             # Generate unique filename
                             img_name = f"row_{row_num}_img_{i+1}_{uuid.uuid4().hex[:8]}{extension}"
                             img_path = os.path.join(folder_path, img_name)
                             
                             # Save image data
-                            if hasattr(img, '_data'):
-                                with open(img_path, 'wb') as f:
-                                    f.write(img._data())
-                                
-                                # Store relative path for database
-                                relative_path = os.path.join(
-                                    'apartment_products',
-                                    str(apartment.id),
-                                    sheet_name.replace(' ', '_').lower(),
-                                    img_name
-                                ).replace('\\', '/')
-                                
-                                sheet_images[row_num] = f"/media/{relative_path}"
-                                logger.info(f"Extracted image for row {row_num}: {relative_path}")
+                            with open(img_path, 'wb') as f:
+                                f.write(img_data)
+                            
+                            logger.info(f"Saved image to: {img_path}")
+                            
+                            # Store relative path for database
+                            relative_path = os.path.join(
+                                'apartment_products',
+                                str(apartment.id),
+                                sheet_name.replace(' ', '_').lower(),
+                                img_name
+                            ).replace('\\', '/')
+                            
+                            sheet_images[row_num] = f"/media/{relative_path}"
+                            logger.info(f"✅ Extracted image for row {row_num}: {relative_path}")
                             
                         except Exception as e:
-                            logger.error(f"Error processing image {i} in sheet '{sheet_name}': {str(e)}")
+                            logger.error(f"❌ Error processing image {i+1} in sheet '{sheet_name}': {str(e)}", exc_info=True)
                             continue
                 
                 if sheet_images:
@@ -684,16 +703,31 @@ class ProductImportService:
                 # Extract product data
                 product_data = self._extract_product_data(row, normalized_columns)
                 
+                # Create import data for reference
+                import_data = {}
+                for key, value in row.to_dict().items():
+                    if pd.notna(value):
+                        import_data[str(key)] = str(value)
+                    else:
+                        import_data[str(key)] = None
+                
                 # Create product
                 with transaction.atomic():
                     product = Product.objects.create(
                         apartment=apartment,
                         category=category,
+                        import_session=import_session,
+                        import_row_number=index + 2,  # +2 for header and 0-based index
+                        import_data=import_data,
+                        created_by=user.username if user else 'system',
                         **product_data
                     )
                     
                     # Handle images: both embedded (from openpyxl) and URL-based (from cells)
                     excel_row = index + 2  # +2 because Excel has header row and is 1-based
+                    
+                    logger.info(f"Checking for images for product '{product.product}' at Excel row {excel_row}")
+                    logger.info(f"Available images in sheet: {list(sheet_images.keys()) if sheet_images else 'None'}")
                     
                     # First, check for embedded images
                     if excel_row in sheet_images:
@@ -701,12 +735,14 @@ class ProductImportService:
                         product.image_url = image_path
                         product.product_image = image_path
                         product.save(update_fields=['image_url', 'product_image'])
-                        logger.info(f"Assigned embedded image to product '{product.product}': {image_path}")
+                        logger.info(f"✅ Assigned embedded image to product '{product.product}' (row {excel_row}): {image_path}")
                     
                     # Second, check for URL-based images from cells (if no embedded image found)
                     elif product_data.get('image_url'):
                         self._process_product_image(product, product_data['image_url'])
                         logger.info(f"Processing URL-based image for product '{product.product}': {product_data['image_url']}")
+                    else:
+                        logger.warning(f"⚠️  No image found for product '{product.product}' at Excel row {excel_row}")
                     
                     successful_imports += 1
                     

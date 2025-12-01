@@ -183,7 +183,13 @@ const ProductView = () => {
                 {tag}
               </Badge>
             ))}
-            {product.delivery_status_tags?.map((tag) => (
+            {(() => {
+              const tags = product.delivery_status_tags;
+              if (typeof tags === 'string' && tags) {
+                return tags.split(',').map(t => t.trim()).filter(t => t !== '');
+              }
+              return Array.isArray(tags) ? tags : [];
+            })().map((tag) => (
               <Badge key={tag} variant="outline" className={getStatusColor(tag)}>
                 {tag}
               </Badge>

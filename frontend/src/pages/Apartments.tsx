@@ -44,7 +44,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Eye, Edit, Trash2, Search, Loader2, RefreshCw, Upload, Download, Cloud, X, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useApartments, useDeleteApartment } from '@/hooks/useApartmentApi';
+import { useClients } from '@/hooks/useClientApi';
 import { Skeleton } from '@/components/ui/skeleton';
+import { productApi } from '@/services/productApi';
 
 const Apartments = () => {
   const navigate = useNavigate();
@@ -89,6 +91,12 @@ const Apartments = () => {
     status: statusFilter !== 'all' ? statusFilter : undefined,
   });
   const deleteApartmentMutation = useDeleteApartment();
+  
+  // Fetch clients for the dropdown
+  const { data: clientsData, isLoading: isLoadingClients } = useClients({
+    page_size: 100, // Get all clients
+    ordering: 'name', // Sort by name
+  });
 
   const apartments = useMemo(() => apartmentsData?.results || [], [apartmentsData?.results]);
 
@@ -196,25 +204,65 @@ const Apartments = () => {
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement API call here
-      // await createApartmentMutation.mutateAsync(apartmentForm);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Check if file is uploaded
+      if (uploadedFiles.length === 0) {
+        toast({
+          title: 'File Required',
+          description: 'Please upload an Excel or CSV file to import products.',
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
-      toast({
-        title: 'Success!',
-        description: `Apartment "${apartmentForm.name}" created successfully${uploadedFiles.length > 0 ? ` with ${uploadedFiles.length} file(s)` : ''}.`,
+      // Call the API to create apartment and import products
+      const result = await productApi.createApartmentAndImport({
+        file: uploadedFiles[0],
+        apartment_name: apartmentForm.name,
+        apartment_type: apartmentForm.type,
+        owner: apartmentForm.client,
+        status: apartmentForm.status,
+        designer: apartmentForm.designer,
+        start_date: apartmentForm.start_date,
+        due_date: apartmentForm.due_date,
+        address: apartmentForm.address,
       });
 
-      // Reset form and close dialog
-      handleResetForm();
-      setShowAddDialog(false);
-      refetch();
+      if (result.success) {
+        toast({
+          title: 'Success!',
+          description: (
+            <div className="space-y-1">
+              <p className="font-semibold">{result.message}</p>
+              <p className="text-sm">Apartment: {result.data.apartment_name}</p>
+              <p className="text-sm">Products imported: {result.data.successful_imports} / {result.data.total_products}</p>
+              {result.data.failed_imports > 0 && (
+                <p className="text-sm text-yellow-600">Failed: {result.data.failed_imports}</p>
+              )}
+              {result.data.errors.length > 0 && (
+                <p className="text-sm text-red-600">Errors: {result.data.errors.join(', ')}</p>
+              )}
+            </div>
+          ),
+        });
+
+        // Reset form and close dialog
+        handleResetForm();
+        setShowAddDialog(false);
+        refetch();
+        
+        // Navigate to the new apartment
+        setTimeout(() => {
+          navigate(`/apartments/${result.data.apartment_id}`);
+        }, 1000);
+      } else {
+        throw new Error(result.message || 'Import failed');
+      }
     } catch (error: any) {
+      console.error('Import error:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create apartment. Please try again.',
+        description: error.response?.data?.message || error.message || 'Failed to create apartment and import products. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -519,13 +567,23 @@ const Apartments = () => {
                           setFormErrors({ ...formErrors, client: '' });
                         }
                       }}
+                      disabled={isLoadingClients}
                     >
                       <SelectTrigger id="apt-client" className={formErrors.client ? 'border-destructive' : ''}>
-                        <SelectValue placeholder="Select client" />
+                        <SelectValue placeholder={isLoadingClients ? "Loading clients..." : "Select client"} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="client1">Client 1</SelectItem>
-                        <SelectItem value="client2">Client 2</SelectItem>
+                        {clientsData?.results && clientsData.results.length > 0 ? (
+                          clientsData.results.map((client) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-clients" disabled>
+                            No clients available
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     {formErrors.client && (

@@ -633,9 +633,17 @@ const ApartmentView = () => {
                                   "Return Scheduled",
                                   "Return Received",
                                 ]}
-                                value={product.delivery_status_tags || []}
+                                value={
+                                  (() => {
+                                    const tags = product.delivery_status_tags;
+                                    if (typeof tags === 'string' && tags) {
+                                      return tags.split(',').map(t => t.trim()).filter(t => t !== '');
+                                    }
+                                    return Array.isArray(tags) ? tags : [];
+                                  })()
+                                }
                                 onChange={(newTags) => {
-                                  updateProduct(product.id, { deliveryStatusTags: newTags });
+                                  updateProduct(product.id, { deliveryStatusTags: newTags.join(', ') });
                                   toast({
                                     title: "Success",
                                     description: "Delivery status updated",

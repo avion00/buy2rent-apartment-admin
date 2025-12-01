@@ -195,6 +195,7 @@ class ImportSessionSerializer(serializers.ModelSerializer):
     """
     apartment_name = serializers.CharField(source='apartment.name', read_only=True)
     duration = serializers.SerializerMethodField()
+    uploaded_file_url = serializers.SerializerMethodField()
     
     def get_duration(self, obj):
         """Calculate import duration"""
@@ -203,15 +204,24 @@ class ImportSessionSerializer(serializers.ModelSerializer):
             return delta.total_seconds()
         return None
     
+    def get_uploaded_file_url(self, obj):
+        """Get the URL of the uploaded file"""
+        if obj.uploaded_file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.uploaded_file.url)
+            return obj.uploaded_file.url
+        return None
+    
     class Meta:
         model = ImportSession
         fields = [
             'id', 'apartment', 'apartment_name', 'file_name', 'file_size', 
-            'file_type', 'total_sheets', 'total_products', 'successful_imports', 
-            'failed_imports', 'status', 'error_log', 'started_at', 
-            'completed_at', 'duration'
+            'file_type', 'uploaded_file', 'uploaded_file_url', 'total_sheets', 
+            'total_products', 'successful_imports', 'failed_imports', 'status', 
+            'error_log', 'started_at', 'completed_at', 'duration'
         ]
-        read_only_fields = ['started_at', 'completed_at']
+        read_only_fields = ['started_at', 'completed_at', 'uploaded_file_url']
 
 
 class ProductImportSerializer(serializers.Serializer):

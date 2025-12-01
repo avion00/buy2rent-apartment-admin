@@ -3,32 +3,24 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Upload, ArrowLeft, CheckCircle, AlertCircle, FileSpreadsheet, Loader2 } from "lucide-react";
-import { parseXlsx, autoMapColumns, validateProductRow } from "@/utils/excel";
-import { useDataStore } from "@/stores/useDataStore";
+import { Upload, ArrowLeft, CheckCircle, AlertCircle, FileSpreadsheet, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
+import { productApi } from "@/services/productApi";
+import { useToast } from "@/hooks/use-toast";
 
 const ProductImport = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const apartmentId = searchParams.get("apartmentId");
-  
-  const apartments = useDataStore((state) => state.apartments);
-  const addProduct = useDataStore((state) => state.addProduct);
+  const { toast: toastHook } = useToast();
   
   const [file, setFile] = useState<File | null>(null);
-  const [parsedData, setParsedData] = useState<any>(null);
-  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
-  const [validationResults, setValidationResults] = useState<any[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [importProgress, setImportProgress] = useState(0);
-  const [processingStatus, setProcessingStatus] = useState<string>("");
+  const [importResult, setImportResult] = useState<any>(null);
   const [fileSize, setFileSize] = useState<string>("");
 
   const formatFileSize = (bytes: number): string => {
@@ -37,7 +29,7 @@ const ProductImport = () => {
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
@@ -54,210 +46,90 @@ const ProductImport = () => {
 
     setFile(selectedFile);
     setFileSize(formatFileSize(selectedFile.size));
-    setIsProcessing(true);
-    setUploadProgress(0);
-    setProcessingStatus("Reading file...");
-
-    try {
-      const data = await parseXlsx(selectedFile, (progress) => {
-        setUploadProgress(progress);
-        if (progress < 50) {
-          setProcessingStatus(`Reading file... ${progress.toFixed(0)}%`);
-        } else if (progress < 80) {
-          setProcessingStatus(`Processing data... ${progress.toFixed(0)}%`);
-        } else {
-          setProcessingStatus(`Validating rows... ${progress.toFixed(0)}%`);
-        }
-      });
-      
-      setProcessingStatus("Mapping columns...");
-      setParsedData(data);
-      
-      const mapping = autoMapColumns(data.headers);
-      setColumnMapping(mapping);
-      
-      setProcessingStatus("Validating data...");
-      const results = data.rows.map((row: any, idx) => {
-        if (idx % 10 === 0) {
-          const validationProgress = (idx / data.rows.length) * 100;
-          setProcessingStatus(`Validating rows... ${validationProgress.toFixed(0)}%`);
-        }
-        return {
-          row,
-          validation: validateProductRow(row, mapping, apartments)
-        };
-      });
-      setValidationResults(results);
-      
-      setProcessingStatus("Complete!");
-      toast.success(`Successfully parsed ${data.rows.length} products`);
-      setUploadProgress(100);
-    } catch (error) {
-      toast.error("Failed to parse file: " + (error as Error).message);
-      setFile(null);
-      setProcessingStatus("Error");
-    } finally {
-      setTimeout(() => {
-        setIsProcessing(false);
-        setProcessingStatus("");
-        setUploadProgress(0);
-      }, 1000);
-    }
+    setImportResult(null);
   };
 
-  const handleColumnMappingChange = (header: string, field: string) => {
-    const newMapping = { ...columnMapping, [header]: field };
-    setColumnMapping(newMapping);
-    
-    if (parsedData) {
-      const results = parsedData.rows.map((row: any) => ({
-        row,
-        validation: validateProductRow(row, newMapping, apartments)
-      }));
-      setValidationResults(results);
-    }
-  };
 
   const handleImport = async () => {
-    if (!parsedData || !apartmentId) return;
-
-    const validRows = validationResults.filter(r => r.validation.valid);
-    
-    if (validRows.length === 0) {
-      toast.error("No valid rows to import");
+    if (!file || !apartmentId) {
+      toast.error("Please select a file");
       return;
     }
 
-    setIsProcessing(true);
-    setImportProgress(0);
-    setProcessingStatus("Importing products...");
+    setIsUploading(true);
+    setUploadProgress(0);
 
     try {
-      // Process in batches to avoid freezing
-      const batchSize = 10;
-      const totalBatches = Math.ceil(validRows.length / batchSize);
-      
-      for (let i = 0; i < validRows.length; i += batchSize) {
-        const batch = validRows.slice(i, i + batchSize);
-        const currentBatch = Math.floor(i / batchSize) + 1;
-        
-        setProcessingStatus(`Importing batch ${currentBatch} of ${totalBatches}...`);
-        setImportProgress((currentBatch / totalBatches) * 100);
-        
-        // Process batch
-        await new Promise<void>((resolve) => {
-          setTimeout(() => {
-            batch.forEach(({ row }) => {
-        const getValue = (field: string) => {
-          const header = Object.keys(columnMapping).find(k => columnMapping[k] === field);
-          return header ? row[header] : undefined;
-        };
-
-        const apartment = apartments.find(
-          a => a.id === getValue('apartment') || 
-               a.name.toLowerCase() === String(getValue('apartment')).toLowerCase()
-        );
-
-        const newProduct = {
-          id: `prod-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          apartmentId: apartment?.id || apartmentId,
-          apartment: apartment?.name || getValue('apartment'),
-          product: getValue('product') || '',
-          vendor: getValue('vendor') || '',
-          vendorLink: getValue('vendorLink') || '',
-          sku: getValue('sku') || '',
-          unitPrice: parseFloat(getValue('unitPrice')) || 0,
-          qty: parseInt(getValue('qty')) || 0,
-          category: getValue('category') || 'General',
-          room: getValue('room') || '',
-          availability: getValue('availability') || 'In Stock',
-          status: getValue('status') || 'Draft',
-          statusTags: [],
-          eta: getValue('eta') || '',
-          actualDelivery: getValue('actualDelivery') || '',
-          imageUrl: getValue('imageUrl') || '',
-          replacementOf: getValue('replacementOf') || '',
-          notes: getValue('notes') || '',
-          deliveryType: getValue('deliveryType') || '',
-          deliveryAddress: getValue('deliveryAddress') || '',
-          deliveryCity: getValue('deliveryCity') || '',
-          deliveryPostalCode: getValue('deliveryPostalCode') || '',
-          deliveryCountry: getValue('deliveryCountry') || '',
-          deliveryInstructions: getValue('deliveryInstructions') || '',
-          deliveryContactPerson: getValue('deliveryContactPerson') || '',
-          deliveryContactPhone: getValue('deliveryContactPhone') || '',
-          deliveryContactEmail: getValue('deliveryContactEmail') || '',
-          trackingNumber: getValue('trackingNumber') || '',
-          deliveryTimeWindow: getValue('deliveryTimeWindow') || '',
-          deliveryNotes: getValue('deliveryNotes') || '',
-          deliveryStatusTags: [],
-        };
-
-              addProduct(newProduct);
-            });
-            resolve();
-          }, 100); // Small delay to allow UI updates
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
         });
-      }
+      }, 200);
 
-      setImportProgress(100);
-      setProcessingStatus("Complete!");
-      toast.success(`Successfully imported ${validRows.length} products`);
+      const result = await productApi.importProducts(file, apartmentId);
       
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setImportResult(result);
+
+      toastHook({
+        title: "Import Successful!",
+        description: (
+          <div className="space-y-1">
+            <p className="font-semibold">{result.message}</p>
+            <p className="text-sm">Total products: {result.total_products}</p>
+            <p className="text-sm">Successfully imported: {result.successful_imports}</p>
+            {result.failed_imports > 0 && (
+              <p className="text-sm text-yellow-600">Failed: {result.failed_imports}</p>
+            )}
+          </div>
+        ),
+      });
+
+      // Navigate back after a short delay
       setTimeout(() => {
         navigate(`/apartments/${apartmentId}`);
-      }, 500);
-    } catch (error) {
-      toast.error("Import failed: " + (error as Error).message);
-      setProcessingStatus("Error");
+      }, 2000);
+    } catch (error: any) {
+      console.error("Import error:", error);
+      toastHook({
+        title: "Import Failed",
+        description: error.response?.data?.message || error.message || "Failed to import products. Please try again.",
+        variant: "destructive",
+      });
+      setUploadProgress(0);
     } finally {
-      setTimeout(() => {
-        setIsProcessing(false);
-        setProcessingStatus("");
-        setImportProgress(0);
-      }, 1000);
+      setIsUploading(false);
     }
   };
 
-  const fieldOptions = [
-    { value: 'skip', label: 'Skip this column' },
-    { value: 'apartment', label: 'Apartment' },
-    { value: 'product', label: 'Product' },
-    { value: 'vendor', label: 'Vendor' },
-    { value: 'vendorLink', label: 'Vendor Link' },
-    { value: 'sku', label: 'SKU' },
-    { value: 'unitPrice', label: 'Unit Price' },
-    { value: 'qty', label: 'Quantity' },
-    { value: 'category', label: 'Category' },
-    { value: 'room', label: 'Room' },
-    { value: 'availability', label: 'Availability' },
-    { value: 'status', label: 'Status' },
-    { value: 'eta', label: 'Expected Delivery' },
-    { value: 'actualDelivery', label: 'Actual Delivery' },
-    { value: 'imageUrl', label: 'Image URL' },
-    { value: 'replacementOf', label: 'Replacement Of' },
-    { value: 'notes', label: 'Notes' },
-    { value: 'deliveryType', label: 'Delivery Type' },
-    { value: 'deliveryAddress', label: 'Delivery Address' },
-    { value: 'deliveryCity', label: 'Delivery City' },
-    { value: 'deliveryPostalCode', label: 'Delivery Postal Code' },
-    { value: 'deliveryCountry', label: 'Delivery Country' },
-    { value: 'deliveryInstructions', label: 'Delivery Instructions' },
-    { value: 'deliveryContactPerson', label: 'Delivery Contact Person' },
-    { value: 'deliveryContactPhone', label: 'Delivery Contact Phone' },
-    { value: 'deliveryContactEmail', label: 'Delivery Contact Email' },
-    { value: 'trackingNumber', label: 'Tracking Number' },
-    { value: 'deliveryTimeWindow', label: 'Delivery Time Window' },
-    { value: 'deliveryNotes', label: 'Delivery Notes' },
-  ];
+  const handleDownloadTemplate = async () => {
+    try {
+      const blob = await productApi.downloadImportTemplate();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'product_import_template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Template downloaded successfully");
+    } catch (error) {
+      toast.error("Failed to download template");
+    }
+  };
 
-  const validCount = validationResults.filter(r => r.validation.valid).length;
-  const invalidCount = validationResults.length - validCount;
 
   return (
     <PageLayout title="Import Products">
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate(-1)} disabled={isProcessing}>
+        <Button variant="ghost" onClick={() => navigate(-1)} disabled={isUploading}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
@@ -288,19 +160,19 @@ const ProductImport = () => {
                     accept=".xlsx,.xls,.csv"
                     onChange={handleFileChange}
                     className="hidden"
-                    disabled={isProcessing}
+                    disabled={isUploading}
                   />
                   <Button 
                     variant="outline" 
                     asChild 
-                    disabled={isProcessing}
+                    disabled={isUploading}
                     className="relative overflow-hidden"
                   >
                     <span>
-                      {isProcessing ? (
+                      {isUploading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing...
+                          Uploading...
                         </>
                       ) : (
                         <>
@@ -311,7 +183,7 @@ const ProductImport = () => {
                     </span>
                   </Button>
                 </label>
-                {file && !isProcessing && (
+                {file && !isUploading && (
                   <div className="flex items-center gap-2">
                     <FileSpreadsheet className="h-5 w-5 text-primary" />
                     <div className="flex flex-col">
@@ -323,10 +195,10 @@ const ProductImport = () => {
               </div>
 
               {/* Progress Bar */}
-              {isProcessing && (
+              {isUploading && uploadProgress > 0 && (
                 <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{processingStatus}</span>
+                    <span className="font-medium">Uploading and processing...</span>
                     <span className="text-muted-foreground">
                       {uploadProgress.toFixed(0)}%
                     </span>
@@ -334,160 +206,111 @@ const ProductImport = () => {
                   <Progress value={uploadProgress} className="h-2" />
                 </div>
               )}
+
+              {/* Download Template Button */}
+              <div className="flex justify-start">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleDownloadTemplate}
+                  disabled={isUploading}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Template
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Column Mapping */}
-        {parsedData && (
+        {/* Import Results */}
+        {importResult && (
           <Card>
             <CardHeader>
-              <CardTitle>Map Columns</CardTitle>
+              <CardTitle>Import Results</CardTitle>
               <CardDescription>
-                Match your Excel columns to product fields
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {parsedData.headers.map((header: string) => (
-                  <div key={header} className="flex items-center gap-4">
-                    <div className="w-1/3 font-medium text-sm">{header}</div>
-                    <div className="w-2/3">
-                      <Select
-                        value={columnMapping[header] || 'skip'}
-                        onValueChange={(value) => handleColumnMappingChange(header, value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select field" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fieldOptions.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Validation Summary */}
-        {validationResults.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Validation Results</CardTitle>
-              <CardDescription>
-                Review the validation status before importing
+                Summary of the import operation
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <Alert className="flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Alert>
                   <CheckCircle className="h-4 w-4 text-success" />
                   <AlertDescription>
-                    <strong>{validCount}</strong> valid rows ready to import
+                    <div className="font-semibold">Total Products</div>
+                    <div className="text-2xl">{importResult.total_products}</div>
                   </AlertDescription>
                 </Alert>
-                {invalidCount > 0 && (
-                  <Alert className="flex-1" variant="destructive">
+                <Alert>
+                  <CheckCircle className="h-4 w-4 text-success" />
+                  <AlertDescription>
+                    <div className="font-semibold">Successfully Imported</div>
+                    <div className="text-2xl text-green-600">{importResult.successful_imports}</div>
+                  </AlertDescription>
+                </Alert>
+                {importResult.failed_imports > 0 && (
+                  <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>{invalidCount}</strong> rows with errors
+                      <div className="font-semibold">Failed</div>
+                      <div className="text-2xl">{importResult.failed_imports}</div>
                     </AlertDescription>
                   </Alert>
                 )}
               </div>
 
-              {/* Preview Table */}
-              <div className="border rounded-lg overflow-auto max-h-96">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">#</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Vendor</TableHead>
-                      <TableHead>Apartment</TableHead>
-                      <TableHead>Issues</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {validationResults.map((result, idx) => {
-                      const getValue = (field: string) => {
-                        const header = Object.keys(columnMapping).find(k => columnMapping[k] === field);
-                        return header ? result.row[header] : '-';
-                      };
-
-                      return (
-                        <TableRow key={idx}>
-                          <TableCell className="font-mono text-xs">{idx + 1}</TableCell>
-                          <TableCell>
-                            {result.validation.valid ? (
-                              <Badge variant="default" className="bg-success">Valid</Badge>
-                            ) : (
-                              <Badge variant="destructive">Invalid</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-medium">{getValue('product')}</TableCell>
-                          <TableCell>{getValue('vendor')}</TableCell>
-                          <TableCell>{getValue('apartment')}</TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              {result.validation.errors.map((error: string, i: number) => (
-                                <div key={i} className="text-xs text-destructive">{error}</div>
-                              ))}
-                              {result.validation.warnings.map((warning: string, i: number) => (
-                                <div key={i} className="text-xs text-warning">{warning}</div>
-                              ))}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Import Progress */}
-              {isProcessing && importProgress > 0 && (
-                <div className="space-y-2 p-4 bg-primary/5 rounded-lg border border-primary/20">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-primary">{processingStatus}</span>
-                    <span className="text-muted-foreground">
-                      {importProgress.toFixed(0)}%
-                    </span>
+              {importResult.errors && importResult.errors.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">Errors:</h4>
+                  <div className="space-y-1">
+                    {importResult.errors.map((error: string, idx: number) => (
+                      <div key={idx} className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                        {error}
+                      </div>
+                    ))}
                   </div>
-                  <Progress value={importProgress} className="h-2" />
                 </div>
               )}
 
+              <div className="flex justify-end">
+                <Button onClick={() => navigate(`/apartments/${apartmentId}`)}>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  View Products
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Import Button */}
+        {file && !importResult && (
+          <Card>
+            <CardContent className="pt-6">
               <div className="flex justify-end gap-2">
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate(-1)}
-                  disabled={isProcessing}
+                  onClick={() => {
+                    setFile(null);
+                    setFileSize("");
+                  }}
+                  disabled={isUploading}
                 >
-                  Cancel
+                  Clear
                 </Button>
                 <Button
                   onClick={handleImport}
-                  disabled={validCount === 0 || isProcessing}
+                  disabled={!file || isUploading}
                   className="min-w-[200px]"
                 >
-                  {isProcessing ? (
+                  {isUploading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Importing...
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Import {validCount} Products
+                      <Upload className="mr-2 h-4 w-4" />
+                      Import Products
                     </>
                   )}
                 </Button>

@@ -184,7 +184,7 @@ export interface Product {
   manual_notes: string;
   ai_summary_notes: string;
   status_tags: string[];
-  delivery_status_tags: string[];
+  delivery_status_tags: string[] | string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -335,7 +335,7 @@ export const productApi = {
   importProducts: async (file: File, apartmentId: string): Promise<any> => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('apartment', apartmentId);
+    formData.append('apartment_id', apartmentId);
     
     const response = await axiosInstance.post('/products/import_excel/', formData, {
       headers: {
@@ -370,6 +370,50 @@ export const productApi = {
   getProductStatistics: async (apartmentId?: string): Promise<any> => {
     const response = await axiosInstance.get('/products/statistics/', {
       params: apartmentId ? { apartment: apartmentId } : undefined
+    });
+    return response.data;
+  },
+
+  // Create apartment and import products in one operation
+  createApartmentAndImport: async (data: {
+    file: File;
+    apartment_name: string;
+    apartment_type?: string;
+    owner?: string;
+    status?: string;
+    designer?: string;
+    start_date?: string;
+    due_date?: string;
+    address?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    data: {
+      apartment_id: string;
+      apartment_name: string;
+      total_products: number;
+      successful_imports: number;
+      failed_imports: number;
+      sheets_processed: number;
+      errors: string[];
+    };
+  }> => {
+    const formData = new FormData();
+    formData.append('file', data.file);
+    formData.append('apartment_name', data.apartment_name);
+    
+    if (data.apartment_type) formData.append('apartment_type', data.apartment_type);
+    if (data.owner) formData.append('owner', data.owner);
+    if (data.status) formData.append('status', data.status);
+    if (data.designer) formData.append('designer', data.designer);
+    if (data.start_date) formData.append('start_date', data.start_date);
+    if (data.due_date) formData.append('due_date', data.due_date);
+    if (data.address) formData.append('address', data.address);
+    
+    const response = await axiosInstance.post('/products/create_apartment_and_import/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response.data;
   },
