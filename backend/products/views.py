@@ -27,7 +27,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = [
-        'apartment', 'vendor', 'availability', 'status', 'payment_status', 
+        'apartment', 'vendor', 'availability', 'payment_status', 
         'issue_state', 'category', 'room', 'replacement_requested', 'replacement_approved'
     ]
     search_fields = ['product', 'sku', 'vendor__name', 'apartment__name', 'brand', 'category']
@@ -84,20 +84,23 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
         """
-        Update product status and status tags
+        Update product status (accepts array of statuses)
         """
         product = self.get_object()
-        new_status = request.data.get('status')
-        status_tags = request.data.get('status_tags', [])
+        status = request.data.get('status', [])
         
-        if new_status:
-            product.status = new_status
-        
-        # Handle status tags update
-        if status_tags:
-            # Update the main status to the first tag if provided
-            if status_tags and status_tags[0] in [choice[0] for choice in Product.STATUS_CHOICES]:
-                product.status = status_tags[0]
+        # Handle status update - store as array in JSONField
+        if status:
+            # Validate that all statuses are valid choices
+            valid_statuses = [choice[0] for choice in Product.STATUS_CHOICES]
+            validated_statuses = [s for s in status if s in valid_statuses]
+            
+            if validated_statuses:
+                product.status = validated_statuses
+            else:
+                # If no valid statuses, keep existing or set default
+                if not product.status or not isinstance(product.status, list):
+                    product.status = ['Design Approved']
         
         product.save()
         serializer = self.get_serializer(product)

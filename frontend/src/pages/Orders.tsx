@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,14 +13,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, FileText, Truck, ArrowUpDown, TrendingUp, Package, DollarSign, Clock } from 'lucide-react';
-import { orders } from '@/data/mockData';
+import { Plus, Search, FileText, Truck, ArrowUpDown, TrendingUp, Package, DollarSign, Clock, Loader2 } from 'lucide-react';
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { OrderCreate } from '@/components/orders/OrderCreate';
 import { OrderDetails } from '@/components/orders/OrderDetails';
 import { DeliveryTracking } from '@/components/orders/DeliveryTracking';
 import { StatusUpdate } from '@/components/orders/StatusUpdate';
+import { useOrders, useOrderStatistics } from '@/hooks/useOrderApi';
+import { format } from 'date-fns';
 
 const vendorSpending = [
   { vendor: 'IKEA', amount: 28500 },
@@ -40,47 +41,70 @@ const monthlyOrders = [
 
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [vendorFilter, setVendorFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [vendorFilter, setVendorFilter] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [trackingDialogOpen, setTrackingDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<typeof orders[0] | null>(null);
-  const [ordersData, setOrdersData] = useState(orders);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-  const filteredOrders = ordersData.filter(order => {
-    const matchesSearch = 
-      order.po_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.apartment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.vendor.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    const matchesVendor = vendorFilter === 'all' || order.vendor === vendorFilter;
-    
-    return matchesSearch && matchesStatus && matchesVendor;
+  // Use the API hooks
+  const { 
+    orders, 
+    loading, 
+    error, 
+    totalCount,
+    updateStatus,
+    markDelivered,
+    refetch 
+  } = useOrders({
+    search: searchTerm,
+    status: statusFilter || undefined,
+    vendor: vendorFilter || undefined,
   });
 
-  const handleStatusUpdate = (orderId: number, newStatus: string) => {
-    setOrdersData(prev => prev.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
-  };
+  const { statistics, loading: statsLoading } = useOrderStatistics();
 
-  const uniqueVendors = Array.from(new Set(orders.map(o => o.vendor)));
+  // Get unique vendors from orders
+  const uniqueVendors = useMemo(() => {
+    const vendors = new Set<string>();
+    orders.forEach(order => {
+      if (order.vendor_name) {
+        vendors.add(order.vendor_name);
+      }
+    });
+    return Array.from(vendors);
+  }, [orders]);
+
+  const handleStatusUpdate = async (orderId: string | number, newStatus: string) => {
+    try {
+      await updateStatus(String(orderId), newStatus);
+      setStatusDialogOpen(false);
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
+    const statusLower = status.toLowerCase();
     const colors: Record<string, string> = {
-      'Draft': 'bg-gray-500/10 text-gray-500',
-      'Sent': 'bg-blue-500/10 text-blue-500',
-      'Confirmed': 'bg-yellow-500/10 text-yellow-500',
-      'Received': 'bg-green-500/10 text-green-500',
+      'draft': 'bg-gray-500/10 text-gray-500',
+      'pending': 'bg-yellow-500/10 text-yellow-500',
+      'sent': 'bg-blue-500/10 text-blue-500',
+      'confirmed': 'bg-green-500/10 text-green-500',
+      'delivered': 'bg-purple-500/10 text-purple-500',
+      'cancelled': 'bg-red-500/10 text-red-500',
     };
-    return colors[status] || 'bg-gray-500/10 text-gray-500';
+    return colors[statusLower] || 'bg-gray-500/10 text-gray-500';
   };
 
-  const totalSpending = ordersData.reduce((sum, order) => sum + order.total, 0);
-  const avgOrderValue = totalSpending / ordersData.length;
+  // Calculate totals from statistics or orders
+  const totalSpending = statistics?.total_value || 
+    orders.reduce((sum, order) => sum + Number(order.total), 0);
+  const avgOrderValue = statistics?.average_order_value || 
+    (orders.length > 0 ? totalSpending / orders.length : 0);
 
   return (
     <PageLayout title="Orders Management">
@@ -95,7 +119,7 @@ const Orders = () => {
                     <Package className="h-4 w-4" />
                     Total Orders
                   </p>
-                  <p className="text-3xl font-bold">{ordersData.length}</p>
+                  <p className="text-3xl font-bold">{loading ? '-' : totalCount || orders.length}</p>
                   <p className="text-xs text-muted-foreground">+12% from last month</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-muted-foreground opacity-50" />
@@ -126,7 +150,7 @@ const Orders = () => {
                     Pending
                   </p>
                   <p className="text-3xl font-bold">
-                    {ordersData.filter(o => o.status === 'Sent').length}
+                    {loading ? '-' : statistics?.pending_orders || orders.filter(o => o.status.toLowerCase() === 'pending' || o.status.toLowerCase() === 'sent').length}
                   </p>
                   <p className="text-xs text-muted-foreground">Awaiting confirmation</p>
                 </div>
@@ -143,7 +167,7 @@ const Orders = () => {
                     Received
                   </p>
                   <p className="text-3xl font-bold">
-                    {ordersData.filter(o => o.status === 'Received').length}
+                    {loading ? '-' : statistics?.delivered_orders || orders.filter(o => o.status.toLowerCase() === 'delivered' || o.status.toLowerCase() === 'received').length}
                   </p>
                   <p className="text-xs text-muted-foreground">Successfully delivered</p>
                 </div>
@@ -256,7 +280,7 @@ const Orders = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>All Orders ({filteredOrders.length})</CardTitle>
+              <CardTitle>All Orders ({loading ? '...' : orders.length})</CardTitle>
               <Button variant="outline" size="sm">
                 <ArrowUpDown className="h-4 w-4 mr-2" />
                 Sort
@@ -281,37 +305,51 @@ const Orders = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.po_number}</TableCell>
-                      <TableCell>{order.apartment}</TableCell>
-                      <TableCell>{order.vendor}</TableCell>
-                      <TableCell>{order.items_count} items</TableCell>
-                      <TableCell>€{order.total.toLocaleString()}</TableCell>
-                      <TableCell>
-                        {order.confirmation ? (
-                          <Badge variant="outline" className="text-xs">
-                            {order.confirmation}
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={10} className="text-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                        Loading orders...
+                      </TableCell>
+                    </TableRow>
+                  ) : orders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                        No orders found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    orders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">{order.po_number}</TableCell>
+                        <TableCell>{order.apartment_name || 'N/A'}</TableCell>
+                        <TableCell>{order.vendor_name || 'N/A'}</TableCell>
+                        <TableCell>{order.items_count} items</TableCell>
+                        <TableCell>€{Number(order.total).toLocaleString()}</TableCell>
+                        <TableCell>
+                          {order.status === 'confirmed' ? (
+                            <Badge variant="outline" className="text-xs">
+                              Confirmed
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {order.is_delivered ? (
+                            <Badge variant="outline" className="text-xs">
+                              Delivered
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(order.status)}>
+                            {order.status}
                           </Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {order.tracking ? (
-                          <Badge variant="outline" className="text-xs">
-                            {order.tracking}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(order.status)}>
-                          {order.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{order.placed_on}</TableCell>
+                        </TableCell>
+                        <TableCell>{format(new Date(order.placed_on), 'yyyy-MM-dd')}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button 
@@ -350,7 +388,8 @@ const Orders = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>

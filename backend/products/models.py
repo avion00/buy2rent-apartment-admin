@@ -82,7 +82,7 @@ class Product(models.Model):
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], default=0)
     qty = models.PositiveIntegerField(default=1)
     availability = models.CharField(max_length=20, choices=AVAILABILITY_CHOICES, default='In Stock')
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Design Approved')
+    status = models.JSONField(default=list, blank=True, help_text="Array of status tags")
     
     # Product Specifications
     dimensions = models.CharField(max_length=255, blank=True, help_text="Product dimensions")
@@ -129,7 +129,7 @@ class Product(models.Model):
     
     # Delivery - Basic Information
     delivery_type = models.CharField(max_length=100, blank=True, help_text="Type of delivery: home_courier, parcel_locker, pickup_point, international, same_day")
-    delivery_status_tags = models.CharField(max_length=255, blank=True, help_text="Comma-separated delivery status tags")
+    delivery_status_tags = models.JSONField(default=list, blank=True, help_text="Array of delivery status tags")
     delivery_address = models.TextField(blank=True)
     delivery_city = models.CharField(max_length=100, blank=True)
     delivery_postal_code = models.CharField(max_length=20, blank=True)
@@ -224,14 +224,6 @@ class Product(models.Model):
     @property
     def outstanding_balance(self):
         return self.total_amount - self.paid_amount
-    
-    @property
-    def status_tags(self):
-        """For compatibility with frontend"""
-        tags = [self.status]
-        if self.issue_state != 'No Issue':
-            tags.append(self.issue_state)
-        return tags
     
     def get_auto_delivery_status_tags(self):
         """Auto-generate delivery status tags based on dates and state"""

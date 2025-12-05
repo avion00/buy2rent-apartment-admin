@@ -5,7 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count, Sum, Avg, F
 from config.swagger_utils import add_viewset_tags
 from .models import Vendor
-from .serializers import VendorSerializer, VendorDetailSerializer
+from .serializers import VendorSerializer
 from .vendor_view_serializers import VendorViewDetailSerializer
 
 
@@ -20,7 +20,7 @@ class VendorViewSet(viewsets.ModelViewSet):
     
     def get_serializer_class(self):
         if self.action == 'retrieve':
-            return VendorDetailSerializer
+            return VendorViewDetailSerializer
         return VendorSerializer
 
     @action(detail=True, methods=['get'])
@@ -31,7 +31,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         vendor = self.get_object()
         from products.serializers import ProductSerializer
         products = vendor.products.select_related('apartment').all()
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
@@ -142,40 +142,6 @@ class VendorViewSet(viewsets.ModelViewSet):
                 'order_accuracy': 98.0,  # This could be calculated from order vs delivery data
             }
         })
-
-    @action(detail=False, methods=['get'])
-    def search_by_name(self, request):
-        """
-        Search vendors by name (for frontend routing compatibility)
-        """
-        name = request.query_params.get('name', '').strip()
-        if not name:
-            return Response(
-                {'error': 'name parameter is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Convert URL-friendly name back to actual name
-        search_name = name.replace('-', ' ')
-        vendor = Vendor.objects.filter(name__iexact=search_name).first()
-        
-        if not vendor:
-            return Response(
-                {'error': 'Vendor not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        serializer = VendorDetailSerializer(vendor)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['get'])
-    def frontend_detail(self, request, pk=None):
-        """
-        Get vendor details in format optimized for VendorView.tsx frontend
-        """
-        vendor = self.get_object()
-        serializer = VendorViewDetailSerializer(vendor)
-        return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def frontend_detail_by_name(self, request):

@@ -4,169 +4,256 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { EnhancedTextarea } from '@/components/ui/enhanced-textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDataStore, Vendor } from '@/stores/useDataStore';
+import { vendorApi, Vendor as ApiVendor } from '@/services/vendorApi';
 import { toast } from 'sonner';
+import { Loader2, Building2, Mail, Phone, Globe, MapPin } from 'lucide-react';
 
 interface VendorDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vendorName: string;
-  onVendorUpdated?: (vendorId: string) => void;
+  productId?: string;
+  onVendorUpdated?: (vendorId: string, vendorName: string) => void;
+  openInEditMode?: boolean; // Open directly in change vendor mode
 }
 
-export const VendorDetailsModal = ({ open, onOpenChange, vendorName, onVendorUpdated }: VendorDetailsModalProps) => {
-  const getVendorByName = useDataStore((state) => state.getVendorByName);
-  const addVendor = useDataStore((state) => state.addVendor);
-  const updateVendor = useDataStore((state) => state.updateVendor);
-  
-  const existingVendor = getVendorByName(vendorName);
-  
-  const [formData, setFormData] = useState<Partial<Vendor>>({
-    name: vendorName,
-    companyName: '',
-    contactPerson: '',
-    email: '',
-    phone: '',
-    website: '',
-    notes: '',
-  });
+export const VendorDetailsModal = ({ open, onOpenChange, vendorName, productId, onVendorUpdated, openInEditMode = false }: VendorDetailsModalProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [vendors, setVendors] = useState<ApiVendor[]>([]);
+  const [selectedVendor, setSelectedVendor] = useState<ApiVendor | null>(null);
+  const [isChangingVendor, setIsChangingVendor] = useState(false);
+  const [newVendorId, setNewVendorId] = useState<string>('');
 
+  // Fetch vendors and find the selected one
   useEffect(() => {
-    if (existingVendor) {
-      setFormData(existingVendor);
+    if (open) {
+      fetchVendors();
+      setIsChangingVendor(openInEditMode); // Set based on prop
     } else {
-      setFormData({
-        name: vendorName,
-        companyName: '',
-        contactPerson: '',
-        email: '',
-        phone: '',
-        website: '',
-        notes: '',
-      });
+      // Reset states when modal closes
+      setSelectedVendor(null);
+      setNewVendorId('');
+      setIsChangingVendor(false);
     }
-  }, [existingVendor, vendorName, open]);
+  }, [open, openInEditMode]);
 
-  const handleSave = () => {
-    if (!formData.email) {
-      toast.error('Email is required for AI communication');
+  const fetchVendors = async () => {
+    setIsLoading(true);
+    try {
+      const response = await vendorApi.getVendors();
+      setVendors(response.results);
+      
+      // Find vendor by name
+      const vendor = response.results.find(v => v.name.toLowerCase() === vendorName.toLowerCase());
+      if (vendor) {
+        setSelectedVendor(vendor);
+        setNewVendorId(vendor.id);
+      } else {
+        // Clear previous vendor data if no vendor is found
+        setSelectedVendor(null);
+        setNewVendorId('');
+      }
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+      toast.error('Failed to load vendors');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChangeVendor = async () => {
+    if (!newVendorId) {
+      toast.error('Please select a vendor');
       return;
     }
 
-    if (existingVendor) {
-      updateVendor(existingVendor.id, formData);
-      toast.success('Vendor details updated');
-      onVendorUpdated?.(existingVendor.id);
-    } else {
-      const newVendor = { ...formData } as Omit<Vendor, 'id'>;
-      addVendor(newVendor);
-      toast.success('New vendor added to global list');
+    const vendor = vendors.find(v => v.id === newVendorId);
+    if (vendor) {
+      onVendorUpdated?.(vendor.id, vendor.name);
+      toast.success(`Vendor changed to ${vendor.name}`);
+      onOpenChange(false);
     }
-    
-    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Vendor Details - {vendorName}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Vendor Details
+          </DialogTitle>
           <DialogDescription>
-            {existingVendor 
-              ? 'Edit vendor details. Changes will be reflected globally.' 
-              : 'Add new vendor details. This vendor will be saved to the global vendors list.'}
+            View vendor information and change vendor assignment
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Vendor Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                disabled
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name</Label>
-              <Input
-                id="companyName"
-                value={formData.companyName}
-                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                placeholder="Official company name"
-              />
-            </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="contactPerson">Contact Person</Label>
-              <Input
-                id="contactPerson"
-                value={formData.contactPerson}
-                onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                placeholder="Primary contact name"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="vendor@example.com"
-                required
-              />
-              <p className="text-xs text-muted-foreground">Required for AI communication</p>
-            </div>
+        ) : (
+          <div className="space-y-6 py-4">
+            {/* Current Vendor Details */}
+            {selectedVendor ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Current Vendor</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsChangingVendor(!isChangingVendor)}
+                  >
+                    {isChangingVendor ? 'Cancel' : 'Change Vendor'}
+                  </Button>
+                </div>
+
+                {!isChangingVendor ? (
+                  <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Vendor Name</Label>
+                        <p className="font-semibold">{selectedVendor.name}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Company Name</Label>
+                        <p className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          {selectedVendor.company_name || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Contact Person</Label>
+                        <p>{selectedVendor.contact_person || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Category</Label>
+                        <p>{selectedVendor.category || 'N/A'}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Email</Label>
+                        <p className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <a href={`mailto:${selectedVendor.email}`} className="text-primary hover:underline">
+                            {selectedVendor.email}
+                          </a>
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Phone</Label>
+                        <p className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          {selectedVendor.phone || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Website</Label>
+                        <p className="flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-muted-foreground" />
+                          {selectedVendor.website ? (
+                            <a href={selectedVendor.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                              {selectedVendor.website}
+                            </a>
+                          ) : 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Address</Label>
+                        <p className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                          <span className="text-sm">
+                            {selectedVendor.address || 'N/A'}
+                            {selectedVendor.city && `, ${selectedVendor.city}`}
+                            {selectedVendor.country && `, ${selectedVendor.country}`}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="col-span-2 grid grid-cols-3 gap-4 pt-4 border-t">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Lead Time</Label>
+                        <p className="font-semibold">{selectedVendor.lead_time || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Reliability</Label>
+                        <p className="font-semibold">{selectedVendor.reliability || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Total Orders</Label>
+                        <p className="font-semibold">{selectedVendor.orders_count || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 p-4 border rounded-lg">
+                    <Label>Select New Vendor</Label>
+                    <Select value={newVendorId} onValueChange={setNewVendorId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a vendor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vendors.map((vendor) => (
+                          <SelectItem key={vendor.id} value={vendor.id}>
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4" />
+                              <span>{vendor.name}</span>
+                              {vendor.company_name && (
+                                <span className="text-xs text-muted-foreground">({vendor.company_name})</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  No vendor assigned or vendor not found in the system.
+                </p>
+                <div className="space-y-4 p-4 border rounded-lg">
+                  <Label>Assign Vendor</Label>
+                  <Select value={newVendorId} onValueChange={setNewVendorId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a vendor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vendors.map((vendor) => (
+                        <SelectItem key={vendor.id} value={vendor.id}>
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4" />
+                            <span>{vendor.name}</span>
+                            {vendor.company_name && (
+                              <span className="text-xs text-muted-foreground">({vendor.company_name})</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+36 ..."
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                value={formData.website}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <EnhancedTextarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Any additional notes about this vendor..."
-              rows={3}
-            />
-          </div>
-        </div>
+        )}
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Close
           </Button>
-          <Button onClick={handleSave}>
-            {existingVendor ? 'Update' : 'Add'} Vendor
-          </Button>
+          {(isChangingVendor || !selectedVendor) && (
+            <Button onClick={handleChangeVendor} disabled={!newVendorId}>
+              {selectedVendor ? 'Change Vendor' : 'Assign Vendor'}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

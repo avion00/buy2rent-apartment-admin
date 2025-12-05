@@ -117,7 +117,7 @@ export interface Product {
   unit_price: string;
   qty: number;
   availability: string;
-  status: string;
+  status: string[];
   dimensions: string;
   weight: string;
   material: string;
@@ -184,26 +184,10 @@ export interface Product {
   manual_notes: string;
   ai_summary_notes: string;
   status_tags: string[];
-  delivery_status_tags: string[] | string;
+  delivery_status_tags: string[];
   created_by: string;
   created_at: string;
   updated_at: string;
-  // CamelCase versions (returned by backend for compatibility)
-  imageUrl?: string;
-  vendorLink?: string;
-  unitPrice?: string;
-  expectedDeliveryDate?: string | null;
-  actualDeliveryDate?: string | null;
-  paymentAmount?: string | null;
-  paidAmount?: string;
-  paymentStatus?: string;
-  paymentDueDate?: string | null;
-  issueState?: string;
-  orderedOn?: string | null;
-  deliveryAddress?: string;
-  deliveryCity?: string;
-  statusTags?: string[];
-  deliveryStatusTags?: string[];
 }
 
 // Product form data for creating/updating
@@ -218,7 +202,7 @@ export interface ProductFormData {
   unit_price: string;
   qty: number;
   availability?: string;
-  status: string;
+  status: string[];
   room?: string;
   link?: string;
   eta?: string | null;

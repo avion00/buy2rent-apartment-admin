@@ -3,7 +3,32 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
+from django.utils import timezone
 from .models import User, LoginAttempt
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """
+    User serializer for admin management
+    """
+    full_name = serializers.CharField(read_only=True)
+    
+    class Meta:
+        model = User
+        fields = [
+            'id', 'email', 'username', 'first_name', 'last_name',
+            'full_name', 'phone', 'avatar', 'is_active',
+            'is_staff', 'is_superuser', 'is_email_verified',
+            'last_login', 'last_login_ip', 'date_joined',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'last_login', 'last_login_ip', 'date_joined',
+            'created_at', 'updated_at', 'full_name'
+        ]
+        extra_kwargs = {
+            'password': {'write_only': True, 'required': False}
+        }
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

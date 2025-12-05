@@ -13,28 +13,58 @@ class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     total_amount = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     outstanding_balance = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    status_tags = serializers.ListField(read_only=True)
+    status = serializers.SerializerMethodField()
+    delivery_status_tags = serializers.SerializerMethodField()
+    
+    def get_status(self, obj):
+        """Ensure status is always returned as an array"""
+        import json
+        status_value = obj.status
+        
+        # If it's already a list, return it
+        if isinstance(status_value, list):
+            return status_value
+        
+        # If it's a JSON string, parse it
+        if isinstance(status_value, str):
+            try:
+                parsed = json.loads(status_value)
+                if isinstance(parsed, list):
+                    return parsed
+                return [parsed] if parsed else ['Design Approved']
+            except:
+                return [status_value] if status_value else ['Design Approved']
+        
+        # Default fallback
+        return ['Design Approved']
+    
+    def get_delivery_status_tags(self, obj):
+        """Ensure delivery_status_tags is always returned as an array"""
+        import json
+        tags_value = obj.delivery_status_tags
+        
+        # If it's already a list, return it
+        if isinstance(tags_value, list):
+            return tags_value
+        
+        # If it's a JSON string, parse it
+        if isinstance(tags_value, str):
+            try:
+                parsed = json.loads(tags_value)
+                if isinstance(parsed, list):
+                    return parsed
+                # If it's comma-separated string, split it
+                return [tag.strip() for tag in tags_value.split(',') if tag.strip()]
+            except:
+                # If parsing fails, split by comma
+                return [tag.strip() for tag in tags_value.split(',') if tag.strip()]
+        
+        # Default fallback
+        return []
     
     # Enhanced image URL fields that provide full URLs
     image_url = serializers.SerializerMethodField()
     product_image = serializers.SerializerMethodField()
-    
-    # Frontend compatibility fields (camelCase versions)
-    imageUrl = serializers.SerializerMethodField()
-    vendorLink = serializers.URLField(source='vendor_link', read_only=True)
-    unitPrice = serializers.DecimalField(source='unit_price', max_digits=10, decimal_places=2, read_only=True)
-    expectedDeliveryDate = serializers.DateField(source='expected_delivery_date', read_only=True)
-    actualDeliveryDate = serializers.DateField(source='actual_delivery_date', read_only=True)
-    paymentAmount = serializers.DecimalField(source='payment_amount', max_digits=10, decimal_places=2, read_only=True)
-    paidAmount = serializers.DecimalField(source='paid_amount', max_digits=10, decimal_places=2, read_only=True)
-    paymentStatus = serializers.CharField(source='payment_status', read_only=True)
-    paymentDueDate = serializers.DateField(source='payment_due_date', read_only=True)
-    issueState = serializers.CharField(source='issue_state', read_only=True)
-    orderedOn = serializers.DateField(source='ordered_on', read_only=True)
-    deliveryAddress = serializers.CharField(source='delivery_address', read_only=True)
-    deliveryCity = serializers.CharField(source='delivery_city', read_only=True)
-    statusTags = serializers.ListField(source='status_tags', read_only=True)
-    deliveryStatusTags = serializers.CharField(source='delivery_status_tags', read_only=True)
     
     def validate_replacement_of(self, value):
         """
@@ -77,16 +107,6 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_product_image(self, obj):
         """Get full product image URL"""
         return self._get_full_image_url(obj.product_image)
-    
-    def get_imageUrl(self, obj):
-        """Get full image URL (camelCase for frontend compatibility)"""
-        # Check image_file first (uploaded files), then image_url, then product_image
-        if obj.image_file:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image_file.url)
-            return obj.image_file.url
-        return self._get_full_image_url(obj.image_url or obj.product_image)
     
     def _get_full_image_url(self, image_path):
         """Convert relative image path to full URL"""
@@ -131,6 +151,83 @@ class ProductSerializer(serializers.ModelSerializer):
             )
         return value
     
+    def update(self, instance, validated_data):
+        """Override update to handle status and delivery_status_tags fields (which are SerializerMethodFields)"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Extract status and delivery_status_tags from initial_data since they're not in validated_data
+        status = self.initial_data.get('status')
+        delivery_status_tags = self.initial_data.get('delivery_status_tags')
+        
+        logger.info(f"Updating product {instance.id} with status: {status}, delivery_status_tags: {delivery_status_tags}")
+        
+        # Update all validated fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Handle status separately - always update if present in request
+        if status is not None:
+            if isinstance(status, list):
+                instance.status = status if status else []
+                logger.info(f"Set status to list: {instance.status}")
+            elif isinstance(status, str):
+                instance.status = [status] if status else []
+                logger.info(f"Set status from string: {instance.status}")
+            else:
+                instance.status = []
+                logger.info(f"Set status to empty array")
+        
+        # Handle delivery_status_tags separately
+        if delivery_status_tags is not None:
+            if isinstance(delivery_status_tags, list):
+                instance.delivery_status_tags = delivery_status_tags if delivery_status_tags else []
+                logger.info(f"Set delivery_status_tags to list: {instance.delivery_status_tags}")
+            elif isinstance(delivery_status_tags, str):
+                instance.delivery_status_tags = [delivery_status_tags] if delivery_status_tags else []
+                logger.info(f"Set delivery_status_tags from string: {instance.delivery_status_tags}")
+            else:
+                instance.delivery_status_tags = []
+                logger.info(f"Set delivery_status_tags to empty array")
+        
+        instance.save()
+        logger.info(f"Product saved with status: {instance.status}, delivery_status_tags: {instance.delivery_status_tags}")
+        return instance
+    
+    def create(self, validated_data):
+        """Override create to handle status and delivery_status_tags fields"""
+        # Extract status and delivery_status_tags from initial_data
+        status = self.initial_data.get('status')
+        delivery_status_tags = self.initial_data.get('delivery_status_tags')
+        
+        # Create the product
+        product = Product.objects.create(**validated_data)
+        
+        # Set status
+        if status is not None:
+            if isinstance(status, list):
+                product.status = status
+            elif isinstance(status, str):
+                product.status = [status] if status else ['Design Approved']
+            else:
+                product.status = ['Design Approved']
+        else:
+            product.status = ['Design Approved']
+        
+        # Set delivery_status_tags
+        if delivery_status_tags is not None:
+            if isinstance(delivery_status_tags, list):
+                product.delivery_status_tags = delivery_status_tags
+            elif isinstance(delivery_status_tags, str):
+                product.delivery_status_tags = [delivery_status_tags] if delivery_status_tags else []
+            else:
+                product.delivery_status_tags = []
+        else:
+            product.delivery_status_tags = []
+        
+        product.save()
+        return product
+    
     class Meta:
         model = Product
         fields = [
@@ -163,11 +260,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'replacement_approved', 'replacement_eta', 'replacement_of',
             'image_url', 'image_file', 'thumbnail_url', 'gallery_images', 'attachments', 
             'import_row_number', 'import_data', 'notes', 'manual_notes', 'ai_summary_notes',
-            'status_tags', 'delivery_status_tags', 'created_by', 'created_at', 'updated_at',
-            # Frontend compatibility fields (camelCase)
-            'imageUrl', 'vendorLink', 'unitPrice', 'expectedDeliveryDate', 'actualDeliveryDate',
-            'paymentAmount', 'paidAmount', 'paymentStatus', 'paymentDueDate', 'issueState',
-            'orderedOn', 'deliveryAddress', 'deliveryCity', 'statusTags', 'deliveryStatusTags'
+            'created_by', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at', 'total_amount', 'outstanding_balance']
 

@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useApartment } from "@/hooks/useApartmentApi";
-import { useProductsByApartment, useDeleteProduct } from "@/hooks/useProductApi";
+import { useProductsByApartment, useDeleteProduct, useUpdateProduct } from "@/hooks/useProductApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +68,9 @@ import { VendorDetailsModal } from "@/components/modals/VendorDetailsModal";
 import { PaymentDetailsModal } from "@/components/modals/PaymentDetailsModal";
 import { IssueManagementModal } from "@/components/modals/IssueManagementModal";
 import { DeliveryLocationModal } from "@/components/modals/DeliveryLocationModal";
+import { SkuEditModal } from "@/components/modals/SkuEditModal";
+import { UnitPriceEditModal } from "@/components/modals/UnitPriceEditModal";
+import { QuantityEditModal } from "@/components/modals/QuantityEditModal";
 
 const ApartmentView = () => {
   const { id } = useParams<{ id: string }>();
@@ -78,12 +81,15 @@ const ApartmentView = () => {
   const { data: apartment, isLoading, error } = useApartment(id || null);
 
   // Fetch products for this apartment
-  const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProductsByApartment(id || null);
+  const { data: productsData, isLoading: isLoadingProducts, error: productsError, refetch } = useProductsByApartment(id || null);
   // API returns array directly, not paginated response
   const products = productsData || [];
   
   // Delete product mutation
   const deleteProductMutation = useDeleteProduct();
+  
+  // Update product mutation
+  const updateProductMutation = useUpdateProduct();
   
   // State for delete confirmation dialog
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: '', name: '', apartmentId: '' });
@@ -97,6 +103,14 @@ const ApartmentView = () => {
   console.log('Is Loading:', isLoadingProducts);
   console.log('Error:', productsError);
 
+  // Helper function to format date without timezone issues
+  const formatDateForAPI = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // TODO: Add API hooks for deliveries, activities when ready
   const deliveries: any[] = [];
   const activities: any[] = [];
@@ -108,13 +122,21 @@ const ApartmentView = () => {
 
   // Modal states
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
+  const [vendorModalEditMode, setVendorModalEditMode] = useState(false);
   const [selectedVendorName, setSelectedVendorName] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedProductForPayment, setSelectedProductForPayment] = useState<any>(null);
   const [issueModalOpen, setIssueModalOpen] = useState(false);
   const [selectedProductForIssue, setSelectedProductForIssue] = useState<any>(null);
   const [deliveryLocationModalOpen, setDeliveryLocationModalOpen] = useState(false);
   const [selectedProductForDelivery, setSelectedProductForDelivery] = useState<any>(null);
+  const [skuModalOpen, setSkuModalOpen] = useState(false);
+  const [selectedProductForSku, setSelectedProductForSku] = useState<any>(null);
+  const [unitPriceModalOpen, setUnitPriceModalOpen] = useState(false);
+  const [selectedProductForPrice, setSelectedProductForPrice] = useState<any>(null);
+  const [quantityModalOpen, setQuantityModalOpen] = useState(false);
+  const [selectedProductForQuantity, setSelectedProductForQuantity] = useState<any>(null);
 
   // Delete handlers
   const handleDeleteClick = (productId: string, productName: string) => {
@@ -212,10 +234,20 @@ const ApartmentView = () => {
     });
   };
 
-  // Placeholder functions for product operations (TODO: Replace with API calls)
-  const updateProduct = (productId: string, updates: any) => {
-    // TODO: Implement product update API call
-    console.log("Update product:", productId, updates);
+  // Product update function using mutation hook
+  const updateProduct = async (productId: string, updates: any) => {
+    try {
+      await updateProductMutation.mutateAsync({ id: productId, data: updates });
+      // Refetch products to show updated data
+      refetch();
+    } catch (error) {
+      console.error("Error updating product:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update product",
+        variant: "destructive",
+      });
+    }
   };
 
   const deleteProduct = (productId: string) => {
@@ -230,8 +262,8 @@ const ApartmentView = () => {
 
   // Calculate overview stats from consolidated product data
   const totalItems = products.length;
-  const orderedItems = products.filter((p) => ["Ordered", "Shipped", "Delivered"].includes(p.status)).length;
-  const deliveredItems = products.filter((p) => p.status === "Delivered").length;
+  const orderedItems = products.filter((p) => Array.isArray(p.status) && p.status.some(s => ["Ordered", "Shipped", "Delivered"].includes(s))).length;
+  const deliveredItems = products.filter((p) => Array.isArray(p.status) && p.status.includes("Delivered")).length;
   const openIssues = products.filter((p) => p.issue_state && !["No Issue", "Resolved"].includes(p.issue_state)).length;
   const totalValue = products.reduce((sum, p) => sum + parseFloat(p.unit_price) * p.qty, 0);
   const totalPayable = products.reduce((sum, p) => sum + parseFloat(p.payment_amount || '0'), 0);
@@ -529,16 +561,17 @@ const ApartmentView = () => {
                     </TableHeader>
                     <TableBody>
                       {products.map((product) => {
+                        const statusArray = Array.isArray(product.status) ? product.status : [];
                         const rowColorClass =
-                          product.status === "Delivered" || product.status === "Closed"
+                          statusArray.includes("Delivered") || statusArray.includes("Closed")
                             ? "bg-green-500/5"
-                            : product.status === "Damaged" ||
-                                product.status === "Wrong Item" ||
-                                product.status === "Missing"
+                            : statusArray.includes("Damaged") ||
+                                statusArray.includes("Wrong Item") ||
+                                statusArray.includes("Missing")
                               ? "bg-red-500/5"
-                              : product.status === "Shipped" || product.status === "Ordered"
+                              : statusArray.includes("Shipped") || statusArray.includes("Ordered")
                                 ? "bg-blue-500/5"
-                                : product.status === "Waiting For Stock"
+                                : statusArray.includes("Waiting For Stock")
                                   ? "bg-yellow-500/5"
                                   : "";
 
@@ -547,9 +580,9 @@ const ApartmentView = () => {
                         return (
                           <TableRow key={product.id} className={rowColorClass}>
                             <TableCell>
-                              {(product.product_image || product.image_url || product.imageUrl) ? (
+                              {(product.product_image || product.image_url) ? (
                                 <img
-                                  src={product.product_image || product.image_url || product.imageUrl}
+                                  src={product.product_image || product.image_url}
                                   alt={product.product}
                                   className="h-10 w-10 rounded object-cover"
                                 />
@@ -576,21 +609,70 @@ const ApartmentView = () => {
                               )}
                             </TableCell>
                             <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="link"
+                                  className="p-0 h-auto text-primary hover:underline"
+                                  onClick={() => {
+                                    setSelectedVendorName(product.vendor_name || 'Not Assigned');
+                                    setSelectedProductId(product.id);
+                                    setVendorModalEditMode(false);
+                                    setVendorModalOpen(true);
+                                  }}
+                                >
+                                  {product.vendor_name || <span className="text-muted-foreground italic">Not Assigned</span>}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => {
+                                    setSelectedVendorName(product.vendor_name || 'Not Assigned');
+                                    setSelectedProductId(product.id);
+                                    setVendorModalEditMode(true);
+                                    setVendorModalOpen(true);
+                                  }}
+                                >
+                                  <Settings className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="link"
+                                className="p-0 h-auto font-mono text-xs text-primary hover:underline"
+                                onClick={() => {
+                                  setSelectedProductForSku(product);
+                                  setSkuModalOpen(true);
+                                }}
+                              >
+                                {product.sku || <span className="text-muted-foreground italic">Add SKU</span>}
+                              </Button>
+                            </TableCell>
+                            <TableCell className="text-right">
                               <Button
                                 variant="link"
                                 className="p-0 h-auto text-primary hover:underline"
                                 onClick={() => {
-                                  setSelectedVendorName(product.vendor_name);
-                                  setVendorModalOpen(true);
+                                  setSelectedProductForPrice(product);
+                                  setUnitPriceModalOpen(true);
                                 }}
                               >
-                                {product.vendor_name}
-                                <Settings className="ml-1 h-3 w-3" />
+                                {parseFloat(product.unit_price).toLocaleString()} HUF
                               </Button>
                             </TableCell>
-                            <TableCell className="font-mono text-xs">{product.sku}</TableCell>
-                            <TableCell className="text-right">{parseFloat(product.unit_price).toLocaleString()} HUF</TableCell>
-                            <TableCell className="text-center">{product.qty}</TableCell>
+                            <TableCell className="text-center">
+                              <Button
+                                variant="link"
+                                className="p-0 h-auto text-primary hover:underline"
+                                onClick={() => {
+                                  setSelectedProductForQuantity(product);
+                                  setQuantityModalOpen(true);
+                                }}
+                              >
+                                {product.qty}
+                              </Button>
+                            </TableCell>
                             <TableCell className="text-right font-semibold">
                               {(parseFloat(product.unit_price) * product.qty).toLocaleString()} HUF
                             </TableCell>
@@ -609,9 +691,9 @@ const ApartmentView = () => {
                                   "Incorrect Quantity",
                                   "Replacement Ordered",
                                 ]}
-                                value={product.status_tags || []}
+                                value={Array.isArray(product.status) ? product.status : []}
                                 onChange={(newTags) => {
-                                  updateProduct(product.id, { statusTags: newTags });
+                                  updateProduct(product.id, { status: newTags });
                                   toast({
                                     title: "Success",
                                     description: "Product status updated",
@@ -633,17 +715,9 @@ const ApartmentView = () => {
                                   "Return Scheduled",
                                   "Return Received",
                                 ]}
-                                value={
-                                  (() => {
-                                    const tags = product.delivery_status_tags;
-                                    if (typeof tags === 'string' && tags) {
-                                      return tags.split(',').map(t => t.trim()).filter(t => t !== '');
-                                    }
-                                    return Array.isArray(tags) ? tags : [];
-                                  })()
-                                }
+                                value={Array.isArray(product.delivery_status_tags) ? product.delivery_status_tags : []}
                                 onChange={(newTags) => {
-                                  updateProduct(product.id, { deliveryStatusTags: newTags.join(', ') });
+                                  updateProduct(product.id, { delivery_status_tags: newTags });
                                   toast({
                                     title: "Success",
                                     description: "Delivery status updated",
@@ -678,7 +752,7 @@ const ApartmentView = () => {
                                     }
                                     onSelect={(date) => {
                                       if (date) {
-                                        updateProduct(product.id, { expectedDeliveryDate: date.toISOString() });
+                                        updateProduct(product.id, { expected_delivery_date: formatDateForAPI(date) });
                                         toast({
                                           title: "Success",
                                           description: "Expected delivery date updated",
@@ -735,7 +809,7 @@ const ApartmentView = () => {
                                     }
                                     onSelect={(date) => {
                                       if (date) {
-                                        updateProduct(product.id, { actualDeliveryDate: date.toISOString() });
+                                        updateProduct(product.id, { actual_delivery_date: formatDateForAPI(date) });
                                         toast({
                                           title: "Success",
                                           description: "Actual delivery date updated",
@@ -948,7 +1022,22 @@ const ApartmentView = () => {
       </Tabs>
 
       {/* Modals */}
-      <VendorDetailsModal open={vendorModalOpen} onOpenChange={setVendorModalOpen} vendorName={selectedVendorName} />
+      <VendorDetailsModal 
+        open={vendorModalOpen} 
+        onOpenChange={setVendorModalOpen} 
+        vendorName={selectedVendorName}
+        productId={selectedProductId}
+        openInEditMode={vendorModalEditMode}
+        onVendorUpdated={(vendorId, vendorName) => {
+          // Update the product with new vendor
+          updateProduct(selectedProductId, { vendor: vendorId, vendor_name: vendorName });
+          toast({
+            title: "Vendor Updated",
+            description: `Product vendor changed to ${vendorName}`,
+          });
+          refetch(); // Refresh the product list
+        }}
+      />
 
       {selectedProductForPayment && (
         <PaymentDetailsModal
@@ -981,6 +1070,60 @@ const ApartmentView = () => {
         onOpenChange={setDeliveryLocationModalOpen}
         product={selectedProductForDelivery}
       />
+
+      {selectedProductForSku && (
+        <SkuEditModal
+          open={skuModalOpen}
+          onOpenChange={setSkuModalOpen}
+          currentSku={selectedProductForSku.sku || ''}
+          productId={selectedProductForSku.id}
+          productName={selectedProductForSku.product}
+          onSkuUpdated={(newSku) => {
+            updateProduct(selectedProductForSku.id, { sku: newSku });
+            toast({
+              title: "Success",
+              description: "SKU updated successfully",
+            });
+            refetch(); // Refresh the product list
+          }}
+        />
+      )}
+
+      {selectedProductForPrice && (
+        <UnitPriceEditModal
+          open={unitPriceModalOpen}
+          onOpenChange={setUnitPriceModalOpen}
+          currentPrice={selectedProductForPrice.unit_price || '0'}
+          productId={selectedProductForPrice.id}
+          productName={selectedProductForPrice.product}
+          onPriceUpdated={(newPrice) => {
+            updateProduct(selectedProductForPrice.id, { unit_price: newPrice });
+            toast({
+              title: "Success",
+              description: "Unit price updated successfully",
+            });
+            refetch(); // Refresh the product list
+          }}
+        />
+      )}
+
+      {selectedProductForQuantity && (
+        <QuantityEditModal
+          open={quantityModalOpen}
+          onOpenChange={setQuantityModalOpen}
+          currentQuantity={selectedProductForQuantity.qty || '1'}
+          productId={selectedProductForQuantity.id}
+          productName={selectedProductForQuantity.product}
+          onQuantityUpdated={(newQuantity) => {
+            updateProduct(selectedProductForQuantity.id, { qty: newQuantity });
+            toast({
+              title: "Success",
+              description: "Quantity updated successfully",
+            });
+            refetch(); // Refresh the product list
+          }}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, id: '', name: '', apartmentId: '' })}>

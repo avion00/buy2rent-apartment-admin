@@ -11,11 +11,11 @@ interface StatusUpdateProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   order: {
-    id: number;
+    id: string | number;
     po_number: string;
     status: string;
   } | null;
-  onStatusUpdate: (orderId: number, newStatus: string) => void;
+  onStatusUpdate: (orderId: string | number, newStatus: string) => void;
 }
 
 const statusFlow = {

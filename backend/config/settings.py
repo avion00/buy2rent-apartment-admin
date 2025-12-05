@@ -58,6 +58,9 @@ INSTALLED_APPS = [
     'payments',
     'issues',
     'activities',
+    'dashboard',  # Dashboard statistics and analytics
+    'notifications',  # Notification system
+    'reports',  # Report generation (PDF, Excel, CSV)
 ]
 
 MIDDLEWARE = [
@@ -302,6 +305,7 @@ SPECTACULAR_SETTINGS = {
     'SCHEMA_PATH_PREFIX': '/api/',
     'COMPONENT_SPLIT_REQUEST': True,
     'SORT_OPERATIONS': False,
+    'DISABLE_ERRORS_AND_WARNINGS': True,  # Suppress schema generation warnings
     'SECURITY': [{'bearerAuth': []}],
     'COMPONENTS': {
         'securitySchemes': {
@@ -341,3 +345,7 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Activities', 'description': 'Activity logging and notes'},
     ],
 }
+
+# Logging Configuration - Suppress drf-spectacular warnings
+import logging
+logging.getLogger('drf_spectacular').setLevel(logging.ERROR)

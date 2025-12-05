@@ -78,7 +78,7 @@ class ClientDetailSerializer(serializers.ModelSerializer):
         return {
             'count': products.count(),
             'total_value': float(total_value),
-            'data': ProductSerializer(products, many=True).data
+            'data': ProductSerializer(products, many=True, context=self.context).data
         }
     
     @extend_schema_field(OpenApiTypes.OBJECT)
@@ -125,9 +125,10 @@ class ClientDetailSerializer(serializers.ModelSerializer):
             if product.payment_amount:
                 total_payable += product.payment_amount
             
-            # Count by status
-            status = product.status
-            product_status_counts[status] = product_status_counts.get(status, 0) + 1
+            # Count by status (status is now an array)
+            status_array = product.status if isinstance(product.status, list) else []
+            for status in status_array:
+                product_status_counts[status] = product_status_counts.get(status, 0) + 1
         
         # Product statistics
         product_stats = {

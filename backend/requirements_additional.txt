@@ -1,0 +1,26 @@
+# Additional requirements for new features
+
+# Reports generation
+openpyxl==3.1.2  # Excel file generation
+reportlab==4.0.4  # PDF generation
+xlsxwriter==3.1.9  # Alternative Excel writer
+
+# Real-time features (for future)
+channels==4.0.0  # WebSocket support
+channels-redis==4.1.0  # Redis channel layer
+redis==5.0.0  # Redis client
+
+# Task scheduling (for automations)
+celery==5.3.4  # Distributed task queue
+django-celery-beat==2.5.0  # Periodic task scheduler
+
+# File management
+django-storages==1.14  # Cloud storage backends
+boto3==1.28.57  # AWS S3 support
+
+# Email
+django-ses==3.5.0  # Amazon SES email backend
+
+# Additional utilities
+python-dateutil==2.8.2  # Date utilities
+pytz==2023.3  # Timezone support

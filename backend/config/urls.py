@@ -23,11 +23,13 @@ from clients.views import ClientViewSet
 from apartments.views import ApartmentViewSet
 from vendors.views import VendorViewSet
 from products.views import ProductViewSet
-from orders.views import OrderViewSet, OrderItemViewSet
+from orders.views import OrderViewSet
 from deliveries.views import DeliveryViewSet
 from payments.views import PaymentViewSet, PaymentHistoryViewSet
 from issues.views import IssueViewSet, IssuePhotoViewSet, AICommunicationLogViewSet
 from activities.views import ActivityViewSet, AINoteViewSet, ManualNoteViewSet
+from accounts.user_management_views import UserManagementViewSet
+from notifications.views import NotificationViewSet, NotificationPreferenceViewSet
 from .views import api_overview
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
@@ -38,7 +40,6 @@ router.register(r'apartments', ApartmentViewSet)
 router.register(r'vendors', VendorViewSet)
 router.register(r'products', ProductViewSet)
 router.register(r'orders', OrderViewSet)
-router.register(r'order-items', OrderItemViewSet)
 router.register(r'deliveries', DeliveryViewSet)
 router.register(r'payments', PaymentViewSet)
 router.register(r'payment-history', PaymentHistoryViewSet)
@@ -48,6 +49,9 @@ router.register(r'ai-communication-logs', AICommunicationLogViewSet)
 router.register(r'activities', ActivityViewSet)
 router.register(r'ai-notes', AINoteViewSet)
 router.register(r'manual-notes', ManualNoteViewSet)
+router.register(r'users', UserManagementViewSet)
+router.register(r'notifications', NotificationViewSet, basename='notification')
+router.register(r'notification-preferences', NotificationPreferenceViewSet, basename='notification-preference')
 
 urlpatterns = [
     path('', api_overview, name='api_overview'),
@@ -55,6 +59,8 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls')),
     path('auth/', include('accounts.urls')),  # Updated to use secure accounts app
+    path('api/dashboard/', include('dashboard.urls')),  # Dashboard endpoints
+    path('api/reports/', include('reports.urls')),  # Report generation endpoints
     
     # Product import endpoints are now part of the main ProductViewSet
     

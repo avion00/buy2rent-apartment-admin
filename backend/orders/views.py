@@ -3,8 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from config.swagger_utils import add_viewset_tags
-from .models import Order, OrderItem
-from .serializers import OrderSerializer, OrderListSerializer, OrderItemSerializer
+from .models import Order
+from .serializers import OrderSerializer, OrderListSerializer
 
 
 @add_viewset_tags('Orders', 'Order')
@@ -84,13 +84,3 @@ class OrderViewSet(viewsets.ModelViewSet):
             'total_value': total_value,
         })
 
-
-@add_viewset_tags('Order Items', 'OrderItem')
-class OrderItemViewSet(viewsets.ModelViewSet):
-    queryset = OrderItem.objects.select_related('order').all()
-    serializer_class = OrderItemSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['order']
-    search_fields = ['product_name', 'sku', 'description']
-    ordering_fields = ['product_name', 'unit_price', 'quantity', 'created_at']
-    ordering = ['product_name']

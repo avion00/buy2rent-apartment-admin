@@ -1,0 +1,30 @@
+============================================================
+🔧 DELETE THESE FILES TO FIX MIGRATION ERROR
+============================================================
+
+Please delete this file manually:
+
+📁 File to delete:
+   e:\meir\buy2rent-apartment-admin\backend\products\migrations\0002_add_uploaded_file_to_import_session.py
+
+This file is empty/corrupted and causing the error:
+"Migration 0002_add_uploaded_file_to_import_session in app products has no Migration class"
+
+============================================================
+AFTER DELETING THE FILE, RUN THESE COMMANDS:
+============================================================
+
+cd backend
+source venv/bin/activate
+python manage.py migrate products
+python manage.py runserver
+
+============================================================
+WHY?
+============================================================
+
+✅ The correct migration already exists: 0010_importsession_uploaded_file.py
+❌ The 0002_ file is empty and blocking Django
+🗑️  Deleting it will fix the issue
+
+============================================================

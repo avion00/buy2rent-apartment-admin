@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { 
   ArrowLeft, 
@@ -17,22 +16,20 @@ import {
   FileSpreadsheet, 
   FileText, 
   Building2, 
-  Package,
   Phone,
   Mail,
   Globe,
   MapPin,
   User,
-  Briefcase,
   FileCheck,
-  Truck,
-  DollarSign
+  DollarSign,
+  Loader2
 } from 'lucide-react';
-import { useDataStore } from '@/stores/useDataStore';
+import { useCreateVendor } from '@/hooks/useVendorApi';
 
 const VendorNew = () => {
   const navigate = useNavigate();
-  const { addVendor } = useDataStore();
+  const createVendor = useCreateVendor();
   const [activeTab, setActiveTab] = useState('basic');
   
   // Basic Info
@@ -71,47 +68,57 @@ const VendorNew = () => {
   const [notes, setNotes] = useState('');
 
   const handleSave = () => {
+    // Validation
     if (!companyName || !email || !contactPerson) {
-      toast.error('Please fill in all required fields');
+      toast.error('Please fill in all required fields (Company Name, Contact Person, Email)');
+      setActiveTab('basic');
       return;
     }
 
-    const newVendor = {
-      id: `vendor-${Date.now()}`,
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      setActiveTab('basic');
+      return;
+    }
+
+    // Prepare vendor data
+    const vendorData = {
       name: companyName,
-      contact: email,
+      company_name: companyName,
+      contact_person: contactPerson,
+      email,
+      phone: phone || '',
+      website: website || '',
       logo: '🏢',
-      website: website || `https://${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
-      lead_time: '7-14 days',
-      reliability: 4.5,
-      orders_count: 0,
-      active_issues: 0,
-      // Additional fields
-      contactPerson,
-      phone,
-      address,
-      city,
-      country,
-      postalCode,
-      taxId,
-      businessType,
-      yearEstablished,
-      employeeCount,
-      category,
-      productCategories,
-      certifications,
-      specializations,
-      paymentTerms,
-      deliveryTerms,
-      warrantyPeriod,
-      returnPolicy,
-      minimumOrder,
-      notes,
+      lead_time: deliveryTerms || '7-14 days',
+      address: address || '',
+      city: city || '',
+      country: country || '',
+      postal_code: postalCode || '',
+      tax_id: taxId || '',
+      business_type: businessType || '',
+      year_established: yearEstablished || '',
+      employee_count: employeeCount || '',
+      category: category || '',
+      product_categories: productCategories || '',
+      certifications: certifications || '',
+      specializations: specializations || '',
+      payment_terms: paymentTerms || '',
+      delivery_terms: deliveryTerms || '',
+      warranty_period: warrantyPeriod || '',
+      return_policy: returnPolicy || '',
+      minimum_order: minimumOrder || '',
+      notes: notes || '',
     };
 
-    addVendor(newVendor);
-    toast.success('Vendor created successfully!');
-    navigate('/vendors');
+    // Call API to create vendor
+    createVendor.mutate(vendorData, {
+      onSuccess: () => {
+        navigate('/vendors');
+      },
+    });
   };
 
   const handleImport = (type: 'excel' | 'csv' | 'docs') => {
@@ -137,9 +144,22 @@ const VendorNew = () => {
               <Upload className="h-4 w-4" />
               Import Data
             </Button>
-            <Button onClick={handleSave} className="gap-2">
-              <Save className="h-4 w-4" />
-              Save Vendor
+            <Button 
+              onClick={handleSave} 
+              className="gap-2"
+              disabled={createVendor.isPending}
+            >
+              {createVendor.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Vendor
+                </>
+              )}
             </Button>
           </div>
         </div>

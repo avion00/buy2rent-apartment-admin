@@ -139,7 +139,7 @@ class ClientViewSet(viewsets.ModelViewSet):
             'apartment', 'vendor'
         )
         
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(products, many=True, context={'request': request})
         
         # Calculate total value from unit_price * qty
         total_value = Decimal('0')

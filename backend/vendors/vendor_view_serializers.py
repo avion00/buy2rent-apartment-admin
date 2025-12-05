@@ -106,7 +106,7 @@ class VendorViewDetailSerializer(serializers.ModelSerializer):
                 'price': float(product.unit_price),
                 'qty': product.qty,
                 'availability': product.availability.replace(' ', '_').lower(),
-                'status': product.status.lower()
+                'status': product.status if isinstance(product.status, list) else []  # status is now an array
             }
             for product in products
         ]

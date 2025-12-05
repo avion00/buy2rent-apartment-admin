@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,53 +19,89 @@ import {
   TrendingUp,
   Package,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
-import { vendors } from "@/data/mockData";
 import { toast } from "sonner";
+import { useVendors, useDeleteVendor } from "@/hooks/useVendorApi";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Vendors = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [reliabilityFilter, setReliabilityFilter] = useState("all");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [vendorToDelete, setVendorToDelete] = useState<{ id: string; name: string } | null>(null);
 
-  const filteredVendors = vendors.filter((vendor) => {
-    const matchesSearch =
-      vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vendor.contact.toLowerCase().includes(searchTerm.toLowerCase());
+  // Fetch vendors from API
+  const { data: vendorsData, isLoading, error } = useVendors();
+  const deleteVendor = useDeleteVendor();
 
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && vendor.active_issues === 0) ||
-      (statusFilter === "issues" && vendor.active_issues > 0);
+  const vendors = vendorsData?.results || [];
 
-    const matchesReliability =
-      reliabilityFilter === "all" ||
-      (reliabilityFilter === "high" && vendor.reliability >= 4.5) ||
-      (reliabilityFilter === "medium" && vendor.reliability >= 3.5 && vendor.reliability < 4.5) ||
-      (reliabilityFilter === "low" && vendor.reliability < 3.5);
+  const filteredVendors = useMemo(() => {
+    return vendors.filter((vendor) => {
+      const matchesSearch =
+        vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.contact_person.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesSearch && matchesStatus && matchesReliability;
-  });
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && vendor.active_issues === 0) ||
+        (statusFilter === "issues" && vendor.active_issues > 0);
 
-  const renderStars = (rating: number) => {
+      const reliability = parseFloat(vendor.reliability);
+      const matchesReliability =
+        reliabilityFilter === "all" ||
+        (reliabilityFilter === "high" && reliability >= 4.5) ||
+        (reliabilityFilter === "medium" && reliability >= 3.5 && reliability < 4.5) ||
+        (reliabilityFilter === "low" && reliability < 3.5);
+
+      return matchesSearch && matchesStatus && matchesReliability;
+    });
+  }, [vendors, searchTerm, statusFilter, reliabilityFilter]);
+
+  const renderStars = (rating: string | number) => {
+    const numRating = typeof rating === 'string' ? parseFloat(rating) : rating;
     return (
       <div className="flex items-center gap-1">
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
             className={`h-3 w-3 ${
-              i < Math.floor(rating) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"
+              i < Math.floor(numRating) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"
             }`}
           />
         ))}
-        <span className="text-sm font-medium ml-1">{rating.toFixed(1)}</span>
+        <span className="text-sm font-medium ml-1">{numRating.toFixed(1)}</span>
       </div>
     );
   };
 
-  const handleDelete = (vendorName: string) => {
-    toast.success(`${vendorName} has been archived`);
+  const handleDeleteClick = (id: string, name: string) => {
+    setVendorToDelete({ id, name });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (vendorToDelete) {
+      deleteVendor.mutate(vendorToDelete.id, {
+        onSuccess: () => {
+          setDeleteDialogOpen(false);
+          setVendorToDelete(null);
+        },
+      });
+    }
   };
 
   return (
@@ -115,7 +151,9 @@ const Vendors = () => {
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-muted-foreground">Avg Reliability</p>
                   <p className="text-3xl font-bold">
-                    {(vendors.reduce((sum, v) => sum + v.reliability, 0) / vendors.length).toFixed(1)}
+                    {vendors.length > 0
+                      ? (vendors.reduce((sum, v) => sum + parseFloat(v.reliability), 0) / vendors.length).toFixed(1)
+                      : '0.0'}
                   </p>
                 </div>
                 <Star className="h-10 w-10 text-yellow-500 opacity-20" />
@@ -224,7 +262,7 @@ const Vendors = () => {
                       <TableRow
                         key={vendor.id}
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/vendors/${vendor.name.toLowerCase().replace(/\s+/g, "-")}`)}
+                        onClick={() => navigate(`/vendors/${vendor.id}`)}
                       >
                         <TableCell>
                           <div className="flex items-center justify-center text-3xl bg-muted rounded-lg w-12 h-12">
@@ -247,7 +285,7 @@ const Vendors = () => {
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            <p>{vendor.contact}</p>
+                            <p>{vendor.email}</p>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -276,7 +314,7 @@ const Vendors = () => {
                               variant="ghost"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/vendors/${vendor.name.toLowerCase().replace(/\s+/g, "-")}`);
+                                navigate(`/vendors/${vendor.id}`);
                               }}
                               title="View Details"
                             >
@@ -287,7 +325,7 @@ const Vendors = () => {
                               variant="ghost"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/vendors/${vendor.name.toLowerCase().replace(/\s+/g, "-")}/edit`);
+                                navigate(`/vendors/${vendor.id}/edit`);
                               }}
                               title="Edit Vendor"
                             >
@@ -298,9 +336,10 @@ const Vendors = () => {
                               variant="ghost"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDelete(vendor.name);
+                                handleDeleteClick(vendor.id, vendor.name);
                               }}
                               title="Delete Vendor"
+                              disabled={deleteVendor.isPending}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -314,6 +353,60 @@ const Vendors = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Loading vendors...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center py-12">
+                <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Failed to load vendors</h3>
+                <p className="text-muted-foreground mb-4">
+                  {error instanceof Error ? error.message : 'An error occurred while fetching vendors'}
+                </p>
+                <Button onClick={() => window.location.reload()}>Try Again</Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete <strong>{vendorToDelete?.name}</strong>.
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteVendor.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                disabled={deleteVendor.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleteVendor.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PageLayout>
   );

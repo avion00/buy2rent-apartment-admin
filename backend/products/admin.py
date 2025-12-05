@@ -169,8 +169,8 @@ class ProductAdmin(admin.ModelAdmin):
     list_per_page = 50
     list_max_show_all = 200
     
-    # Enable inline editing for some fields
-    list_editable = ['status', 'payment_status', 'qty', 'unit_price']
+    # Enable inline editing for some fields (status is JSONField, can't be edited inline)
+    list_editable = ['payment_status', 'qty', 'unit_price']
     
     # Add actions for bulk operations
     actions = ['mark_as_delivered', 'mark_as_paid', 'export_as_csv']
@@ -178,10 +178,12 @@ class ProductAdmin(admin.ModelAdmin):
     def mark_as_delivered(self, request, queryset):
         """Mark selected products as delivered"""
         from datetime import date
-        updated = queryset.update(
-            actual_delivery_date=date.today(),
-            status='Delivered'
-        )
+        updated = 0
+        for product in queryset:
+            product.actual_delivery_date = date.today()
+            product.status = ['Delivered']
+            product.save()
+            updated += 1
         self.message_user(request, f'{updated} products marked as delivered.')
     mark_as_delivered.short_description = "Mark selected products as delivered"
     

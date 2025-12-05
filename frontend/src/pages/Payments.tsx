@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +60,7 @@ import { PaymentHistoryModal } from '@/components/modals/PaymentHistoryModal';
 import { PaymentCreateModal } from '@/components/modals/PaymentCreateModal';
 
 const Payments = () => {
+  const navigate = useNavigate();
   const { payments, apartments, vendors, updatePayment, addPaymentToHistory } = useDataStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -305,7 +307,7 @@ const Payments = () => {
       <div className="space-y-6">
         {/* Header Actions */}
         <div className="flex justify-between items-center">
-          <Button onClick={() => setIsCreateModalOpen(true)} size="lg" className="h-11">
+          <Button onClick={() => navigate('/payments/new')} size="lg" className="h-11">
             <Plus className="h-5 w-5 mr-2" />
             Create Payment
           </Button>

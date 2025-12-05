@@ -31,23 +31,53 @@ import {
   CheckCircle,
   Calendar,
   TrendingUp,
-  Clock
+  Clock,
+  Loader2
 } from 'lucide-react';
-import { vendors } from '@/data/mockData';
-import { products } from '@/data/mockData';
-import { orders } from '@/data/mockData';
-import { issues } from '@/data/mockData';
-import { payments } from '@/data/mockData';
+import { useVendor, useVendorProducts, useRemoveVendorProduct } from '@/hooks/useVendorApi';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash2, User as UserIcon, Image as ImageIcon } from 'lucide-react';
 
 const VendorView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Find vendor by name (id)
-  const vendor = vendors.find(v => v.name.toLowerCase().replace(/\s+/g, '-') === id);
+  // Fetch vendor data from API
+  const { data: vendor, isLoading, error } = useVendor(id || null);
+  
+  // Fetch vendor products
+  const { data: products = [], isLoading: productsLoading } = useVendorProducts(id || null);
+  
+  // Remove product mutation
+  const removeProduct = useRemoveVendorProduct(id || '');
 
-  if (!vendor) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <PageLayout title="Loading...">
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading vendor details...</p>
+          </CardContent>
+        </Card>
+      </PageLayout>
+    );
+  }
+
+  // Error or not found state
+  if (error || !vendor) {
     return (
       <PageLayout title="Vendor Not Found">
         <Card>
@@ -55,7 +85,7 @@ const VendorView = () => {
             <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Vendor Not Found</h3>
             <p className="text-muted-foreground mb-4">
-              The vendor you're looking for doesn't exist.
+              {error instanceof Error ? error.message : "The vendor you're looking for doesn't exist."}
             </p>
             <Button onClick={() => navigate('/vendors')}>
               Back to Vendors
@@ -66,25 +96,21 @@ const VendorView = () => {
     );
   }
 
-  const vendorProducts = products.filter(p => p.vendor === vendor.name);
-  const vendorOrders = orders.filter(o => o.vendor === vendor.name);
-  const vendorIssues = issues.filter(i => i.vendor === vendor.name);
-  const vendorPayments = payments.filter(p => p.vendor === vendor.name);
-
-  const renderStars = (rating: number) => {
+  const renderStars = (rating: string | number) => {
+    const numRating = typeof rating === 'string' ? parseFloat(rating) : rating;
     return (
       <div className="flex items-center gap-1">
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
             className={`h-4 w-4 ${
-              i < Math.floor(rating)
+              i < Math.floor(numRating)
                 ? 'fill-yellow-500 text-yellow-500'
                 : 'text-muted-foreground'
             }`}
           />
         ))}
-        <span className="text-sm font-medium ml-1">{rating.toFixed(1)}</span>
+        <span className="text-sm font-medium ml-1">{numRating.toFixed(1)}</span>
       </div>
     );
   };
@@ -142,8 +168,8 @@ const VendorView = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a href={`mailto:${vendor.contact}`} className="hover:underline">
-                      {vendor.contact}
+                    <a href={`mailto:${vendor.email}`} className="hover:underline">
+                      {vendor.email}
                     </a>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
@@ -202,9 +228,15 @@ const VendorView = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Products</p>
-                  <p className="text-3xl font-bold mt-1">{vendorProducts.length}</p>
+                  <p className="text-3xl font-bold mt-1">
+                    {productsLoading ? (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : (
+                      products.length
+                    )}
+                  </p>
                 </div>
-                <Building2 className="h-8 w-8 text-primary" />
+                <Package className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -214,7 +246,12 @@ const VendorView = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Reliability</p>
-                  <p className="text-3xl font-bold mt-1">{vendor.reliability.toFixed(1)}</p>
+                  <p className="text-3xl font-bold mt-1">
+                    {(() => {
+                      const rel = typeof vendor.reliability === 'string' ? parseFloat(vendor.reliability) : vendor.reliability;
+                      return rel.toFixed(1);
+                    })()}
+                  </p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-500" />
               </div>
@@ -246,7 +283,7 @@ const VendorView = () => {
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{vendor.contact}</span>
+                        <span className="text-sm">{vendor.email}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Globe className="h-4 w-4 text-muted-foreground" />
@@ -314,163 +351,243 @@ const VendorView = () => {
 
               {/* Products Tab */}
               <TabsContent value="products" className="mt-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Product Name</TableHead>
-                        <TableHead>Apartment</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Availability</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {vendorProducts.map((product) => (
-                        <TableRow key={product.id}>
-                          <TableCell className="font-medium">{product.product}</TableCell>
-                          <TableCell>{product.apartment}</TableCell>
-                          <TableCell>${product.price.toFixed(2)}</TableCell>
-                          <TableCell>{product.qty}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              product.status === 'delivered' ? 'default' :
-                              product.status === 'ordered' ? 'secondary' : 'outline'
-                            }>
-                              {product.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={product.availability === 'in_stock' ? 'default' : 'destructive'}>
-                              {product.availability.replace('_', ' ')}
-                            </Badge>
-                          </TableCell>
+                {productsLoading ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading products...</p>
+                  </div>
+                ) : products.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Products</h3>
+                    <p className="text-muted-foreground">
+                      This vendor hasn't supplied any products yet.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[80px]">Image</TableHead>
+                          <TableHead>Product Details</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Client</TableHead>
+                          <TableHead>Apartment</TableHead>
+                          <TableHead>Room</TableHead>
+                          <TableHead className="text-right">Qty</TableHead>
+                          <TableHead className="text-right">Unit Price</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                          <TableHead>Payment</TableHead>
+                          <TableHead>Availability</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {products.map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell>
+                              {product.product_image || product.image_url ? (
+                                <img 
+                                  src={product.product_image || product.image_url} 
+                                  alt={product.product}
+                                  className="w-16 h-16 object-cover rounded-md"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
+                              <div className={`w-16 h-16 bg-muted rounded-md flex items-center justify-center ${product.product_image || product.image_url ? 'hidden' : ''}`}>
+                                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1 min-w-[200px]">
+                                <p className="font-medium">{product.product}</p>
+                                {product.description && (
+                                  <p className="text-xs text-muted-foreground">{product.description}</p>
+                                )}
+                                {product.dimensions && (
+                                  <p className="text-xs text-muted-foreground">📏 {product.dimensions}</p>
+                                )}
+                                {product.material && (
+                                  <p className="text-xs text-muted-foreground">🧱 {product.material}</p>
+                                )}
+                                {product.color && (
+                                  <p className="text-xs text-muted-foreground">🎨 {product.color}</p>
+                                )}
+                                {product.brand && (
+                                  <p className="text-xs text-muted-foreground">🏷️ {product.brand}</p>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{product.category_name}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {product.apartment_details?.client_details ? (
+                                <div className="space-y-1 min-w-[150px]">
+                                  <div className="flex items-center gap-2">
+                                    <UserIcon className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm font-medium">{product.apartment_details.client_details.name}</span>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{product.apartment_details.client_details.email}</p>
+                                  <p className="text-xs text-muted-foreground">{product.apartment_details.client_details.phone}</p>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {product.apartment_details.client_details.type}
+                                  </Badge>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {product.apartment_details ? (
+                                <div className="space-y-1 min-w-[150px]">
+                                  <p className="text-sm font-medium">{product.apartment_details.name}</p>
+                                  <p className="text-xs text-muted-foreground">{product.apartment_details.type}</p>
+                                  <p className="text-xs text-muted-foreground">👤 {product.apartment_details.owner}</p>
+                                  <Badge variant={
+                                    product.apartment_details.status === 'Delivery' ? 'default' :
+                                    product.apartment_details.status === 'In Progress' ? 'secondary' : 'outline'
+                                  } className="text-xs">
+                                    {product.apartment_details.status}
+                                  </Badge>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm">{product.room || '-'}</span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className="font-medium">{product.qty || '-'}</span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {product.unit_price ? (
+                                <div className="space-y-1">
+                                  <span className="font-medium">
+                                    {typeof product.unit_price === 'number' 
+                                      ? `${product.unit_price.toFixed(2)} ${product.currency || ''}`
+                                      : `${product.unit_price} ${product.currency || ''}`}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {product.total_amount || product.total_cost ? (
+                                <div className="space-y-1">
+                                  <span className="font-semibold text-primary">
+                                    {product.total_amount || product.total_cost} {product.currency || ''}
+                                  </span>
+                                  {product.outstanding_balance && parseFloat(product.outstanding_balance) > 0 && (
+                                    <p className="text-xs text-destructive">
+                                      Due: {product.outstanding_balance} {product.currency}
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1 min-w-[120px]">
+                                <Badge variant={
+                                  product.payment_status === 'Paid' ? 'default' :
+                                  product.payment_status === 'Unpaid' ? 'destructive' :
+                                  product.payment_status === 'Partial' ? 'secondary' : 'outline'
+                                }>
+                                  {product.payment_status || 'Unknown'}
+                                </Badge>
+                                {product.paid_amount && parseFloat(product.paid_amount) > 0 && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Paid: {product.paid_amount} {product.currency}
+                                  </p>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={
+                                product.availability === 'In Stock' ? 'default' :
+                                product.availability === 'Out of Stock' ? 'destructive' :
+                                product.availability === 'Pre-order' ? 'secondary' : 'outline'
+                              }>
+                                {product.availability || 'Unknown'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    disabled={removeProduct.isPending}
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Remove Product?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to remove "{product.product}" from this vendor? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => removeProduct.mutate(product.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Remove
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </TabsContent>
 
               {/* Orders Tab */}
               <TabsContent value="orders" className="mt-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Order #</TableHead>
-                        <TableHead>Apartment</TableHead>
-                        <TableHead>Items</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {vendorOrders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.po_number}</TableCell>
-                          <TableCell>{order.apartment}</TableCell>
-                          <TableCell>{order.items_count}</TableCell>
-                          <TableCell>${order.total.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              order.status === 'delivered' ? 'default' :
-                              order.status === 'in_transit' ? 'secondary' :
-                              order.status === 'confirmed' ? 'outline' : 'outline'
-                            }>
-                              {order.status.replace('_', ' ')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{order.placed_on}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="text-center py-12">
+                  <Truck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Orders</h3>
+                  <p className="text-muted-foreground">
+                    Order history for this vendor will be displayed here.
+                  </p>
                 </div>
               </TabsContent>
 
               {/* Issues Tab */}
               <TabsContent value="issues" className="mt-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Item</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Priority</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {vendorIssues.map((issue) => (
-                        <TableRow key={issue.id}>
-                          <TableCell className="font-medium">{issue.item}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{issue.issue_type.replace('_', ' ')}</Badge>
-                          </TableCell>
-                          <TableCell className="max-w-xs truncate">{issue.description}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              issue.priority === 'high' ? 'destructive' :
-                              issue.priority === 'medium' ? 'secondary' : 'outline'
-                            }>
-                              {issue.priority}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              issue.status === 'resolved' ? 'default' :
-                              issue.status === 'in_progress' ? 'secondary' : 'outline'
-                            }>
-                              {issue.status.replace('_', ' ')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{issue.created_date}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Issues</h3>
+                  <p className="text-muted-foreground">
+                    Issue tracking for this vendor will be displayed here.
+                  </p>
                 </div>
               </TabsContent>
 
               {/* Payments Tab */}
               <TabsContent value="payments" className="mt-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Order #</TableHead>
-                        <TableHead>Apartment</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Paid Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {vendorPayments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell className="font-medium">{payment.order_no}</TableCell>
-                          <TableCell>{payment.apartment}</TableCell>
-                          <TableCell>${payment.amount.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              payment.status === 'paid' ? 'default' :
-                              payment.status === 'pending' ? 'secondary' : 'destructive'
-                            }>
-                              {payment.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{payment.due_date}</TableCell>
-                          <TableCell>{payment.paid_date || '-'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="text-center py-12">
+                  <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Payments</h3>
+                  <p className="text-muted-foreground">
+                    Payment history for this vendor will be displayed here.
+                  </p>
                 </div>
               </TabsContent>
             </Tabs>
