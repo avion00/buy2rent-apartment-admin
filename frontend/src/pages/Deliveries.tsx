@@ -15,9 +15,8 @@ import {
 } from '@/components/ui/table';
 import { 
   Calendar, Search, Clock, Truck, Eye, MapPinned, CheckCircle2, 
-  Package, TrendingUp, AlertTriangle, Filter 
+  Package, TrendingUp, AlertTriangle, Filter, Loader2 
 } from 'lucide-react';
-import { deliveries } from '@/data/mockData';
 import { DeliveryDetails } from '@/components/deliveries/DeliveryDetails';
 import { DeliveryStatusUpdate } from '@/components/deliveries/DeliveryStatusUpdate';
 import { DeliveryTracking } from '@/components/deliveries/DeliveryTracking';
@@ -29,36 +28,55 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { useDeliveries, useDeliveryStatistics } from '@/hooks/useDeliveryApi';
+import { DeliveryListItem } from '@/services/deliveryApi';
 
 const Deliveries = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
-  const [deliveriesData, setDeliveriesData] = useState(deliveries);
-  const [selectedDelivery, setSelectedDelivery] = useState<typeof deliveries[0] | null>(null);
+  const [selectedDelivery, setSelectedDelivery] = useState<DeliveryListItem | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [statusUpdateOpen, setStatusUpdateOpen] = useState(false);
   const [trackingOpen, setTrackingOpen] = useState(false);
 
-  const filteredDeliveries = deliveriesData.filter(delivery => {
-    const matchesSearch = 
-      delivery.apartment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      delivery.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      delivery.order_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      delivery.tracking_number.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || delivery.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || delivery.priority === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
+  // Use API hooks
+  const { 
+    deliveries: deliveriesData, 
+    loading, 
+    error,
+    refetch,
+    updateStatus: apiUpdateStatus 
+  } = useDeliveries({
+    search: searchTerm || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    priority: priorityFilter !== 'all' ? priorityFilter : undefined,
   });
 
-  const handleStatusUpdate = (deliveryId: number, newStatus: string, receivedBy?: string, actualDelivery?: string) => {
-    setDeliveriesData(prev => prev.map(d => 
-      d.id === deliveryId 
-        ? { ...d, status: newStatus, received_by: receivedBy || d.received_by, actual_delivery: actualDelivery || d.actual_delivery }
-        : d
-    ));
+  const { statistics, loading: statsLoading } = useDeliveryStatistics();
+
+  const handleStatusUpdate = async (
+    deliveryId: string, 
+    newStatus: string, 
+    data?: { 
+      receivedBy?: string; 
+      actualDelivery?: string; 
+      statusNotes?: string;
+      location?: string;
+      delayReason?: string;
+    }
+  ) => {
+    try {
+      await apiUpdateStatus(deliveryId, newStatus, {
+        received_by: data?.receivedBy,
+        actual_date: data?.actualDelivery,
+        status_notes: data?.statusNotes,
+        location: data?.location,
+        delay_reason: data?.delayReason,
+      });
+    } catch (err) {
+      console.error('Failed to update status:', err);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -83,7 +101,8 @@ const Deliveries = () => {
   // Chart data for vendor deliveries
   const vendorDeliveryData = Object.entries(
     deliveriesData.reduce((acc, delivery) => {
-      acc[delivery.vendor] = (acc[delivery.vendor] || 0) + 1;
+      const vendorName = delivery.vendor_name || 'Unknown';
+      acc[vendorName] = (acc[vendorName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>)
   ).map(([vendor, count]) => ({
@@ -311,107 +330,124 @@ const Deliveries = () => {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold">
-                  All Deliveries ({filteredDeliveries.length})
+                  All Deliveries ({deliveriesData.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="font-semibold text-foreground/90">Apartment</TableHead>
-                        <TableHead className="font-semibold text-foreground/90">Vendor</TableHead>
-                        <TableHead className="font-semibold text-foreground/90">Order No</TableHead>
-                        <TableHead className="font-semibold text-foreground/90">Priority</TableHead>
-                        <TableHead className="font-semibold text-foreground/90">ETA</TableHead>
-                        <TableHead className="font-semibold text-foreground/90">Time Slot</TableHead>
-                        <TableHead className="font-semibold text-foreground/90">Status</TableHead>
-                        <TableHead className="font-semibold text-foreground/90">Tracking</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground/90">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredDeliveries.length === 0 ? (
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-12">
+                    <p className="text-destructive">{error}</p>
+                    <Button variant="outline" className="mt-4" onClick={refetch}>
+                      Try Again
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={9} className="text-center py-8">
-                            <p className="text-muted-foreground">No deliveries found</p>
-                          </TableCell>
+                          <TableHead className="font-semibold text-foreground/90">Apartment</TableHead>
+                          <TableHead className="font-semibold text-foreground/90">Vendor</TableHead>
+                          <TableHead className="font-semibold text-foreground/90">Order No</TableHead>
+                          <TableHead className="font-semibold text-foreground/90">Priority</TableHead>
+                          <TableHead className="font-semibold text-foreground/90">ETA</TableHead>
+                          <TableHead className="font-semibold text-foreground/90">Time Slot</TableHead>
+                          <TableHead className="font-semibold text-foreground/90">Status</TableHead>
+                          <TableHead className="font-semibold text-foreground/90">Tracking</TableHead>
+                          <TableHead className="text-right font-semibold text-foreground/90">Actions</TableHead>
                         </TableRow>
-                      ) : (
-                        filteredDeliveries.map((delivery) => (
-                          <TableRow key={delivery.id} className="hover:bg-muted/50">
-                            <TableCell className="font-medium">{delivery.apartment}</TableCell>
-                            <TableCell className="text-muted-foreground">{delivery.vendor}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="font-mono">
-                                {delivery.order_no}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={getPriorityColor(delivery.priority)}>
-                                {delivery.priority}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">{delivery.eta}</TableCell>
-                            <TableCell className="text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4" />
-                                {delivery.time_slot}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={getStatusColor(delivery.status)}>
-                                {delivery.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="font-mono">
-                                {delivery.tracking_number}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-1">
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  title="View Details"
-                                  onClick={() => {
-                                    setSelectedDelivery(delivery);
-                                    setDetailsOpen(true);
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  title="Track Delivery"
-                                  onClick={() => {
-                                    setSelectedDelivery(delivery);
-                                    setTrackingOpen(true);
-                                  }}
-                                >
-                                  <MapPinned className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  title="Update Status"
-                                  onClick={() => {
-                                    setSelectedDelivery(delivery);
-                                    setStatusUpdateOpen(true);
-                                  }}
-                                >
-                                  <CheckCircle2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                      </TableHeader>
+                      <TableBody>
+                        {deliveriesData.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={9} className="text-center py-8">
+                              <p className="text-muted-foreground">No deliveries found</p>
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                        ) : (
+                          deliveriesData.map((delivery) => (
+                            <TableRow key={delivery.id} className="hover:bg-muted/50">
+                              <TableCell className="font-medium">{delivery.apartment_name}</TableCell>
+                              <TableCell className="text-muted-foreground">{delivery.vendor_name}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="font-mono">
+                                  {delivery.order_reference}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={getPriorityColor(delivery.priority)}>
+                                  {delivery.priority}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">{delivery.expected_date}</TableCell>
+                              <TableCell className="text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  {delivery.time_slot || '-'}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={getStatusColor(delivery.status)}>
+                                  {delivery.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {delivery.tracking_number ? (
+                                  <Badge variant="outline" className="font-mono">
+                                    {delivery.tracking_number}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-1">
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    title="View Details"
+                                    onClick={() => {
+                                      setSelectedDelivery(delivery);
+                                      setDetailsOpen(true);
+                                    }}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    title="Track Delivery"
+                                    onClick={() => {
+                                      setSelectedDelivery(delivery);
+                                      setTrackingOpen(true);
+                                    }}
+                                  >
+                                    <MapPinned className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    title="Update Status"
+                                    onClick={() => {
+                                      setSelectedDelivery(delivery);
+                                      setStatusUpdateOpen(true);
+                                    }}
+                                  >
+                                    <CheckCircle2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -437,7 +473,7 @@ const Deliveries = () => {
                     const dayNumber = i - dayOffset + 1;
                     const currentDate = new Date(today.getFullYear(), today.getMonth(), dayNumber);
                     const dateKey = currentDate.toISOString().split('T')[0];
-                    const dayDeliveries = filteredDeliveries.filter(d => d.eta === dateKey);
+                    const dayDeliveries = deliveriesData.filter(d => d.expected_date === dateKey);
                     
                     if (i < dayOffset || dayNumber > new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()) {
                       return <div key={i} className="aspect-square" />;
@@ -458,7 +494,7 @@ const Deliveries = () => {
                                 key={d.id}
                                 className={`text-[10px] px-1 py-0.5 rounded truncate ${getStatusColor(d.status)}`}
                               >
-                                {d.apartment.split(' ')[0]}
+                                {d.apartment_name?.split(' ')[0]}
                               </div>
                             ))}
                             {dayDeliveries.length > 2 && (

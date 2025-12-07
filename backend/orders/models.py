@@ -8,9 +8,12 @@ from vendors.models import Vendor
 class Order(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Draft'),
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
         ('confirmed', 'Confirmed'),
         ('in_transit', 'In Transit'),
         ('delivered', 'Delivered'),
+        ('received', 'Received'),
         ('cancelled', 'Cancelled'),
         ('returned', 'Returned'),
     ]

@@ -8,14 +8,13 @@ interface DeliveryTrackingProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   delivery: {
-    id: number;
-    apartment: string;
-    vendor: string;
-    order_no: string;
-    tracking_number: string;
+    id: string;
+    apartment_name: string;
+    vendor_name: string;
+    order_reference: string;
+    tracking_number?: string;
     status: string;
-    carrier: string;
-    eta: string;
+    expected_date: string;
   } | null;
 }
 
@@ -26,7 +25,7 @@ export const DeliveryTracking = ({ open, onOpenChange, delivery }: DeliveryTrack
     {
       date: '2025-11-10 14:30',
       status: delivery.status === 'Delivered' ? 'Delivered' : delivery.status === 'In Transit' ? 'Out for Delivery' : 'Package Ready',
-      location: delivery.status === 'Delivered' ? delivery.apartment : 'Local Hub',
+      location: delivery.status === 'Delivered' ? delivery.apartment_name : 'Local Hub',
       description: delivery.status === 'Delivered' 
         ? 'Package delivered successfully' 
         : delivery.status === 'In Transit' 
@@ -44,14 +43,14 @@ export const DeliveryTracking = ({ open, onOpenChange, delivery }: DeliveryTrack
     {
       date: '2025-11-08 16:45',
       status: 'Package Dispatched',
-      location: `${delivery.vendor} Warehouse`,
+      location: `${delivery.vendor_name} Warehouse`,
       description: 'Package has been dispatched from warehouse',
       active: false
     },
     {
       date: '2025-11-08 09:00',
       status: 'Order Confirmed',
-      location: delivery.vendor,
+      location: delivery.vendor_name,
       description: 'Order has been confirmed and is being prepared',
       active: false
     },
@@ -67,7 +66,7 @@ export const DeliveryTracking = ({ open, onOpenChange, delivery }: DeliveryTrack
             </div>
             <div>
               <DialogTitle className="text-base font-bold">Track Delivery</DialogTitle>
-              <p className="text-xs text-muted-foreground">{delivery.order_no}</p>
+              <p className="text-xs text-muted-foreground">{delivery.order_reference}</p>
             </div>
           </div>
         </DialogHeader>
@@ -89,7 +88,7 @@ export const DeliveryTracking = ({ open, onOpenChange, delivery }: DeliveryTrack
                   </div>
                 </div>
                 <Badge className="bg-primary text-primary-foreground">
-                  {delivery.carrier}
+                  Carrier
                 </Badge>
               </div>
 
@@ -98,21 +97,21 @@ export const DeliveryTracking = ({ open, onOpenChange, delivery }: DeliveryTrack
                   <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">Destination</p>
-                    <p className="text-sm font-medium truncate">{delivery.apartment}</p>
+                    <p className="text-sm font-medium truncate">{delivery.apartment_name}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Truck className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">From</p>
-                    <p className="text-sm font-medium truncate">{delivery.vendor}</p>
+                    <p className="text-sm font-medium truncate">{delivery.vendor_name}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">ETA</p>
-                    <p className="text-sm font-medium">{delivery.eta}</p>
+                    <p className="text-sm font-medium">{delivery.expected_date}</p>
                   </div>
                 </div>
               </div>

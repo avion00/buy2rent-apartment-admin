@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,14 +14,31 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, FileText, Truck, ArrowUpDown, TrendingUp, Package, DollarSign, Clock, Loader2 } from 'lucide-react';
+import { Plus, Search, FileText, Truck, ArrowUpDown, TrendingUp, Package, DollarSign, Clock, Loader2, Edit, Trash2, MoreHorizontal, Eye, CheckCircle, Copy } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Bar, BarChart, Line, LineChart, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import { OrderCreate } from '@/components/orders/OrderCreate';
-import { OrderDetails } from '@/components/orders/OrderDetails';
 import { DeliveryTracking } from '@/components/orders/DeliveryTracking';
 import { StatusUpdate } from '@/components/orders/StatusUpdate';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useOrders, useOrderStatistics } from '@/hooks/useOrderApi';
+import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 const vendorSpending = [
@@ -40,14 +58,16 @@ const monthlyOrders = [
 ];
 
 const Orders = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [vendorFilter, setVendorFilter] = useState('');
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [trackingDialogOpen, setTrackingDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Use the API hooks
   const { 
@@ -57,6 +77,7 @@ const Orders = () => {
     totalCount,
     updateStatus,
     markDelivered,
+    deleteOrder,
     refetch 
   } = useOrders({
     search: searchTerm,
@@ -84,6 +105,20 @@ const Orders = () => {
       setSelectedOrder(null);
     } catch (error) {
       console.error('Failed to update status:', error);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!selectedOrder) return;
+    try {
+      setDeleting(true);
+      await deleteOrder(selectedOrder.id);
+      setDeleteDialogOpen(false);
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error('Failed to delete order:', error);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -266,7 +301,7 @@ const Orders = () => {
             </SelectContent>
           </Select>
 
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => navigate('/orders/new')}>
             <Plus className="h-4 w-4 mr-2" />
             Create Order
           </Button>
@@ -343,41 +378,103 @@ const Orders = () => {
                         </TableCell>
                         <TableCell>{format(new Date(order.placed_on), 'yyyy-MM-dd')}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            title="View Details"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setDetailsDialogOpen(true);
-                            }}
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            title="Delivery Tracking"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setTrackingDialogOpen(true);
-                            }}
-                          >
-                            <Truck className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            title="Update Status"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setStatusDialogOpen(true);
-                            }}
-                          >
-                            <ArrowUpDown className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-muted"
+                            >
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel className="font-semibold text-xs text-muted-foreground uppercase tracking-wide">
+                              Order Actions
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            
+                            {/* View & Edit Section */}
+                            <DropdownMenuItem 
+                              onClick={() => navigate(`/orders/${order.id}`)}
+                              className="cursor-pointer py-2.5"
+                            >
+                              <Eye className="mr-3 h-4 w-4 text-muted-foreground" />
+                              <span>View Details</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => navigate(`/orders/${order.id}/edit`)}
+                              className="cursor-pointer py-2.5"
+                            >
+                              <Edit className="mr-3 h-4 w-4 text-muted-foreground" />
+                              <span>Edit Order</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                navigator.clipboard.writeText(order.po_number);
+                                toast({
+                                  title: "Copied to clipboard",
+                                  description: `PO Number ${order.po_number} has been copied.`,
+                                });
+                              }}
+                              className="cursor-pointer py-2.5"
+                            >
+                              <Copy className="mr-3 h-4 w-4 text-muted-foreground" />
+                              <span>Copy PO Number</span>
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Status & Tracking Section */}
+                            <DropdownMenuLabel className="font-semibold text-xs text-muted-foreground uppercase tracking-wide">
+                              Status & Delivery
+                            </DropdownMenuLabel>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setStatusDialogOpen(true);
+                              }}
+                              className="cursor-pointer py-2.5"
+                            >
+                              <ArrowUpDown className="mr-3 h-4 w-4 text-muted-foreground" />
+                              <span>Update Status</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setTrackingDialogOpen(true);
+                              }}
+                              className="cursor-pointer py-2.5"
+                            >
+                              <Truck className="mr-3 h-4 w-4 text-muted-foreground" />
+                              <span>Delivery Tracking</span>
+                            </DropdownMenuItem>
+                            {!order.is_delivered && (
+                              <DropdownMenuItem 
+                                onClick={() => markDelivered(order.id)}
+                                className="cursor-pointer py-2.5"
+                              >
+                                <CheckCircle className="mr-3 h-4 w-4 text-green-500" />
+                                <span className="text-green-600">Mark as Delivered</span>
+                              </DropdownMenuItem>
+                            )}
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Danger Zone */}
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="cursor-pointer py-2.5 text-destructive focus:text-destructive focus:bg-destructive/10"
+                            >
+                              <Trash2 className="mr-3 h-4 w-4" />
+                              <span>Delete Order</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                     ))
@@ -390,8 +487,6 @@ const Orders = () => {
       </div>
 
       {/* Modals */}
-      <OrderCreate open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
-      <OrderDetails open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen} order={selectedOrder} />
       <DeliveryTracking open={trackingDialogOpen} onOpenChange={setTrackingDialogOpen} order={selectedOrder} />
       <StatusUpdate 
         open={statusDialogOpen} 
@@ -399,6 +494,36 @@ const Orders = () => {
         order={selectedOrder}
         onStatusUpdate={handleStatusUpdate}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete order <strong>{selectedOrder?.po_number}</strong>? 
+              This action cannot be undone and will permanently remove the order and all its items.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteOrder}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Order'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 };

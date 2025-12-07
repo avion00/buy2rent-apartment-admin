@@ -23,6 +23,9 @@ import ProductView from "./pages/ProductView";
 import ProductEdit from "./pages/ProductEdit";
 import ProductImport from "./pages/ProductImport";
 import Orders from "./pages/Orders";
+import OrderNew from "./pages/OrderNew";
+import OrderView from "./pages/OrderView";
+import OrderEdit from "./pages/OrderEdit";
 import Deliveries from "./pages/Deliveries";
 import Issues from "./pages/Issues";
 import IssueDetail from "./pages/IssueDetail";
@@ -66,6 +69,9 @@ const App = () => (
           <Route path="/products/:id" element={<ProtectedRoute><ProductView /></ProtectedRoute>} />
           <Route path="/products/:id/edit" element={<ProtectedRoute><ProductEdit /></ProtectedRoute>} />
           <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+          <Route path="/orders/new" element={<ProtectedRoute><OrderNew /></ProtectedRoute>} />
+          <Route path="/orders/:id" element={<ProtectedRoute><OrderView /></ProtectedRoute>} />
+          <Route path="/orders/:id/edit" element={<ProtectedRoute><OrderEdit /></ProtectedRoute>} />
           <Route path="/deliveries" element={<ProtectedRoute><Deliveries /></ProtectedRoute>} />
           <Route path="/issues" element={<ProtectedRoute><Issues /></ProtectedRoute>} />
           <Route path="/issues/:issueId" element={<ProtectedRoute><IssueDetail /></ProtectedRoute>} />

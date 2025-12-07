@@ -45,7 +45,11 @@ export interface OrderItem {
   quantity: number;
   unit_price: string | number;
   total_price: string | number;
+  description?: string;
+  specifications?: Record<string, any>;
   notes?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Order {
@@ -65,6 +69,7 @@ export interface Order {
   actual_delivery?: string;
   is_delivered: boolean;
   tracking_number?: string;
+  shipping_address?: string;
   notes?: string;
   created_at?: string;
   updated_at?: string;

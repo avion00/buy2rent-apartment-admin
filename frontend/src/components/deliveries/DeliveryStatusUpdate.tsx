@@ -8,16 +8,24 @@ import { useToast } from '@/hooks/use-toast';
 import { Clock, Truck, PackageCheck, XCircle, Calendar, User } from 'lucide-react';
 import { LocationPicker } from './LocationPicker';
 
+interface StatusUpdateData {
+  receivedBy?: string;
+  actualDelivery?: string;
+  statusNotes?: string;
+  location?: string;
+  delayReason?: string;
+}
+
 interface DeliveryStatusUpdateProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   delivery: {
-    id: number;
-    order_no: string;
-    apartment: string;
+    id: string;
+    order_reference: string;
+    apartment_name: string;
     status: string;
   } | null;
-  onStatusUpdate: (deliveryId: number, newStatus: string, receivedBy?: string, actualDelivery?: string) => void;
+  onStatusUpdate: (deliveryId: string, newStatus: string, data?: StatusUpdateData) => void;
 }
 
 export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpdate }: DeliveryStatusUpdateProps) => {
@@ -106,12 +114,32 @@ export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpd
       return;
     }
 
-    onStatusUpdate(
-      delivery.id, 
-      selectedStatus, 
-      selectedStatus === 'Delivered' ? receivedBy : undefined,
-      selectedStatus === 'Delivered' ? (actualDelivery || new Date().toISOString().split('T')[0]) : undefined
-    );
+    // Build status notes based on the status
+    let statusNotes = '';
+    switch (selectedStatus) {
+      case 'Scheduled':
+        statusNotes = scheduledReason || `Scheduled for ${scheduledTime}`;
+        break;
+      case 'In Transit':
+        statusNotes = currentLocation ? `Package is at ${currentLocation}` : 'Package is in transit';
+        break;
+      case 'Delivered':
+        statusNotes = `Delivered and received by ${receivedBy}`;
+        break;
+      case 'Delayed':
+        statusNotes = delayReason;
+        break;
+      default:
+        statusNotes = `Status changed to ${selectedStatus}`;
+    }
+
+    onStatusUpdate(delivery.id, selectedStatus, {
+      receivedBy: selectedStatus === 'Delivered' ? receivedBy : undefined,
+      actualDelivery: selectedStatus === 'Delivered' ? (actualDelivery || new Date().toISOString().split('T')[0]) : undefined,
+      statusNotes,
+      location: currentLocation || undefined,
+      delayReason: selectedStatus === 'Delayed' ? delayReason : undefined,
+    });
 
     toast({
       title: "Status Updated",
@@ -281,9 +309,9 @@ export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpd
         <DialogHeader className="space-y-2 pb-3 border-b">
           <DialogTitle className="text-lg font-semibold">Update Delivery Status</DialogTitle>
           <DialogDescription className="flex items-center gap-2">
-            <span className="font-mono text-sm font-medium text-primary">{delivery.order_no}</span>
+            <span className="font-mono text-sm font-medium text-primary">{delivery.order_reference}</span>
             <span className="text-muted-foreground">•</span>
-            <span className="text-sm">{delivery.apartment}</span>
+            <span className="text-sm">{delivery.apartment_name}</span>
           </DialogDescription>
         </DialogHeader>
 
