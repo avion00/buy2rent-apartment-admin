@@ -22,7 +22,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             'id', 'po_number', 'apartment', 'apartment_name', 'vendor', 'vendor_name',
-            'items_count', 'total', 'status', 'placed_on', 'expected_delivery', 
+            'items_count', 'total', 'status', 'confirmation_code', 'placed_on', 'expected_delivery', 
             'actual_delivery', 'notes', 'shipping_address', 'tracking_number',
             'is_delivered', 'items', 'created_at', 'updated_at'
         ]
@@ -64,6 +64,6 @@ class OrderListSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             'id', 'po_number', 'apartment_name', 'vendor_name',
-            'items_count', 'total', 'status', 'placed_on', 'expected_delivery', 
-            'actual_delivery', 'is_delivered'
+            'items_count', 'total', 'status', 'confirmation_code', 'placed_on', 'expected_delivery', 
+            'actual_delivery', 'tracking_number', 'is_delivered'
         ]

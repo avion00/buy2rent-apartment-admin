@@ -59,10 +59,12 @@ export interface Order {
   items_count: number;
   total: string | number;
   status: string;
+  confirmation_code?: string;
   placed_on: string;
   expected_delivery?: string;
   actual_delivery?: string;
   is_delivered: boolean;
+  tracking_number?: string;
   notes?: string;
   created_at?: string;
   updated_at?: string;

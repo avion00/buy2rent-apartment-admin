@@ -33,6 +33,7 @@ class Order(models.Model):
     items_count = models.PositiveIntegerField(default=0, help_text="Total number of items in this order")
     total = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], help_text="Total order amount")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    confirmation_code = models.CharField(max_length=100, blank=True, help_text="Vendor confirmation reference")
     
     # Important dates
     placed_on = models.DateField(help_text="Date when order was placed")

@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Plus, Search, FileText, Truck, ArrowUpDown, TrendingUp, Package, DollarSign, Clock, Loader2 } from 'lucide-react';
-import { Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
+import { Bar, BarChart, Line, LineChart, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { OrderCreate } from '@/components/orders/OrderCreate';
 import { OrderDetails } from '@/components/orders/OrderDetails';
@@ -191,15 +191,13 @@ const Orders = () => {
                 }}
                 className="h-[280px]"
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={vendorSpending}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="vendor" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart data={vendorSpending}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="vendor" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <Tooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                </BarChart>
               </ChartContainer>
             </CardContent>
           </Card>
@@ -217,17 +215,15 @@ const Orders = () => {
                 }}
                 className="h-[280px]"
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyOrders}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="month" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Line type="monotone" dataKey="orders" stroke="hsl(var(--primary))" strokeWidth={2} />
-                    <Line type="monotone" dataKey="spending" stroke="hsl(var(--chart-2))" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <LineChart data={monthlyOrders}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="month" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <Tooltip content={<ChartTooltipContent />} />
+                  <Legend />
+                  <Line type="monotone" dataKey="orders" stroke="hsl(var(--primary))" strokeWidth={2} />
+                  <Line type="monotone" dataKey="spending" stroke="hsl(var(--chart-2))" strokeWidth={2} />
+                </LineChart>
               </ChartContainer>
             </CardContent>
           </Card>
@@ -327,19 +323,15 @@ const Orders = () => {
                         <TableCell>{order.items_count} items</TableCell>
                         <TableCell>€{Number(order.total).toLocaleString()}</TableCell>
                         <TableCell>
-                          {order.status === 'confirmed' ? (
-                            <Badge variant="outline" className="text-xs">
-                              Confirmed
-                            </Badge>
+                          {order.confirmation_code ? (
+                            <span className="text-xs font-mono">{order.confirmation_code}</span>
                           ) : (
                             <span className="text-muted-foreground text-xs">-</span>
                           )}
                         </TableCell>
                         <TableCell>
-                          {order.is_delivered ? (
-                            <Badge variant="outline" className="text-xs">
-                              Delivered
-                            </Badge>
+                          {order.tracking_number ? (
+                            <span className="text-xs font-mono">{order.tracking_number}</span>
                           ) : (
                             <span className="text-muted-foreground text-xs">-</span>
                           )}
