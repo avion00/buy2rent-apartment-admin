@@ -7,7 +7,7 @@ from .serializers import PaymentSerializer, PaymentHistorySerializer
 
 @add_viewset_tags('Payments', 'Payment')
 class PaymentViewSet(viewsets.ModelViewSet):
-    queryset = Payment.objects.select_related('apartment', 'vendor').prefetch_related('payment_history').all()
+    queryset = Payment.objects.select_related('apartment', 'vendor').prefetch_related('payment_history', 'products__category').all()
     serializer_class = PaymentSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['apartment', 'vendor', 'status']

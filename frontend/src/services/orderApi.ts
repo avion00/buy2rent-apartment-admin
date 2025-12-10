@@ -41,6 +41,8 @@ export interface OrderItem {
   id?: string;
   product: string;
   product_name?: string;
+  product_image?: string;
+  product_image_url?: string;
   sku?: string;
   quantity: number;
   unit_price: string | number;

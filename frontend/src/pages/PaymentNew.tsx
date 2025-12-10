@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EnhancedTextarea } from "@/components/ui/enhanced-textarea";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -13,34 +15,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { toast } from "sonner";
 import { useCreatePayment } from "@/hooks/usePaymentApi";
+import { useOrders } from "@/hooks/useOrderApi";
+import { Order, OrderItem } from "@/services/orderApi";
 import { 
   ArrowLeft, 
   Loader2, 
   Save, 
-  Building2, 
   DollarSign, 
-  FileText, 
   Calendar,
   CreditCard,
-  Wallet,
   Building,
-  Store,
   Receipt,
   Banknote,
   Package,
-  CheckSquare,
-  Square
+  CheckCircle2,
+  ShoppingCart,
+  TrendingUp,
+  AlertCircle,
+  Search,
+  ChevronRight,
+  Wallet,
+  Building2,
+  User,
+  Clock
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -51,9 +50,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useApartments } from "@/hooks/useApartmentApi";
-import { useVendors } from "@/hooks/useVendorApi";
-import { useProducts } from "@/hooks/useProductApi";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 const PaymentNew = () => {
   const navigate = useNavigate();

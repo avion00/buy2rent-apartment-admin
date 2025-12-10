@@ -355,7 +355,7 @@ const Deliveries = () => {
                           <TableHead className="font-semibold text-foreground/90">Order No</TableHead>
                           <TableHead className="font-semibold text-foreground/90">Priority</TableHead>
                           <TableHead className="font-semibold text-foreground/90">ETA</TableHead>
-                          <TableHead className="font-semibold text-foreground/90">Time Slot</TableHead>
+                          {/* <TableHead className="font-semibold text-foreground/90">Time Slot</TableHead> */}
                           <TableHead className="font-semibold text-foreground/90">Status</TableHead>
                           <TableHead className="font-semibold text-foreground/90">Tracking</TableHead>
                           <TableHead className="text-right font-semibold text-foreground/90">Actions</TableHead>
@@ -384,12 +384,12 @@ const Deliveries = () => {
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-muted-foreground">{delivery.expected_date}</TableCell>
-                              <TableCell className="text-muted-foreground">
+                              {/* <TableCell className="text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <Clock className="h-4 w-4" />
                                   {delivery.time_slot || '-'}
                                 </div>
-                              </TableCell>
+                              </TableCell> */}
                               <TableCell>
                                 <Badge variant="outline" className={getStatusColor(delivery.status)}>
                                   {delivery.status}

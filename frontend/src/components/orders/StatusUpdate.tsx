@@ -18,11 +18,38 @@ interface StatusUpdateProps {
   onStatusUpdate: (orderId: string | number, newStatus: string) => void;
 }
 
-const statusFlow = {
-  'Draft': 'Sent',
-  'Sent': 'Confirmed',
-  'Confirmed': 'Received',
-  'Received': 'Received'
+// Status flow mapping - lowercase to match backend values
+const statusFlow: Record<string, string> = {
+  'draft': 'pending',
+  'pending': 'sent',
+  'sent': 'confirmed',
+  'confirmed': 'in_transit',
+  'in_transit': 'delivered',
+  'delivered': 'received',
+  'received': 'received',
+  'cancelled': 'cancelled',
+  'returned': 'returned',
+  // Also support capitalized versions for backward compatibility
+  'Draft': 'pending',
+  'Pending': 'sent',
+  'Sent': 'confirmed',
+  'Confirmed': 'in_transit',
+  'In Transit': 'delivered',
+  'Delivered': 'received',
+  'Received': 'received',
+};
+
+// Display names for statuses
+const statusDisplayNames: Record<string, string> = {
+  'draft': 'Draft',
+  'pending': 'Pending',
+  'sent': 'Sent',
+  'confirmed': 'Confirmed',
+  'in_transit': 'In Transit',
+  'delivered': 'Delivered',
+  'received': 'Received',
+  'cancelled': 'Cancelled',
+  'returned': 'Returned',
 };
 
 export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: StatusUpdateProps) => {
@@ -31,13 +58,18 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
 
   if (!order) return null;
 
-  const nextStatus = statusFlow[order.status as keyof typeof statusFlow];
-  const isAlreadyReceived = order.status === 'Received';
+  const currentStatus = order.status.toLowerCase();
+  const nextStatus = statusFlow[order.status] || statusFlow[currentStatus];
+  const isTerminalStatus = ['received', 'cancelled', 'returned'].includes(currentStatus);
+  
+  // Get display names
+  const currentDisplayName = statusDisplayNames[currentStatus] || order.status;
+  const nextDisplayName = statusDisplayNames[nextStatus] || nextStatus;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isAlreadyReceived) {
+    if (isTerminalStatus) {
       toast({
         title: "Already Completed",
         description: "This order has already been received",
@@ -49,7 +81,7 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
     
     toast({
       title: "Status Updated",
-      description: `Order ${order.po_number} status changed to ${nextStatus}`,
+      description: `Order ${order.po_number} status changed to ${nextDisplayName}`,
     });
     
     setNotes('');
@@ -57,13 +89,19 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
   };
 
   const getStatusColor = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
     const colors: Record<string, string> = {
-      'Draft': 'bg-gray-500/10 text-gray-500',
-      'Sent': 'bg-blue-500/10 text-blue-500',
-      'Confirmed': 'bg-yellow-500/10 text-yellow-500',
-      'Received': 'bg-green-500/10 text-green-500',
+      'draft': 'bg-gray-500/10 text-gray-500',
+      'pending': 'bg-orange-500/10 text-orange-500',
+      'sent': 'bg-blue-500/10 text-blue-500',
+      'confirmed': 'bg-purple-500/10 text-purple-500',
+      'in_transit': 'bg-yellow-500/10 text-yellow-500',
+      'delivered': 'bg-teal-500/10 text-teal-500',
+      'received': 'bg-green-500/10 text-green-500',
+      'cancelled': 'bg-red-500/10 text-red-500',
+      'returned': 'bg-pink-500/10 text-pink-500',
     };
-    return colors[status] || 'bg-gray-500/10 text-gray-500';
+    return colors[normalizedStatus] || 'bg-gray-500/10 text-gray-500';
   };
 
   return (
@@ -84,16 +122,16 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
           <div className="bg-muted p-4 rounded-lg">
             <div className="flex items-center justify-center gap-4">
               <Badge className={getStatusColor(order.status)}>
-                {order.status}
+                {currentDisplayName}
               </Badge>
               <ArrowRight className="h-5 w-5 text-muted-foreground" />
               <Badge className={getStatusColor(nextStatus)}>
-                {nextStatus}
+                {nextDisplayName}
               </Badge>
             </div>
           </div>
 
-          {isAlreadyReceived ? (
+          {isTerminalStatus ? (
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 text-center">
               <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
               <p className="text-sm font-medium">Order Already Received</p>
@@ -107,16 +145,31 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
               <div className="space-y-2 text-sm">
                 <p className="font-medium">What happens next?</p>
                 <ul className="space-y-1 text-muted-foreground ml-4 list-disc text-xs">
-                  {nextStatus === 'Sent' && (
+                  {nextStatus === 'pending' && (
+                    <li>Order will be marked as pending review</li>
+                  )}
+                  {nextStatus === 'sent' && (
                     <li>Order will be marked as sent to vendor</li>
                   )}
-                  {nextStatus === 'Confirmed' && (
+                  {nextStatus === 'confirmed' && (
                     <>
                       <li>Order confirmed by vendor</li>
                       <li>Payment may be processed</li>
                     </>
                   )}
-                  {nextStatus === 'Received' && (
+                  {nextStatus === 'in_transit' && (
+                    <>
+                      <li>Order is being shipped</li>
+                      <li>Delivery tracking will be available</li>
+                    </>
+                  )}
+                  {nextStatus === 'delivered' && (
+                    <>
+                      <li>Items have been delivered</li>
+                      <li>Awaiting confirmation of receipt</li>
+                    </>
+                  )}
+                  {nextStatus === 'received' && (
                     <>
                       <li>Items marked as received</li>
                       <li>Order will be completed</li>
@@ -145,9 +198,9 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} size="sm">
               Cancel
             </Button>
-            {!isAlreadyReceived && (
+            {!isTerminalStatus && (
               <Button type="submit" size="sm">
-                Update to {nextStatus}
+                Update to {nextDisplayName}
               </Button>
             )}
           </DialogFooter>

@@ -1,5 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { issueApi } from "@/services/issueApi";
 import { useNavigate } from "react-router-dom";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +51,7 @@ import {
   Archive,
   Timer,
   Target,
+  Loader2,
 } from "lucide-react";
 import {
   AreaChart,
@@ -72,13 +75,46 @@ import { cn } from "@/lib/utils";
 import { useDataStore } from "@/stores/useDataStore";
 import { format, differenceInDays, subDays } from "date-fns";
 import { IssueManagementModal } from "@/components/modals/IssueManagementModal";
-import { ReportIssueModal } from "@/components/modals/ReportIssueModal";
 import { BulkEmailModal } from "@/components/modals/BulkEmailModal";
 import * as XLSX from "xlsx";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Issues = () => {
   const navigate = useNavigate();
-  const { issues, apartments, products, vendors, updateIssue } = useDataStore();
+  const { apartments, products, vendors, updateIssue } = useDataStore();
+  
+  // API Issues state
+  const [apiIssues, setApiIssues] = useState<any[]>([]);
+  const [issuesLoading, setIssuesLoading] = useState(true);
+  
+  // Fetch issues from API
+  useEffect(() => {
+    const fetchIssues = async () => {
+      setIssuesLoading(true);
+      try {
+        const response = await issueApi.getIssues({ page_size: 100 });
+        setApiIssues(response.results || []);
+      } catch (error) {
+        console.error('Failed to fetch issues:', error);
+        toast.error('Failed to load issues');
+      } finally {
+        setIssuesLoading(false);
+      }
+    };
+    fetchIssues();
+  }, []);
+  
+  // Use API issues
+  const issues = apiIssues;
 
   // View Mode
   const [viewMode, setViewMode] = useState<"kanban" | "table" | "grid">("kanban");
@@ -96,9 +132,13 @@ const Issues = () => {
   // Modal states
   const [selectedIssue, setSelectedIssue] = useState<any>(null);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
-  const [isReportIssueOpen, setIsReportIssueOpen] = useState(false);
   const [isBulkEmailOpen, setIsBulkEmailOpen] = useState(false);
   const [selectedIssuesForEmail, setSelectedIssuesForEmail] = useState<any[]>([]);
+  
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [issueToDelete, setIssueToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Mock priority data (in real app, this would come from the store)
   const issuePriorities = useMemo(() => {
@@ -153,23 +193,25 @@ const Issues = () => {
     }
   };
 
-  // Filter issues
+  // Filter issues - updated for API data structure
   const filteredIssues = useMemo(() => {
     return issues.filter((issue) => {
-      const apartmentName = getApartmentName(issue.apartmentId);
-      const priority = issuePriorities[issue.id];
+      const apartmentName = issue.apartment_details?.name || issue.apartment_name || getApartmentName(issue.apartment);
+      const productName = issue.display_product_name || issue.product_name || issue.product_details?.product || '';
+      const vendorName = issue.vendor_name || issue.vendor_details?.name || issue.vendor || '';
+      const priority = issue.priority || issuePriorities[issue.id];
 
       const matchesSearch =
-        issue.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         issue.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        issue.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        vendorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         apartmentName.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesStatus = statusFilter === "All" || issue.status === statusFilter;
-      const matchesType = typeFilter === "All" || issue.type === typeFilter;
+      const matchesType = typeFilter === "All" || issue.type?.includes(typeFilter);
       const matchesPriority = priorityFilter === "All" || priority === priorityFilter;
-      const matchesApartment = apartmentFilter === "All" || issue.apartmentId === apartmentFilter;
-      const matchesVendor = vendorFilter === "All" || issue.vendor === vendorFilter;
+      const matchesApartment = apartmentFilter === "All" || issue.apartment === apartmentFilter;
+      const matchesVendor = vendorFilter === "All" || issue.vendor === vendorFilter || vendorName === vendorFilter;
 
       return matchesSearch && matchesStatus && matchesType && matchesPriority && matchesApartment && matchesVendor;
     });
@@ -182,8 +224,8 @@ const Issues = () => {
     const pending = filteredIssues.filter((i) => i.status === "Pending Vendor Response").length;
     const resolved = filteredIssues.filter((i) => i.status === "Resolution Agreed").length;
     const closed = filteredIssues.filter((i) => i.status === "Closed").length;
-    const critical = filteredIssues.filter((i) => issuePriorities[i.id] === "Critical").length;
-    const withAI = filteredIssues.filter((i) => i.aiActivated).length;
+    const critical = filteredIssues.filter((i) => (i.priority || issuePriorities[i.id]) === "Critical").length;
+    const withAI = filteredIssues.filter((i) => i.ai_activated).length;
 
     // Calculate average resolution time (mock data)
     const avgResolutionDays = 5.2;
@@ -245,8 +287,8 @@ const Issues = () => {
       .filter((item) => item.value > 0);
   }, [filteredIssues]);
 
-  // Get unique vendors
-  const uniqueVendors = Array.from(new Set(issues.map((i) => i.vendor))).sort();
+  // Get unique vendors - use vendor_name from API
+  const uniqueVendors = Array.from(new Set(issues.map((i) => i.vendor_name || i.vendor_details?.name || i.vendor))).filter(Boolean).sort();
 
   // Clear filters
   const clearFilters = () => {
@@ -273,23 +315,53 @@ const Issues = () => {
     navigate(`/issues/${issue.id}`);
   };
 
+  const handleEditIssue = (e: React.MouseEvent, issue: any) => {
+    e.stopPropagation();
+    navigate(`/issues/${issue.id}/edit`);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, issue: any) => {
+    e.stopPropagation();
+    setIssueToDelete(issue);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!issueToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await issueApi.deleteIssue(issueToDelete.id);
+      toast.success('Issue deleted successfully');
+      // Refresh the issues list
+      const response = await issueApi.getIssues({});
+      setApiIssues(response.results || []);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete issue');
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setIssueToDelete(null);
+    }
+  };
+
   const handleExport = () => {
     try {
-      // Prepare data for export
+      // Prepare data for export - updated for API data structure
       const exportData = filteredIssues.map((issue) => ({
         "Issue ID": issue.id,
-        Product: issue.productName,
+        Product: issue.display_product_name || issue.product_name || issue.product_details?.product || 'Unknown',
         Type: issue.type,
-        Priority: issuePriorities[issue.id],
+        Priority: issue.priority || issuePriorities[issue.id],
         Status: issue.status,
-        Apartment: getApartmentName(issue.apartmentId),
-        Vendor: issue.vendor,
+        Apartment: issue.apartment_details?.name || issue.apartment_name || getApartmentName(issue.apartment),
+        Vendor: issue.vendor_name || issue.vendor_details?.name || issue.vendor,
         Description: issue.description,
-        "Reported Date": format(new Date(issue.reportedOn), "yyyy-MM-dd"),
-        "Days Open": differenceInDays(new Date(), new Date(issue.reportedOn)),
-        "AI Active": issue.aiActivated ? "Yes" : "No",
+        "Reported Date": issue.reported_on ? format(new Date(issue.reported_on), "yyyy-MM-dd") : 'Unknown',
+        "Days Open": issue.reported_on ? differenceInDays(new Date(), new Date(issue.reported_on)) : 0,
+        "AI Active": issue.ai_activated ? "Yes" : "No",
         Photos: issue.photos?.length || 0,
-        Communications: issue.aiCommunicationLog?.length || 0,
+        Communications: issue.ai_communication_log?.length || 0,
       }));
 
       // Create worksheet
@@ -342,6 +414,46 @@ const Issues = () => {
     setIsBulkEmailOpen(true);
   };
 
+  // Drag and drop handler for Kanban board
+  const handleDragEnd = useCallback(async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    // Dropped outside a droppable area
+    if (!destination) return;
+
+    // Dropped in the same position
+    if (destination.droppableId === source.droppableId && destination.index === source.index) {
+      return;
+    }
+
+    const newStatus = destination.droppableId;
+    const issueId = draggableId;
+
+    // Find the issue
+    const issue = filteredIssues.find(i => i.id === issueId);
+    if (!issue) return;
+
+    // If status hasn't changed, do nothing
+    if (issue.status === newStatus) return;
+
+    try {
+      // Optimistically update the UI
+      toast.loading(`Moving issue to ${newStatus}...`, { id: 'drag-status' });
+
+      // Call API to update status
+      await issueApi.updateIssue(issueId, { status: newStatus });
+
+      // Refresh the issues list
+      const response = await issueApi.getIssues();
+      setApiIssues(response.results || []);
+
+      toast.success(`Issue moved to ${newStatus}`, { id: 'drag-status' });
+    } catch (error) {
+      console.error('Failed to update issue status:', error);
+      toast.error('Failed to update issue status', { id: 'drag-status' });
+    }
+  }, [filteredIssues]);
+
   return (
     <PageLayout title="Issues Management">
       <div className="space-y-6">
@@ -351,7 +463,7 @@ const Issues = () => {
             <Button
               size="lg"
               className="h-11 shadow-lg hover:shadow-xl transition-shadow"
-              onClick={() => setIsReportIssueOpen(true)}
+              onClick={() => navigate('/issues/new')}
             >
               <Plus className="h-5 w-5 mr-2" />
               Report Issue
@@ -721,101 +833,207 @@ const Issues = () => {
           </CardContent>
         </Card>
 
-        {/* Kanban View */}
+        {/* Kanban View with Drag & Drop */}
         {viewMode === "kanban" && (
-          <div className="overflow-x-auto">
-            <div className="flex gap-4 pb-4" style={{ minWidth: "min-content" }}>
-              {Object.entries(issuesByStatus).map(([status, statusIssues]) => (
-                <div key={status} className="flex-shrink-0 w-96">
-                  <Card className="h-full">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base font-semibold">{status}</CardTitle>
-                        <Badge className={getStatusColor(status)}>{statusIssues.length}</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
-                      {statusIssues.map((issue) => {
-                        const priority = issuePriorities[issue.id];
-                        const daysOpen = differenceInDays(new Date(), new Date(issue.reportedOn));
-
-                        return (
-                          <Card
-                            key={issue.id}
-                            className="hover:shadow-md transition-all cursor-pointer border-l-4"
-                            style={{
-                              borderLeftColor:
-                                priority === "Critical"
-                                  ? "hsl(var(--danger))"
-                                  : priority === "High"
-                                    ? "hsl(var(--warning))"
-                                    : "hsl(var(--border))",
-                            }}
-                            onClick={() => handleViewIssue(issue)}
-                          >
-                            <CardContent className="p-4 space-y-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    {getTypeIcon(issue.type)}
-                                    <p className="font-semibold text-sm truncate">{issue.productName}</p>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground line-clamp-2">{issue.description}</p>
-                                </div>
-                                <Badge className={getPriorityColor(priority)} variant="outline">
-                                  {priority}
-                                </Badge>
-                              </div>
-
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <Badge variant="outline" className="text-xs">
-                                  {getApartmentName(issue.apartmentId)}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {issue.vendor}
-                                </Badge>
-                                {issue.aiActivated && (
-                                  <Badge className="text-xs bg-primary/10 text-primary border-primary/20">
-                                    <Bot className="h-3 w-3 mr-1" />
-                                    AI
-                                  </Badge>
-                                )}
-                              </div>
-
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {daysOpen}d ago
-                                </div>
-                                {issue.photos && issue.photos.length > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <ImageIcon className="h-3 w-3" />
-                                    {issue.photos.length}
-                                  </div>
-                                )}
-                                {issue.aiCommunicationLog && issue.aiCommunicationLog.length > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <MessageSquare className="h-3 w-3" />
-                                    {issue.aiCommunicationLog.length}
-                                  </div>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                      {statusIssues.length === 0 && (
-                        <div className="text-center py-12 text-sm text-muted-foreground">
-                          <Package className="h-12 w-12 mx-auto mb-2 text-muted-foreground/30" />
-                          No issues
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="overflow-x-auto">
+              <div className="flex gap-4 pb-4" style={{ minWidth: "min-content" }}>
+                {Object.entries(issuesByStatus).map(([status, statusIssues]) => (
+                  <div key={status} className="flex-shrink-0 w-96">
+                    <Card className="h-full">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base font-semibold">{status}</CardTitle>
+                          <Badge className={getStatusColor(status)}>{statusIssues.length}</Badge>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              ))}
+                      </CardHeader>
+                      <Droppable droppableId={status}>
+                        {(provided, snapshot) => (
+                          <CardContent 
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            className={cn(
+                              "space-y-3 max-h-[600px] overflow-y-auto min-h-[100px] transition-colors",
+                              snapshot.isDraggingOver && "bg-primary/5 border-2 border-dashed border-primary/30 rounded-lg"
+                            )}
+                          >
+                            {statusIssues.map((issue, index) => {
+                              const priority = issue.priority || issuePriorities[issue.id];
+                              const daysOpen = issue.reported_on ? differenceInDays(new Date(), new Date(issue.reported_on)) : 0;
+
+                              return (
+                                <Draggable key={issue.id} draggableId={issue.id} index={index}>
+                                  {(provided, snapshot) => (
+                                    <Card
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      className={cn(
+                                        "hover:shadow-md transition-all cursor-grab border-l-4",
+                                        snapshot.isDragging && "shadow-xl rotate-2 cursor-grabbing ring-2 ring-primary"
+                                      )}
+                                      style={{
+                                        ...provided.draggableProps.style,
+                                        borderLeftColor:
+                                          priority === "Critical"
+                                            ? "hsl(var(--danger))"
+                                            : priority === "High"
+                                              ? "hsl(var(--warning))"
+                                              : "hsl(var(--border))",
+                                      }}
+                                      onClick={() => !snapshot.isDragging && handleViewIssue(issue)}
+                                    >
+                                      <CardContent className="p-3 space-y-2">
+                                        {(() => {
+                                          const items = issue.items || [];
+                                          const itemsCount = items.length || issue.items_count || 0;
+                                          const displayItems = itemsCount > 0 ? items.slice(0, 4) : [];
+                                          const remainingCount = Math.max(0, itemsCount - 4);
+                                          
+                                          // Get single product image for fallback
+                                          const singleProductImage = items[0]?.product_image ||
+                                            issue.order_item_details?.product_image || 
+                                            issue.product_details?.product_image || 
+                                            issue.product_details?.image_url;
+
+                                          return (
+                                            <>
+                                              {/* Header */}
+                                              <div className="flex items-start justify-between gap-2">
+                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                  {getTypeIcon(issue.type)}
+                                                  <span className="font-semibold text-sm truncate">
+                                                    {issue.display_product_name || issue.product_name || issue.product_details?.product || 'Unknown'}
+                                                  </span>
+                                                </div>
+                                                <Badge className={getPriorityColor(priority)} variant="outline">
+                                                  {priority}
+                                                </Badge>
+                                              </div>
+
+                                              {/* Description */}
+                                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                                {issue.description}
+                                              </p>
+
+                                              {/* Badges Row */}
+                                              <div className="flex items-center gap-2 flex-wrap">
+                                                <Badge variant="outline" className="text-xs">
+                                                  {issue.apartment_details?.name || issue.apartment_name || getApartmentName(issue.apartment)}
+                                                </Badge>
+                                                <Badge variant="outline" className="text-xs">
+                                                  {issue.vendor_name || issue.vendor_details?.name || issue.vendor}
+                                                </Badge>
+                                                {issue.ai_activated && (
+                                                  <Badge className="text-xs bg-primary/10 text-primary border-primary/20">
+                                                    <Bot className="h-3 w-3 mr-1" />
+                                                    AI
+                                                  </Badge>
+                                                )}
+                                              </div>
+
+                                              {/* Footer with time, actions, and stacked product images */}
+                                              <div className="flex items-center justify-between pt-1">
+                                                <div className="flex items-center gap-2">
+                                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                    <Clock className="h-3 w-3" />
+                                                    {daysOpen}d ago
+                                                  </div>
+                                                  {/* Edit/Delete Actions */}
+                                                  <div className="flex items-center gap-0.5">
+                                                    <button
+                                                      onClick={(e) => handleEditIssue(e, issue)}
+                                                      className="p-1 rounded hover:bg-muted transition-colors"
+                                                      title="Edit Issue"
+                                                    >
+                                                      <Edit className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                                                    </button>
+                                                    <button
+                                                      onClick={(e) => handleDeleteClick(e, issue)}
+                                                      className="p-1 rounded hover:bg-destructive/10 transition-colors"
+                                                      title="Delete Issue"
+                                                    >
+                                                      <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                                
+                                                {/* Stacked Product Images - Bottom Right */}
+                                                <div className="flex items-center -space-x-2">
+                                                  {itemsCount > 0 ? (
+                                                    <>
+                                                      {displayItems.map((item, idx) => (
+                                                        <div 
+                                                          key={item.id || idx} 
+                                                          className="relative"
+                                                          style={{ zIndex: 10 - idx }}
+                                                        >
+                                                          {item.product_image ? (
+                                                            <img 
+                                                              src={item.product_image} 
+                                                              alt={item.product_name || 'Product'} 
+                                                              className="w-7 h-7 rounded-full object-cover border-2 border-background shadow-sm"
+                                                            />
+                                                          ) : (
+                                                            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center border-2 border-background shadow-sm">
+                                                              <Package className="h-3 w-3 text-muted-foreground" />
+                                                            </div>
+                                                          )}
+                                                        </div>
+                                                      ))}
+                                                      {remainingCount > 0 && (
+                                                        <div 
+                                                          className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center border-2 border-background shadow-sm text-[10px] font-semibold text-primary"
+                                                          style={{ zIndex: 1 }}
+                                                        >
+                                                          +{remainingCount}
+                                                        </div>
+                                                      )}
+                                                    </>
+                                                  ) : singleProductImage ? (
+                                                    <img 
+                                                      src={singleProductImage} 
+                                                      alt={issue.display_product_name || 'Product'} 
+                                                      className="w-7 h-7 rounded-full object-cover border-2 border-background shadow-sm"
+                                                    />
+                                                  ) : (
+                                                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center border-2 border-background shadow-sm">
+                                                      <Package className="h-3 w-3 text-muted-foreground" />
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </>
+                                          );
+                                        })()}
+                                      </CardContent>
+                                    </Card>
+                                  )}
+                                </Draggable>
+                              );
+                            })}
+                            {provided.placeholder}
+                            {statusIssues.length === 0 && !snapshot.isDraggingOver && (
+                              <div className="text-center py-12 text-sm text-muted-foreground">
+                                <Package className="h-12 w-12 mx-auto mb-2 text-muted-foreground/30" />
+                                No issues
+                              </div>
+                            )}
+                            {statusIssues.length === 0 && snapshot.isDraggingOver && (
+                              <div className="text-center py-8 text-sm text-primary">
+                                <Package className="h-10 w-10 mx-auto mb-2 text-primary/50" />
+                                Drop here to move to {status}
+                              </div>
+                            )}
+                          </CardContent>
+                        )}
+                      </Droppable>
+                    </Card>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </DragDropContext>
         )}
 
         {/* Table View */}
@@ -848,8 +1066,8 @@ const Issues = () => {
                       </TableRow>
                     ) : (
                       filteredIssues.map((issue) => {
-                        const priority = issuePriorities[issue.id];
-                        const daysOpen = differenceInDays(new Date(), new Date(issue.reportedOn));
+                        const priority = issue.priority || issuePriorities[issue.id];
+                        const daysOpen = issue.reported_on ? differenceInDays(new Date(), new Date(issue.reported_on)) : 0;
 
                         return (
                           <TableRow key={issue.id} className="hover:bg-muted/50">
@@ -861,7 +1079,7 @@ const Issues = () => {
                             </TableCell>
                             <TableCell>
                               <div>
-                                <p className="font-medium text-sm">{issue.productName}</p>
+                                <p className="font-medium text-sm">{issue.display_product_name || issue.product_name || issue.product_details?.product || 'Unknown'}</p>
                                 <p className="text-xs text-muted-foreground line-clamp-1">{issue.description}</p>
                               </div>
                             </TableCell>
@@ -879,19 +1097,19 @@ const Issues = () => {
                               <Badge className={getStatusColor(issue.status)}>{issue.status}</Badge>
                             </TableCell>
                             <TableCell>
-                              <span className="text-sm">{getApartmentName(issue.apartmentId)}</span>
+                              <span className="text-sm">{issue.apartment_details?.name || issue.apartment_name || getApartmentName(issue.apartment)}</span>
                             </TableCell>
                             <TableCell>
-                              <span className="text-sm">{issue.vendor}</span>
+                              <span className="text-sm">{issue.vendor_name || issue.vendor_details?.name || issue.vendor}</span>
                             </TableCell>
                             <TableCell>
                               <div className="text-sm">
-                                <p>{format(new Date(issue.reportedOn), "MMM dd, yyyy")}</p>
+                                <p>{issue.reported_on ? format(new Date(issue.reported_on), "MMM dd, yyyy") : 'Unknown'}</p>
                                 <p className="text-xs text-muted-foreground">{daysOpen}d ago</p>
                               </div>
                             </TableCell>
                             <TableCell>
-                              {issue.aiActivated ? (
+                              {issue.ai_activated ? (
                                 <div className="flex items-center gap-1 text-primary">
                                   <Bot className="h-4 w-4" />
                                   <span className="text-xs">Active</span>
@@ -901,9 +1119,17 @@ const Issues = () => {
                               )}
                             </TableCell>
                             <TableCell className="text-center">
-                              <Button variant="ghost" size="sm" onClick={() => handleViewIssue(issue)}>
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center justify-center gap-1">
+                                <Button variant="ghost" size="sm" onClick={() => handleViewIssue(issue)} title="View">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={(e) => handleEditIssue(e, issue)} title="Edit">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={(e) => handleDeleteClick(e, issue)} title="Delete" className="hover:text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
@@ -920,8 +1146,8 @@ const Issues = () => {
         {viewMode === "grid" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredIssues.map((issue) => {
-              const priority = issuePriorities[issue.id];
-              const daysOpen = differenceInDays(new Date(), new Date(issue.reportedOn));
+              const priority = issue.priority || issuePriorities[issue.id];
+              const daysOpen = issue.reported_on ? differenceInDays(new Date(), new Date(issue.reported_on)) : 0;
 
               return (
                 <Card
@@ -941,18 +1167,18 @@ const Issues = () => {
                     </div>
 
                     <div>
-                      <h3 className="font-semibold mb-1">{issue.productName}</h3>
+                      <h3 className="font-semibold mb-1">{issue.display_product_name || issue.product_name || issue.product_details?.product || 'Unknown'}</h3>
                       <p className="text-sm text-muted-foreground line-clamp-2">{issue.description}</p>
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-xs">
-                        {getApartmentName(issue.apartmentId)}
+                        {issue.apartment_details?.name || issue.apartment_name || getApartmentName(issue.apartment)}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        {issue.vendor}
+                        {issue.vendor_name || issue.vendor_details?.name || issue.vendor}
                       </Badge>
-                      {issue.aiActivated && (
+                      {issue.ai_activated && (
                         <Badge className="text-xs bg-primary/10 text-primary border-primary/20">
                           <Bot className="h-3 w-3 mr-1" />
                           AI Active
@@ -961,9 +1187,28 @@ const Issues = () => {
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {daysOpen} days ago
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {daysOpen} days ago
+                        </div>
+                        {/* Edit/Delete Actions */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => handleEditIssue(e, issue)}
+                            className="p-1.5 rounded hover:bg-muted transition-colors"
+                            title="Edit Issue"
+                          >
+                            <Edit className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteClick(e, issue)}
+                            className="p-1.5 rounded hover:bg-destructive/10 transition-colors"
+                            title="Delete Issue"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                          </button>
+                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         {issue.photos && issue.photos.length > 0 && (
@@ -999,15 +1244,63 @@ const Issues = () => {
         <IssueManagementModal product={selectedIssue} open={isIssueModalOpen} onOpenChange={setIsIssueModalOpen} />
       )}
 
-      {/* Report Issue Modal */}
-      <ReportIssueModal open={isReportIssueOpen} onOpenChange={setIsReportIssueOpen} />
-
       {/* Bulk Email Modal */}
       <BulkEmailModal
         open={isBulkEmailOpen}
         onOpenChange={setIsBulkEmailOpen}
         selectedIssues={selectedIssuesForEmail}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                <Trash2 className="h-6 w-6 text-destructive" />
+              </div>
+              <div>
+                <AlertDialogTitle className="text-lg">Delete Issue</AlertDialogTitle>
+                <AlertDialogDescription className="text-sm">
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          {issueToDelete && (
+            <div className="py-4">
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <p className="text-sm font-medium text-foreground">
+                  {issueToDelete.display_product_name || issueToDelete.product_name || issueToDelete.type || 'Issue'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {issueToDelete.description?.slice(0, 100)}{issueToDelete.description && issueToDelete.description.length > 100 ? '...' : ''}
+                </p>
+              </div>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Issue
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 };

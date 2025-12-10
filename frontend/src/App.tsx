@@ -28,9 +28,12 @@ import OrderView from "./pages/OrderView";
 import OrderEdit from "./pages/OrderEdit";
 import Deliveries from "./pages/Deliveries";
 import Issues from "./pages/Issues";
+import IssueNew from "./pages/IssueNew";
 import IssueDetail from "./pages/IssueDetail";
+import IssueEdit from "./pages/IssueEdit";
 import Payments from "./pages/Payments";
 import PaymentNew from "./pages/PaymentNew";
+import PaymentDetail from "./pages/PaymentDetail";
 import PaymentEdit from "./pages/PaymentEdit";
 import Vendors from "./pages/Vendors";
 import VendorNew from "./pages/VendorNew";
@@ -74,9 +77,12 @@ const App = () => (
           <Route path="/orders/:id/edit" element={<ProtectedRoute><OrderEdit /></ProtectedRoute>} />
           <Route path="/deliveries" element={<ProtectedRoute><Deliveries /></ProtectedRoute>} />
           <Route path="/issues" element={<ProtectedRoute><Issues /></ProtectedRoute>} />
+          <Route path="/issues/new" element={<ProtectedRoute><IssueNew /></ProtectedRoute>} />
           <Route path="/issues/:issueId" element={<ProtectedRoute><IssueDetail /></ProtectedRoute>} />
+          <Route path="/issues/:issueId/edit" element={<ProtectedRoute><IssueEdit /></ProtectedRoute>} />
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
           <Route path="/payments/new" element={<ProtectedRoute><PaymentNew /></ProtectedRoute>} />
+          <Route path="/payments/:id" element={<ProtectedRoute><PaymentDetail /></ProtectedRoute>} />
           <Route path="/payments/:id/edit" element={<ProtectedRoute><PaymentEdit /></ProtectedRoute>} />
           <Route path="/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
           <Route path="/vendors/new" element={<ProtectedRoute><VendorNew /></ProtectedRoute>} />

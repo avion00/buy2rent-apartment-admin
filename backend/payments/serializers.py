@@ -15,10 +15,16 @@ class ProductSummarySerializer(serializers.Serializer):
     """Lightweight product serializer for payment product list"""
     id = serializers.UUIDField()
     product = serializers.CharField()
-    category_name = serializers.CharField()
+    category_name = serializers.SerializerMethodField()
     unit_price = serializers.DecimalField(max_digits=10, decimal_places=2)
     qty = serializers.IntegerField()
     payment_status = serializers.CharField()
+    
+    def get_category_name(self, obj):
+        """Get category name from related ProductCategory"""
+        if obj.category:
+            return obj.category.name
+        return None
 
 
 class PaymentSerializer(serializers.ModelSerializer):

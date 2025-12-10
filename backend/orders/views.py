@@ -2,14 +2,17 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Prefetch
 from config.swagger_utils import add_viewset_tags
-from .models import Order
+from .models import Order, OrderItem
 from .serializers import OrderSerializer, OrderListSerializer
 
 
 @add_viewset_tags('Orders', 'Order')
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.select_related('apartment', 'vendor').prefetch_related('items').all()
+    queryset = Order.objects.select_related('apartment', 'vendor').prefetch_related(
+        Prefetch('items', queryset=OrderItem.objects.select_related('product'))
+    ).all()
     serializer_class = OrderSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['apartment', 'vendor', 'status', 'placed_on']

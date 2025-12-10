@@ -3,6 +3,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from apartments.models import Apartment
 from vendors.models import Vendor
+from products.models import Product
 
 
 class Order(models.Model):
@@ -80,7 +81,9 @@ class OrderItem(models.Model):
     )
     
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_items', help_text="Reference to product")
     product_name = models.CharField(max_length=255, help_text="Name of the product")
+    product_image_url = models.URLField(blank=True, null=True, help_text="Product image URL stored at order time")
     sku = models.CharField(max_length=100, blank=True, help_text="Product SKU")
     quantity = models.PositiveIntegerField(default=1)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])

@@ -32,7 +32,10 @@ import {
   Filter,
   X,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Loader2,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -58,10 +61,21 @@ import { format, subDays, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
 import { PaymentHistoryModal } from '@/components/modals/PaymentHistoryModal';
 import { PaymentCreateModal } from '@/components/modals/PaymentCreateModal';
+import { usePayments, useDeletePayment, useUpdatePayment } from '@/hooks/usePaymentApi';
+import { Payment } from '@/services/paymentApi';
 
 const Payments = () => {
   const navigate = useNavigate();
-  const { payments, apartments, vendors, updatePayment, addPaymentToHistory } = useDataStore();
+  const { apartments, vendors, updatePayment: updateLocalPayment, addPaymentToHistory } = useDataStore();
+  
+  // Fetch payments from API
+  const { data: paymentsData, isLoading, error, refetch } = usePayments({ page_size: 100 });
+  const deletePaymentMutation = useDeletePayment();
+  const updatePaymentMutation = useUpdatePayment();
+  
+  // Get payments from API response
+  const apiPayments: Payment[] = paymentsData?.results || [];
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [vendorFilter, setVendorFilter] = useState('All');
@@ -78,10 +92,9 @@ const Payments = () => {
   const [chartType, setChartType] = useState<'trends' | 'status' | 'vendors'>('trends');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Get apartment names for display
-  const getApartmentName = (apartmentId: string) => {
-    const apt = apartments.find(a => a.id === apartmentId);
-    return apt?.name || 'Unknown';
+  // Get apartment name from payment details
+  const getApartmentName = (payment: Payment) => {
+    return payment.apartment_details?.name || 'Unknown';
   };
 
   const getStatusColor = (status: string) => {
@@ -109,28 +122,29 @@ const Payments = () => {
 
   // Filter payments with all criteria
   const filteredPayments = useMemo(() => {
-    return payments.filter(payment => {
-      const apartmentName = getApartmentName(payment.apartmentId);
+    return apiPayments.filter(payment => {
+      const apartmentName = getApartmentName(payment);
+      const vendorName = payment.vendor_name || payment.vendor_details?.name || '';
       
       // Search filter
       const matchesSearch = 
-        payment.vendor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        payment.orderReference.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        vendorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        payment.order_reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
         apartmentName.toLowerCase().includes(searchQuery.toLowerCase());
       
       // Status filter
       const matchesStatus = statusFilter === 'All' || payment.status === statusFilter;
       
       // Vendor filter
-      const matchesVendor = vendorFilter === 'All' || payment.vendor === vendorFilter;
+      const matchesVendor = vendorFilter === 'All' || vendorName === vendorFilter;
       
       // Apartment filter
-      const matchesApartment = apartmentFilter === 'All' || payment.apartmentId === apartmentFilter;
+      const matchesApartment = apartmentFilter === 'All' || payment.apartment === apartmentFilter;
       
       // Date range filter
       let matchesDateRange = true;
       if (dateFrom || dateTo) {
-        const paymentDate = new Date(payment.dueDate);
+        const paymentDate = new Date(payment.due_date);
         if (dateFrom) {
           matchesDateRange = matchesDateRange && paymentDate >= new Date(dateFrom);
         }
@@ -142,7 +156,7 @@ const Payments = () => {
       // Amount range filter
       let matchesAmountRange = true;
       if (minAmount || maxAmount) {
-        const amount = payment.totalAmount;
+        const amount = parseFloat(payment.total_amount);
         if (minAmount) {
           matchesAmountRange = matchesAmountRange && amount >= parseFloat(minAmount);
         }
@@ -154,17 +168,17 @@ const Payments = () => {
       return matchesSearch && matchesStatus && matchesVendor && matchesApartment && 
              matchesDateRange && matchesAmountRange;
     });
-  }, [payments, searchQuery, statusFilter, vendorFilter, apartmentFilter, dateFrom, dateTo, minAmount, maxAmount]);
+  }, [apiPayments, searchQuery, statusFilter, vendorFilter, apartmentFilter, dateFrom, dateTo, minAmount, maxAmount]);
 
   // Calculate statistics based on filtered payments
-  const totalAmount = filteredPayments.reduce((sum, p) => sum + p.totalAmount, 0);
-  const totalPaid = filteredPayments.reduce((sum, p) => sum + p.amountPaid, 0);
+  const totalAmount = filteredPayments.reduce((sum, p) => sum + parseFloat(p.total_amount || '0'), 0);
+  const totalPaid = filteredPayments.reduce((sum, p) => sum + parseFloat(p.amount_paid || '0'), 0);
   const totalDue = totalAmount - totalPaid;
   const overdueCount = filteredPayments.filter(p => p.status === "Overdue").length;
   const partialCount = filteredPayments.filter(p => p.status === "Partial").length;
 
   // Get unique vendors from payments
-  const uniqueVendors = Array.from(new Set(payments.map(p => p.vendor))).sort();
+  const uniqueVendors = Array.from(new Set(apiPayments.map(p => p.vendor_name || p.vendor_details?.name || ''))).filter(Boolean).sort();
 
   // Clear all filters
   const clearFilters = () => {
@@ -240,36 +254,36 @@ const Payments = () => {
       const date = subDays(now, i);
       const dateStr = format(date, 'yyyy-MM-dd');
       
-      const dayPayments = payments.filter(p => {
-        if (p.lastPaymentDate === dateStr) return true;
-        return p.paymentHistory.some(h => h.date === dateStr);
+      const dayPayments = apiPayments.filter(p => {
+        if (p.last_payment_date === dateStr) return true;
+        return p.payment_history?.some(h => h.date === dateStr);
       });
 
-      const totalPaid = dayPayments.reduce((sum, p) => {
-        const dayHistory = p.paymentHistory.filter(h => h.date === dateStr);
-        return sum + dayHistory.reduce((s, h) => s + h.amount, 0);
+      const totalPaidForDay = dayPayments.reduce((sum, p) => {
+        const dayHistory = p.payment_history?.filter(h => h.date === dateStr) || [];
+        return sum + dayHistory.reduce((s, h) => s + parseFloat(h.amount || '0'), 0);
       }, 0);
 
       dailyData.push({
         date: format(date, 'MMM dd'),
         fullDate: dateStr,
-        paid: totalPaid,
-        pending: payments
-          .filter(p => p.dueDate === dateStr && p.status !== 'Paid')
-          .reduce((sum, p) => sum + (p.totalAmount - p.amountPaid), 0),
+        paid: totalPaidForDay,
+        pending: apiPayments
+          .filter(p => p.due_date === dateStr && p.status !== 'Paid')
+          .reduce((sum, p) => sum + parseFloat(p.outstanding_amount || '0'), 0),
       });
     }
 
     return dailyData;
-  }, [payments, timePeriod]);
+  }, [apiPayments, timePeriod]);
 
   // Status distribution data
   const statusData = useMemo(() => {
     const statusCounts = {
-      Paid: payments.filter(p => p.status === 'Paid').length,
-      Partial: payments.filter(p => p.status === 'Partial').length,
-      Unpaid: payments.filter(p => p.status === 'Unpaid').length,
-      Overdue: payments.filter(p => p.status === 'Overdue').length,
+      Paid: apiPayments.filter(p => p.status === 'Paid').length,
+      Partial: apiPayments.filter(p => p.status === 'Partial').length,
+      Unpaid: apiPayments.filter(p => p.status === 'Unpaid').length,
+      Overdue: apiPayments.filter(p => p.status === 'Overdue').length,
     };
 
     return [
@@ -278,19 +292,20 @@ const Payments = () => {
       { name: 'Unpaid', value: statusCounts.Unpaid, color: 'hsl(var(--muted-foreground))' },
       { name: 'Overdue', value: statusCounts.Overdue, color: 'hsl(var(--danger))' },
     ].filter(item => item.value > 0);
-  }, [payments]);
+  }, [apiPayments]);
 
   // Vendor comparison data
   const vendorData = useMemo(() => {
     const vendorStats: Record<string, { total: number; paid: number; pending: number }> = {};
 
-    payments.forEach(p => {
-      if (!vendorStats[p.vendor]) {
-        vendorStats[p.vendor] = { total: 0, paid: 0, pending: 0 };
+    apiPayments.forEach(p => {
+      const vendorName = p.vendor_name || p.vendor_details?.name || 'Unknown';
+      if (!vendorStats[vendorName]) {
+        vendorStats[vendorName] = { total: 0, paid: 0, pending: 0 };
       }
-      vendorStats[p.vendor].total += p.totalAmount;
-      vendorStats[p.vendor].paid += p.amountPaid;
-      vendorStats[p.vendor].pending += (p.totalAmount - p.amountPaid);
+      vendorStats[vendorName].total += parseFloat(p.total_amount || '0');
+      vendorStats[vendorName].paid += parseFloat(p.amount_paid || '0');
+      vendorStats[vendorName].pending += parseFloat(p.outstanding_amount || '0');
     });
 
     return Object.entries(vendorStats)
@@ -300,7 +315,7 @@ const Payments = () => {
       }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 5);
-  }, [payments]);
+  }, [apiPayments]);
 
   return (
     <PageLayout title="Payments">
@@ -711,7 +726,7 @@ const Payments = () => {
                       )}
                       {apartmentFilter !== 'All' && (
                         <Badge variant="secondary" className="gap-1">
-                          Apartment: {getApartmentName(apartmentFilter)}
+                          Apartment: {apartments.find(a => a.id === apartmentFilter)?.name || apartmentFilter}
                           <X 
                             className="h-3 w-3 cursor-pointer" 
                             onClick={() => setApartmentFilter('All')}
@@ -763,7 +778,7 @@ const Payments = () => {
               <div className="flex items-center justify-between pt-2 border-t">
                 <p className="text-sm text-muted-foreground">
                   Showing <span className="font-semibold text-foreground">{filteredPayments.length}</span> of{' '}
-                  <span className="font-semibold text-foreground">{payments.length}</span> payments
+                  <span className="font-semibold text-foreground">{apiPayments.length}</span> payments
                 </p>
               </div>
             </div>
@@ -793,7 +808,16 @@ const Payments = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPayments.length === 0 ? (
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-12">
+                        <div className="flex flex-col items-center gap-2">
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                          <p className="text-muted-foreground">Loading payments...</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredPayments.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
@@ -804,22 +828,26 @@ const Payments = () => {
                     </TableRow>
                   ) : (
                     filteredPayments.map((payment) => {
-                      const balance = payment.totalAmount - payment.amountPaid;
+                      const totalAmount = parseFloat(payment.total_amount || '0');
+                      const amountPaid = parseFloat(payment.amount_paid || '0');
+                      const balance = parseFloat(payment.outstanding_amount || '0');
                       const isOverdue = payment.status === "Overdue";
-                      const dueDate = new Date(payment.dueDate);
+                      const dueDate = new Date(payment.due_date);
                       const today = new Date();
                       const isPastDue = dueDate < today && payment.status !== "Paid";
+                      const vendorName = payment.vendor_name || payment.vendor_details?.name || 'Unknown';
                       
                       return (
                         <TableRow 
                           key={payment.id} 
                           className={cn(
-                            "transition-colors",
+                            "transition-colors cursor-pointer hover:bg-muted/50",
                             isOverdue && "bg-danger/5 hover:bg-danger/10"
                           )}
+                          onClick={() => navigate(`/payments/${payment.id}`)}
                         >
                           <TableCell>
-                            <div className="font-medium text-foreground">{payment.vendor}</div>
+                            <div className="font-medium text-foreground">{vendorName}</div>
                             {payment.notes && (
                               <div className="text-xs text-muted-foreground mt-0.5 max-w-[200px] truncate">
                                 {payment.notes}
@@ -829,26 +857,26 @@ const Payments = () => {
                           <TableCell>
                             <div className="flex items-center gap-1.5">
                               <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
-                              <span className="font-mono text-sm">{payment.orderReference}</span>
+                              <span className="font-mono text-sm">{payment.order_reference}</span>
                             </div>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="font-normal">
-                              {getApartmentName(payment.apartmentId)}
+                              {getApartmentName(payment)}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <span className="font-semibold">{payment.totalAmount.toLocaleString()} HUF</span>
+                            <span className="font-semibold">{totalAmount.toLocaleString()} HUF</span>
                           </TableCell>
                           <TableCell className="text-right">
-                            {payment.amountPaid > 0 ? (
+                            {amountPaid > 0 ? (
                               <div className="space-y-0.5">
                                 <div className="font-semibold text-success">
-                                  {payment.amountPaid.toLocaleString()} HUF
+                                  {amountPaid.toLocaleString()} HUF
                                 </div>
-                                {payment.lastPaymentDate && (
+                                {payment.last_payment_date && (
                                   <div className="text-xs text-muted-foreground">
-                                    {format(new Date(payment.lastPaymentDate), 'MMM dd')}
+                                    {format(new Date(payment.last_payment_date), 'MMM dd')}
                                   </div>
                                 )}
                               </div>
@@ -873,7 +901,7 @@ const Payments = () => {
                               "text-sm",
                               isPastDue && "text-danger font-semibold"
                             )}>
-                              {format(new Date(payment.dueDate), 'MMM dd, yyyy')}
+                              {format(new Date(payment.due_date), 'MMM dd, yyyy')}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -882,7 +910,7 @@ const Payments = () => {
                               <span className="ml-1">{payment.status}</span>
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-center gap-1.5">
                               {payment.status !== "Paid" && (
                                 <Button 
@@ -902,6 +930,14 @@ const Payments = () => {
                               >
                                 <Eye className="h-3.5 w-3.5" />
                               </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => navigate(`/payments/${payment.id}/edit`)}
+                                className="h-8"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -920,31 +956,32 @@ const Payments = () => {
         payment={selectedPayment}
         open={isPaymentModalOpen}
         onOpenChange={setIsPaymentModalOpen}
-        onSave={(amount, method, reference, note) => {
+        onSave={async (amount, method, reference, note) => {
           if (selectedPayment) {
-            const paymentEntry = {
-              date: new Date().toISOString().split('T')[0],
-              amount,
-              method,
-              referenceNo: reference,
-              note,
-            };
-            addPaymentToHistory(selectedPayment.id, paymentEntry);
-            
-            const newAmountPaid = selectedPayment.amountPaid + amount;
-            const newStatus = newAmountPaid >= selectedPayment.totalAmount ? 'Paid' : 
-                            newAmountPaid > 0 ? 'Partial' : 'Unpaid';
-            
-            updatePayment(selectedPayment.id, {
-              amountPaid: newAmountPaid,
-              status: newStatus as any,
-              lastPaymentDate: paymentEntry.date,
-            });
-            
-            toast.success("Payment Recorded", {
-              description: `${amount.toLocaleString()} HUF recorded successfully`,
-            });
-            setIsPaymentModalOpen(false);
+            try {
+              const currentAmountPaid = parseFloat(selectedPayment.amount_paid || '0');
+              const totalAmount = parseFloat(selectedPayment.total_amount || '0');
+              const newAmountPaid = currentAmountPaid + amount;
+              const newStatus = newAmountPaid >= totalAmount ? 'Paid' : 
+                              newAmountPaid > 0 ? 'Partial' : 'Unpaid';
+              
+              await updatePaymentMutation.mutateAsync({
+                id: selectedPayment.id,
+                data: {
+                  amount_paid: newAmountPaid.toString(),
+                  status: newStatus,
+                  last_payment_date: new Date().toISOString().split('T')[0],
+                }
+              });
+              
+              toast.success("Payment Recorded", {
+                description: `${amount.toLocaleString()} HUF recorded successfully`,
+              });
+              setIsPaymentModalOpen(false);
+              refetch();
+            } catch (error) {
+              toast.error("Failed to record payment");
+            }
           }
         }}
       />
