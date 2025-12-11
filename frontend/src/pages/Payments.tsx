@@ -12,7 +12,7 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
+  TableHead, 
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
@@ -35,8 +35,28 @@ import {
   ChevronUp,
   Loader2,
   Edit,
-  Trash2
+  Trash2,
+  MoreHorizontal,
+  AlertTriangle,
+  XCircle
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   LineChart, 
   Line, 
@@ -61,7 +81,7 @@ import { format, subDays, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
 import { PaymentHistoryModal } from '@/components/modals/PaymentHistoryModal';
 import { PaymentCreateModal } from '@/components/modals/PaymentCreateModal';
-import { usePayments, useDeletePayment, useUpdatePayment } from '@/hooks/usePaymentApi';
+import { usePayments, useDeletePayment, useUpdatePayment, useCreatePaymentHistory } from '@/hooks/usePaymentApi';
 import { Payment } from '@/services/paymentApi';
 
 const Payments = () => {
@@ -72,6 +92,7 @@ const Payments = () => {
   const { data: paymentsData, isLoading, error, refetch } = usePayments({ page_size: 100 });
   const deletePaymentMutation = useDeletePayment();
   const updatePaymentMutation = useUpdatePayment();
+  const createPaymentHistoryMutation = useCreatePaymentHistory();
   
   // Get payments from API response
   const apiPayments: Payment[] = paymentsData?.results || [];
@@ -91,6 +112,8 @@ const Payments = () => {
   const [timePeriod, setTimePeriod] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
   const [chartType, setChartType] = useState<'trends' | 'status' | 'vendors'>('trends');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
 
   // Get apartment name from payment details
   const getApartmentName = (payment: Payment) => {
@@ -156,7 +179,7 @@ const Payments = () => {
       // Amount range filter
       let matchesAmountRange = true;
       if (minAmount || maxAmount) {
-        const amount = parseFloat(payment.total_amount);
+        const amount = payment.total_amount || 0;
         if (minAmount) {
           matchesAmountRange = matchesAmountRange && amount >= parseFloat(minAmount);
         }
@@ -171,8 +194,8 @@ const Payments = () => {
   }, [apiPayments, searchQuery, statusFilter, vendorFilter, apartmentFilter, dateFrom, dateTo, minAmount, maxAmount]);
 
   // Calculate statistics based on filtered payments
-  const totalAmount = filteredPayments.reduce((sum, p) => sum + parseFloat(p.total_amount || '0'), 0);
-  const totalPaid = filteredPayments.reduce((sum, p) => sum + parseFloat(p.amount_paid || '0'), 0);
+  const totalAmount = filteredPayments.reduce((sum, p) => sum + (p.total_amount || 0), 0);
+  const totalPaid = filteredPayments.reduce((sum, p) => sum + (p.amount_paid || 0), 0);
   const totalDue = totalAmount - totalPaid;
   const overdueCount = filteredPayments.filter(p => p.status === "Overdue").length;
   const partialCount = filteredPayments.filter(p => p.status === "Partial").length;
@@ -261,7 +284,7 @@ const Payments = () => {
 
       const totalPaidForDay = dayPayments.reduce((sum, p) => {
         const dayHistory = p.payment_history?.filter(h => h.date === dateStr) || [];
-        return sum + dayHistory.reduce((s, h) => s + parseFloat(h.amount || '0'), 0);
+        return sum + dayHistory.reduce((s, h) => s + (h.amount || 0), 0);
       }, 0);
 
       dailyData.push({
@@ -270,7 +293,7 @@ const Payments = () => {
         paid: totalPaidForDay,
         pending: apiPayments
           .filter(p => p.due_date === dateStr && p.status !== 'Paid')
-          .reduce((sum, p) => sum + parseFloat(p.outstanding_amount || '0'), 0),
+          .reduce((sum, p) => sum + (p.outstanding_amount || 0), 0),
       });
     }
 
@@ -303,9 +326,9 @@ const Payments = () => {
       if (!vendorStats[vendorName]) {
         vendorStats[vendorName] = { total: 0, paid: 0, pending: 0 };
       }
-      vendorStats[vendorName].total += parseFloat(p.total_amount || '0');
-      vendorStats[vendorName].paid += parseFloat(p.amount_paid || '0');
-      vendorStats[vendorName].pending += parseFloat(p.outstanding_amount || '0');
+      vendorStats[vendorName].total += p.total_amount || 0;
+      vendorStats[vendorName].paid += p.amount_paid || 0;
+      vendorStats[vendorName].pending += p.outstanding_amount || 0;
     });
 
     return Object.entries(vendorStats)
@@ -828,9 +851,9 @@ const Payments = () => {
                     </TableRow>
                   ) : (
                     filteredPayments.map((payment) => {
-                      const totalAmount = parseFloat(payment.total_amount || '0');
-                      const amountPaid = parseFloat(payment.amount_paid || '0');
-                      const balance = parseFloat(payment.outstanding_amount || '0');
+                      const totalAmount = payment.total_amount || 0;
+                      const amountPaid = payment.amount_paid || 0;
+                      const balance = payment.outstanding_amount || 0;
                       const isOverdue = payment.status === "Overdue";
                       const dueDate = new Date(payment.due_date);
                       const today = new Date();
@@ -911,33 +934,52 @@ const Payments = () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-center gap-1.5">
-                              {payment.status !== "Paid" && (
-                                <Button 
-                                  size="sm"
-                                  onClick={() => handleRecordPayment(payment)}
-                                  className="h-8"
-                                >
-                                  <DollarSign className="h-3.5 w-3.5 mr-1" />
-                                  Record
-                                </Button>
-                              )}
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleViewHistory(payment)}
-                                className="h-8"
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => navigate(`/payments/${payment.id}/edit`)}
-                                className="h-8"
-                              >
-                                <Edit className="h-3.5 w-3.5" />
-                              </Button>
+                            <div className="flex items-center justify-center gap-1">
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => navigate(`/payments/${payment.id}`)}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  
+                                  {/* Record Payment - only show for Unpaid or Partial */}
+                                  {payment.status !== 'Paid' && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem 
+                                        onClick={() => handleRecordPayment(payment)}
+                                        className="text-success focus:text-success"
+                                      >
+                                        <DollarSign className="h-4 w-4 mr-2" />
+                                        Record Payment
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                  
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => navigate(`/payments/${payment.id}/edit`)}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit Payment
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="text-danger focus:text-danger"
+                                    onClick={() => {
+                                      setPaymentToDelete(payment);
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Payment
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -959,19 +1001,14 @@ const Payments = () => {
         onSave={async (amount, method, reference, note) => {
           if (selectedPayment) {
             try {
-              const currentAmountPaid = parseFloat(selectedPayment.amount_paid || '0');
-              const totalAmount = parseFloat(selectedPayment.total_amount || '0');
-              const newAmountPaid = currentAmountPaid + amount;
-              const newStatus = newAmountPaid >= totalAmount ? 'Paid' : 
-                              newAmountPaid > 0 ? 'Partial' : 'Unpaid';
-              
-              await updatePaymentMutation.mutateAsync({
-                id: selectedPayment.id,
-                data: {
-                  amount_paid: newAmountPaid.toString(),
-                  status: newStatus,
-                  last_payment_date: new Date().toISOString().split('T')[0],
-                }
+              // Create a payment history record - this will auto-update the payment's amount_paid
+              await createPaymentHistoryMutation.mutateAsync({
+                payment: selectedPayment.id,
+                date: new Date().toISOString().split('T')[0],
+                amount: amount,
+                method: method,
+                reference_no: reference,
+                note: note,
               });
               
               toast.success("Payment Recorded", {
@@ -998,6 +1035,106 @@ const Payments = () => {
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent 
+          className="max-w-md"
+          onKeyDown={async (e) => {
+            if (e.key === 'Enter' && paymentToDelete && !deletePaymentMutation.isPending) {
+              e.preventDefault();
+              try {
+                await deletePaymentMutation.mutateAsync(paymentToDelete.id);
+                toast.success("Payment Deleted", {
+                  description: `Payment ${paymentToDelete.order_reference} has been deleted.`,
+                });
+                setDeleteDialogOpen(false);
+                setPaymentToDelete(null);
+                refetch();
+              } catch (error) {
+                toast.error("Failed to delete payment");
+              }
+            }
+          }}
+        >
+          <AlertDialogHeader className="space-y-4">
+            {/* Warning Icon */}
+            <div className="mx-auto w-14 h-14 rounded-full bg-danger/10 flex items-center justify-center">
+              <AlertTriangle className="h-7 w-7 text-danger" />
+            </div>
+            
+            <div className="text-center space-y-2">
+              <AlertDialogTitle className="text-xl">Delete Payment</AlertDialogTitle>
+              <AlertDialogDescription className="text-base">
+                Are you sure you want to delete this payment record?
+              </AlertDialogDescription>
+            </div>
+            
+            {/* Payment Info Card */}
+            {paymentToDelete && (
+              <div className="bg-muted/50 rounded-lg p-4 border space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Order Reference</span>
+                  <span className="font-semibold">{paymentToDelete.order_reference}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Vendor</span>
+                  <span className="font-medium">{paymentToDelete.vendor_name || paymentToDelete.vendor_details?.name || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Amount</span>
+                  <span className="font-semibold text-primary">
+                    {(paymentToDelete.total_amount || 0).toLocaleString()} HUF
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            <p className="text-sm text-center text-muted-foreground">
+              <AlertTriangle className="h-3.5 w-3.5 inline mr-1 text-warning" />
+              This action cannot be undone. All payment history will be lost.
+            </p>
+          </AlertDialogHeader>
+          
+          <AlertDialogFooter className="sm:space-x-3 mt-2">
+            <AlertDialogCancel className="flex-1 sm:flex-none">
+              <XCircle className="h-4 w-4 mr-2" />
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="flex-1 sm:flex-none bg-danger text-danger-foreground hover:bg-danger/90"
+              disabled={deletePaymentMutation.isPending}
+              onClick={async () => {
+                if (paymentToDelete) {
+                  try {
+                    await deletePaymentMutation.mutateAsync(paymentToDelete.id);
+                    toast.success("Payment Deleted", {
+                      description: `Payment ${paymentToDelete.order_reference} has been deleted.`,
+                    });
+                    setDeleteDialogOpen(false);
+                    setPaymentToDelete(null);
+                    refetch();
+                  } catch (error) {
+                    toast.error("Failed to delete payment");
+                  }
+                }
+              }}
+            >
+              {deletePaymentMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Payment
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 };

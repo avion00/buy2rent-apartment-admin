@@ -369,22 +369,33 @@ class ProductViewSet(viewsets.ModelViewSet):
                 'address': request.data.get('address', 'Address not provided'),
             }
             
-            # Handle client/owner - need to find or create client
+            # Handle client/owner - can be a UUID (client ID) or a name
             from clients.models import Client
-            owner_name = request.data.get('owner', '')
-            if owner_name:
-                client, created = Client.objects.get_or_create(
-                    name=owner_name,
-                    defaults={'email': '', 'phone': ''}
-                )
-                apartment_data['client'] = client
-            else:
-                # Create a default client if none provided
+            import uuid
+            owner_value = request.data.get('owner', '')
+            client = None
+            
+            if owner_value:
+                # Check if owner_value is a valid UUID (client ID)
+                try:
+                    owner_uuid = uuid.UUID(str(owner_value))
+                    # It's a UUID, look up by ID
+                    client = Client.objects.filter(id=owner_uuid).first()
+                except (ValueError, AttributeError):
+                    # Not a UUID, treat as a name and get_or_create
+                    client, created = Client.objects.get_or_create(
+                        name=owner_value,
+                        defaults={'email': '', 'phone': ''}
+                    )
+            
+            if not client:
+                # Create a default client if none found/provided
                 client, created = Client.objects.get_or_create(
                     name='Default Client',
                     defaults={'email': '', 'phone': ''}
                 )
-                apartment_data['client'] = client
+            
+            apartment_data['client'] = client
             
             # Handle dates - these are required fields
             from datetime import date, timedelta

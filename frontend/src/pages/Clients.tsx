@@ -41,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Search, Edit, Trash2, Building2, Eye, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Building2, Eye, Loader2, RefreshCw, AlertTriangle, Users, UserCheck, UserX, Briefcase, TrendingUp, Home } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ClientDetailsModal } from '@/components/modals/ClientDetailsModal';
 import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from '@/hooks/useClientApi';
@@ -86,6 +86,28 @@ const Clients = () => {
 
   // Clients are already filtered by the API based on search params
   const filteredClients = clients;
+  
+  // Calculate stats from all clients (not filtered)
+  const stats = useMemo(() => {
+    const allClients = clientsData?.results || [];
+    const totalClients = allClients.length;
+    const activeClients = allClients.filter(c => c.account_status === 'Active').length;
+    const inactiveClients = allClients.filter(c => c.account_status === 'Inactive').length;
+    const investorClients = allClients.filter(c => c.type === 'Investor').length;
+    const internalClients = allClients.filter(c => c.type === 'Buy2Rent Internal').length;
+    const totalApartments = allClients.reduce((sum, c) => sum + (c.apartments_count || 0), 0);
+    const avgApartmentsPerClient = totalClients > 0 ? (totalApartments / totalClients).toFixed(1) : '0';
+    
+    return {
+      totalClients,
+      activeClients,
+      inactiveClients,
+      investorClients,
+      internalClients,
+      totalApartments,
+      avgApartmentsPerClient,
+    };
+  }, [clientsData?.results]);
   
   // Memoize search handler to prevent re-creation
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -264,6 +286,99 @@ const Clients = () => {
   return (
     <PageLayout title="Clients">
       <div className="space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {/* Total Clients */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-muted/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Clients</p>
+                  <p className="text-2xl font-bold mt-1">{stats.totalClients}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Active Clients */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-green-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Active</p>
+                  <p className="text-2xl font-bold mt-1 text-green-600">{stats.activeClients}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                  <UserCheck className="h-5 w-5 text-green-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Inactive Clients */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-red-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Inactive</p>
+                  <p className="text-2xl font-bold mt-1 text-red-500">{stats.inactiveClients}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                  <UserX className="h-5 w-5 text-red-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Investors */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-violet-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Investors</p>
+                  <p className="text-2xl font-bold mt-1 text-violet-600">{stats.investorClients}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                  <Briefcase className="h-5 w-5 text-violet-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Total Apartments */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-emerald-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Apartments</p>
+                  <p className="text-2xl font-bold mt-1 text-emerald-600">{stats.totalApartments}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                  <Home className="h-5 w-5 text-emerald-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Avg Apartments per Client */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-amber-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Avg/Client</p>
+                  <p className="text-2xl font-bold mt-1 text-amber-600">{stats.avgApartmentsPerClient}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-amber-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Header Actions */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">

@@ -13,6 +13,13 @@ from .password_reset_views import (
     PasswordResetRequestView,
     PasswordResetConfirmView
 )
+from .settings_views import (
+    UserSettingsView,
+    NotificationSettingsView,
+    DisplaySettingsView,
+    RegionalSettingsView,
+    ProfileSettingsView,
+)
 
 urlpatterns = [
     # Authentication endpoints
@@ -33,4 +40,11 @@ urlpatterns = [
     # Session management
     path('sessions/', UserSessionsView.as_view(), name='user_sessions'),
     path('sessions/<uuid:session_id>/', UserSessionsView.as_view(), name='terminate_session'),
+    
+    # User Settings endpoints
+    path('settings/', UserSettingsView.as_view(), name='user_settings'),
+    path('settings/notifications/', NotificationSettingsView.as_view(), name='notification_settings'),
+    path('settings/display/', DisplaySettingsView.as_view(), name='display_settings'),
+    path('settings/regional/', RegionalSettingsView.as_view(), name='regional_settings'),
+    path('settings/profile/', ProfileSettingsView.as_view(), name='profile_settings'),
 ]

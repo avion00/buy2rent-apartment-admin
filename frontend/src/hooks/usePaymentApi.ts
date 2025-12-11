@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { paymentApi, Payment, PaymentFormData, PaymentHistory } from '@/services/paymentApi';
+import { paymentApi, Payment, PaymentFormData, PaymentHistory, CreatePaymentFromOrderData } from '@/services/paymentApi';
 
 // Query keys
 export const paymentKeys = {
@@ -42,6 +42,18 @@ export const useCreatePayment = () => {
 
   return useMutation({
     mutationFn: (data: PaymentFormData) => paymentApi.createPayment(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: paymentKeys.lists() });
+    },
+  });
+};
+
+// Create payment from order (new)
+export const useCreatePaymentFromOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreatePaymentFromOrderData) => paymentApi.createPaymentFromOrder(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: paymentKeys.lists() });
     },
@@ -104,7 +116,7 @@ export const useCreatePaymentHistory = () => {
     mutationFn: (data: {
       payment: string;
       date: string;
-      amount: string;
+      amount: number;
       method: string;
       reference_no?: string;
       note?: string;
@@ -112,6 +124,21 @@ export const useCreatePaymentHistory = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: paymentKeys.history(data.payment) });
       queryClient.invalidateQueries({ queryKey: paymentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: paymentKeys.details() });
+    },
+  });
+};
+
+// Delete payment history entry
+export const useDeletePaymentHistory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => paymentApi.deletePaymentHistory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: paymentKeys.history() });
+      queryClient.invalidateQueries({ queryKey: paymentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: paymentKeys.details() });
     },
   });
 };

@@ -2,6 +2,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Building2, 
   Package, 
@@ -9,79 +10,124 @@ import {
   Truck, 
   CreditCard,
   TrendingUp,
-  Calendar
+  Calendar,
+  RefreshCw
 } from 'lucide-react';
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useDashboardOverview, useDashboardRecentActivities } from '@/hooks/useDashboardApi';
 
-const ordersData = [
-  { month: 'Jun', ordered: 12, delivered: 10 },
-  { month: 'Jul', ordered: 19, delivered: 15 },
-  { month: 'Aug', ordered: 15, delivered: 18 },
-  { month: 'Sep', ordered: 22, delivered: 20 },
-  { month: 'Oct', ordered: 28, delivered: 25 },
-  { month: 'Nov', ordered: 15, delivered: 8 },
+// Fallback data when API fails
+const fallbackOrdersData = [
+  { month: 'Jun', ordered: 0, delivered: 0 },
+  { month: 'Jul', ordered: 0, delivered: 0 },
+  { month: 'Aug', ordered: 0, delivered: 0 },
+  { month: 'Sep', ordered: 0, delivered: 0 },
+  { month: 'Oct', ordered: 0, delivered: 0 },
+  { month: 'Nov', ordered: 0, delivered: 0 },
 ];
 
-const spendingData = [
-  { month: 'Jun', amount: 12500 },
-  { month: 'Jul', amount: 18200 },
-  { month: 'Aug', amount: 15800 },
-  { month: 'Sep', amount: 22100 },
-  { month: 'Oct', amount: 28900 },
-  { month: 'Nov', amount: 16500 },
-];
-
-const todaysTasks = [
-  { id: 1, type: 'Delivery', title: 'IKEA delivery to Budapest Apt #A12', time: '9:00 AM', priority: 'high' },
-  { id: 2, type: 'Approval', title: 'Approve replacement for dining chairs', time: '11:00 AM', priority: 'medium' },
-  { id: 3, type: 'Payment', title: 'Process payment to Royalty Line', time: '2:00 PM', priority: 'high' },
-  { id: 4, type: 'Delivery', title: 'Philips lighting delivery', time: '4:00 PM', priority: 'low' },
-];
-
-const aiActions = [
-  { id: 1, action: 'Email sent to IKEA Hungary', details: 'Missing chair replacement request', time: '1 hour ago' },
-  { id: 2, action: 'Payment reminder sent', details: 'Philips Lighting - Invoice INV-003', time: '3 hours ago' },
-  { id: 3, action: 'Stock check completed', details: 'Wood Dining Table - In stock at vendor', time: '5 hours ago' },
+const fallbackSpendingData = [
+  { month: 'Jun', amount: 0 },
+  { month: 'Jul', amount: 0 },
+  { month: 'Aug', amount: 0 },
+  { month: 'Sep', amount: 0 },
+  { month: 'Oct', amount: 0 },
+  { month: 'Nov', amount: 0 },
 ];
 
 const Overview = () => {
+  const { data: dashboardData, isLoading, refetch } = useDashboardOverview();
+  const { data: recentData } = useDashboardRecentActivities();
+  
+  // Use API data or fallback
+  const kpi = dashboardData?.kpi;
+  const ordersData = dashboardData?.orders_chart || fallbackOrdersData;
+  const spendingData = dashboardData?.spending_chart || fallbackSpendingData;
+  
+  // Recent activities for tasks section
+  const recentOrders = recentData?.recent_orders || [];
+  const recentIssues = recentData?.recent_issues || [];
+  const recentPayments = recentData?.recent_payments || [];
+  
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <PageLayout title="Dashboard Overview">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-3 w-20" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card><CardContent className="p-6"><Skeleton className="h-[300px] w-full" /></CardContent></Card>
+            <Card><CardContent className="p-6"><Skeleton className="h-[300px] w-full" /></CardContent></Card>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+  
   return (
     <PageLayout title="Dashboard Overview">
       <div className="space-y-6">
+        
+        
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <KPICard
             title="Active Apartments"
-            value={14}
+            value={kpi?.active_apartments?.value ?? 0}
             icon={Building2}
-            trend={{ value: 12, label: 'vs last month' }}
+            trend={{ 
+              value: kpi?.active_apartments?.trend ?? 0, 
+              label: kpi?.active_apartments?.trend_label ?? 'vs last month' 
+            }}
           />
           <KPICard
             title="Pending Orders"
-            value={9}
+            value={kpi?.pending_orders?.value ?? 0}
             icon={Package}
-            trend={{ value: -5, label: 'vs last week' }}
+            trend={{ 
+              value: kpi?.pending_orders?.trend ?? 0, 
+              label: kpi?.pending_orders?.trend_label ?? 'vs last week' 
+            }}
           />
           <KPICard
             title="Open Issues"
-            value={6}
+            value={kpi?.open_issues?.value ?? 0}
             icon={AlertCircle}
-            trend={{ value: 0, label: 'no change' }}
+            trend={{ 
+              value: kpi?.open_issues?.trend ?? 0, 
+              label: kpi?.open_issues?.trend_label ?? 'no change' 
+            }}
           />
           <KPICard
             title="Deliveries This Week"
-            value={12}
+            value={kpi?.deliveries_this_week?.value ?? 0}
             icon={Truck}
-            trend={{ value: 8, label: 'vs last week' }}
+            trend={{ 
+              value: kpi?.deliveries_this_week?.trend ?? 0, 
+              label: kpi?.deliveries_this_week?.trend_label ?? 'vs last week' 
+            }}
           />
           <KPICard
             title="Overdue Payments"
-            value={3}
+            value={kpi?.overdue_payments?.value ?? 0}
             icon={CreditCard}
-            trend={{ value: -2, label: 'vs last month' }}
+            trend={{ 
+              value: kpi?.overdue_payments?.trend ?? 0, 
+              label: kpi?.overdue_payments?.trend_label ?? 'vs last month' 
+            }}
           />
         </div>
 
@@ -176,62 +222,85 @@ const Overview = () => {
           </Card>
         </div>
 
-        {/* Tasks and AI Actions */}
+        {/* Recent Orders and Payments */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Today's Tasks */}
+          {/* Recent Orders */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Today's Tasks
+                  <Package className="h-5 w-5" />
+                  Recent Orders
                 </CardTitle>
-                <Badge variant="outline">{todaysTasks.length} pending</Badge>
+                <Badge variant="outline">{recentOrders.length} orders</Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {todaysTasks.map((task) => (
-                  <div key={task.id} className="flex items-start justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">{task.type}</Badge>
-                        <Badge 
-                          variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'default' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {task.priority}
-                        </Badge>
+                {recentOrders.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No recent orders</p>
+                ) : (
+                  recentOrders.slice(0, 5).map((order) => (
+                    <div key={order.id} className="flex items-start justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">{order.po_number}</Badge>
+                          <Badge 
+                            variant={order.status === 'delivered' ? 'default' : order.status === 'processing' ? 'secondary' : 'outline'}
+                            className="text-xs"
+                          >
+                            {order.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm font-medium">{order.apartment}</p>
+                        <p className="text-xs text-muted-foreground">{order.vendor} • {order.total.toLocaleString()} Ft</p>
                       </div>
-                      <p className="text-sm font-medium">{task.title}</p>
-                      <p className="text-xs text-muted-foreground">{task.time}</p>
                     </div>
-                    <Button size="sm" variant="ghost">View</Button>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Recent AI Actions */}
+          {/* Recent Payments */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent AI Actions</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Recent Payments
+                </CardTitle>
+                <Badge variant="outline">{recentPayments.length} payments</Badge>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {aiActions.map((item) => (
-                  <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <TrendingUp className="h-4 w-4 text-primary" />
+                {recentPayments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No recent payments</p>
+                ) : (
+                  recentPayments.slice(0, 5).map((payment) => (
+                    <div key={payment.id} className="flex items-start gap-3 p-3 rounded-lg border">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <CreditCard className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium">{payment.order_reference}</p>
+                          <Badge 
+                            variant={payment.status === 'Paid' ? 'default' : payment.status === 'Partial' ? 'secondary' : 'destructive'}
+                            className="text-xs"
+                          >
+                            {payment.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{payment.vendor || 'Unknown vendor'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {payment.amount_paid.toLocaleString()} / {payment.total_amount.toLocaleString()} Ft
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium">{item.action}</p>
-                      <p className="text-sm text-muted-foreground">{item.details}</p>
-                      <p className="text-xs text-muted-foreground">{item.time}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

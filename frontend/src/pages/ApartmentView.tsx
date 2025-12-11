@@ -330,11 +330,11 @@ const ApartmentView = () => {
               </Badge>
               <Badge className={getStatusColor(apartment.status)}>{apartment.status}</Badge>
             </div>
-            <div className="space-y-1 text-sm text-muted-foreground">
+            {/* <div className="space-y-1 text-sm text-muted-foreground">
               <p>
                 <strong>Progress:</strong> {apartment.progress}%
               </p>
-            </div>
+            </div> */}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate(`/apartments/${apartment.id}/edit`)}>
@@ -347,7 +347,7 @@ const ApartmentView = () => {
             </Button>
           </div>
         </div>
-        <Progress value={apartment.progress} className="h-2" />
+        {/* <Progress value={apartment.progress} className="h-2" /> */}
       </div>
 
       {/* Tabs */}

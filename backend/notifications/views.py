@@ -56,6 +56,33 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
     
+    @extend_schema(
+        tags=['notifications'],
+        summary='Create notification',
+        request=CreateNotificationSerializer,
+        responses={201: NotificationSerializer}
+    )
+    def create(self, request, *args, **kwargs):
+        """Create a new notification for the current user"""
+        serializer = CreateNotificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        notification = create_notification(
+            user=request.user,
+            title=serializer.validated_data['title'],
+            message=serializer.validated_data['message'],
+            notification_type=serializer.validated_data.get('notification_type', 'info'),
+            priority=serializer.validated_data.get('priority', 'medium'),
+            related_object_type=serializer.validated_data.get('related_object_type', ''),
+            related_object_id=serializer.validated_data.get('related_object_id', ''),
+            action_url=serializer.validated_data.get('action_url', ''),
+            action_text=serializer.validated_data.get('action_text', ''),
+            metadata=serializer.validated_data.get('metadata', {})
+        )
+        
+        response_serializer = NotificationSerializer(notification)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+    
     @action(detail=True, methods=['post'])
     @extend_schema(
         tags=['Notifications'],

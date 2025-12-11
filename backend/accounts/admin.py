@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils import timezone
 from .models import User, UserSession, LoginAttempt
+from .settings_models import UserSettings
 
 
 @admin.register(User)
@@ -195,3 +196,58 @@ class LoginAttemptAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         """Disable editing of login attempts"""
         return False
+
+
+@admin.register(UserSettings)
+class UserSettingsAdmin(admin.ModelAdmin):
+    """
+    Admin for user settings
+    """
+    list_display = [
+        'user', 'theme', 'language', 'currency', 'timezone',
+        'email_notifications', 'two_factor_enabled', 'updated_at'
+    ]
+    list_filter = [
+        'theme', 'language', 'currency', 'email_notifications',
+        'two_factor_enabled', 'created_at'
+    ]
+    search_fields = ['user__email', 'user__username', 'company', 'job_title']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    ordering = ['-updated_at']
+    
+    fieldsets = (
+        ('User', {
+            'fields': ('id', 'user')
+        }),
+        ('Profile', {
+            'fields': ('company', 'job_title')
+        }),
+        ('Notification Channels', {
+            'fields': ('email_notifications', 'push_notifications', 'sms_notifications')
+        }),
+        ('Activity Notifications', {
+            'fields': (
+                'order_updates', 'payment_alerts', 'delivery_notifications',
+                'vendor_messages', 'system_alerts'
+            )
+        }),
+        ('Report Notifications', {
+            'fields': ('weekly_reports', 'monthly_reports')
+        }),
+        ('Sound & Desktop', {
+            'fields': ('sound_enabled', 'desktop_notifications')
+        }),
+        ('Display Settings', {
+            'fields': ('theme', 'compact_view', 'sidebar_collapsed', 'show_avatars', 'animations_enabled')
+        }),
+        ('Regional Settings', {
+            'fields': ('language', 'timezone', 'date_format', 'time_format', 'currency', 'number_format')
+        }),
+        ('Security', {
+            'fields': ('two_factor_enabled',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

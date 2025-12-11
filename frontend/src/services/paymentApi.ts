@@ -40,8 +40,34 @@ axiosInstance.interceptors.response.use(
 );
 
 // Payment type definitions
+export interface OrderItemSummary {
+  id: string;
+  product: string;
+  product_name: string;
+  product_image: string | null;
+  sku: string;
+  quantity: number;
+  unit_price: string;
+  total_price: string;
+}
+
+export interface OrderSummary {
+  id: string;
+  po_number: string;
+  apartment_name: string;
+  vendor_name: string;
+  items_count: number;
+  total: string;
+  status: string;
+  placed_on: string;
+}
+
 export interface Payment {
   id: string;
+  // Order relationship
+  order: string | null;
+  order_details: OrderSummary | null;
+  // Apartment & Vendor
   apartment: string;
   apartment_details: {
     id: string;
@@ -77,16 +103,37 @@ export interface Payment {
   };
   vendor_name: string;
   order_reference: string;
-  total_amount: string;
-  amount_paid: string;
-  outstanding_amount: string;
+  // Amount fields (integers for HUF)
+  total_amount: number;
+  shipping_cost: number;
+  discount: number;
+  final_total: number;
+  amount_paid: number;
+  outstanding_amount: number;
+  // Payment details
   due_date: string;
   status: 'Unpaid' | 'Partial' | 'Paid' | 'Overdue';
   last_payment_date: string | null;
   notes: string;
+  payment_method: 'Bank Transfer' | 'Card Payment' | 'Cash';
+  reference_number: string;
+  // Bank Transfer details
+  bank_name: string;
+  account_holder: string;
+  account_number: string;
+  iban: string;
+  // Card Payment details
+  card_holder: string;
+  card_last_four: string;
+  // Order items (new)
+  order_items: string[];
+  order_item_details: OrderItemSummary[];
+  order_items_count: number;
+  // Products (legacy)
   products: string[];
   product_details: ProductSummary[];
   product_count: number;
+  // Payment history
   payment_history: PaymentHistory[];
   created_at: string;
   updated_at: string;
@@ -104,8 +151,9 @@ export interface ProductSummary {
 export interface PaymentHistory {
   id: string;
   payment: string;
+  payment_reference?: string;
   date: string;
-  amount: string;
+  amount: number;
   method: string;
   reference_no: string;
   note: string;
@@ -113,16 +161,41 @@ export interface PaymentHistory {
 }
 
 export interface PaymentFormData {
-  apartment: string;
-  vendor: string;
-  order_reference: string;
+  order?: string;
+  apartment?: string;
+  vendor?: string;
+  order_reference?: string;
   due_date: string;
   total_amount: string;
   amount_paid: string;
   status: string;
   last_payment_date?: string | null;
   notes?: string;
-  products: string[];
+  order_items?: string[];
+  products?: string[];
+}
+
+export interface CreatePaymentFromOrderData {
+  order: string;
+  order_items?: string[];
+  due_date: string;
+  // Amount fields
+  total_amount?: number;
+  shipping_cost?: number;
+  discount?: number;
+  amount_paid?: number;
+  // Payment method
+  payment_method?: 'Bank Transfer' | 'Card Payment' | 'Cash';
+  reference_number?: string;
+  notes?: string;
+  // Bank Transfer details
+  bank_name?: string;
+  account_holder?: string;
+  account_number?: string;
+  iban?: string;
+  // Card Payment details
+  card_holder?: string;
+  card_last_four?: string;
 }
 
 export interface PaymentListResponse {
@@ -160,6 +233,12 @@ export const paymentApi = {
     return response.data;
   },
 
+  // Create payment from an order (new endpoint)
+  createPaymentFromOrder: async (data: CreatePaymentFromOrderData): Promise<Payment> => {
+    const response = await axiosInstance.post('/payments/from-order/', data);
+    return response.data;
+  },
+
   // Update payment
   updatePayment: async (id: string, data: Partial<PaymentFormData>): Promise<Payment> => {
     const response = await axiosInstance.put(`/payments/${id}/`, data);
@@ -188,12 +267,17 @@ export const paymentApi = {
   createPaymentHistory: async (data: {
     payment: string;
     date: string;
-    amount: string;
+    amount: number;
     method: string;
     reference_no?: string;
     note?: string;
   }): Promise<PaymentHistory> => {
     const response = await axiosInstance.post('/payment-history/', data);
     return response.data;
+  },
+
+  // Delete payment history entry
+  deletePaymentHistory: async (id: string): Promise<void> => {
+    await axiosInstance.delete(`/payment-history/${id}/`);
   },
 };

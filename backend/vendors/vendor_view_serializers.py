@@ -59,6 +59,10 @@ class VendorViewDetailSerializer(serializers.ModelSerializer):
     # Core vendor info (matching frontend expectations)
     contact = serializers.SerializerMethodField()
     
+    # Dynamic counts from related models
+    orders_count = serializers.SerializerMethodField()
+    active_issues = serializers.SerializerMethodField()
+    
     # Related data
     products = serializers.SerializerMethodField()
     orders = serializers.SerializerMethodField()
@@ -158,6 +162,14 @@ class VendorViewDetailSerializer(serializers.ModelSerializer):
             }
             for payment in payments
         ]
+    
+    def get_orders_count(self, obj):
+        """Get actual count of orders for this vendor"""
+        return obj.orders.count()
+    
+    def get_active_issues(self, obj):
+        """Get count of open/active issues for this vendor"""
+        return obj.issues.exclude(status='Closed').count()
     
     def get_products_count(self, obj):
         """Get total products count"""

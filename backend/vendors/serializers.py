@@ -3,6 +3,10 @@ from .models import Vendor
 
 
 class VendorSerializer(serializers.ModelSerializer):
+    # Dynamic counts from related models
+    orders_count = serializers.SerializerMethodField()
+    active_issues = serializers.SerializerMethodField()
+    
     class Meta:
         model = Vendor
         fields = [
@@ -29,11 +33,21 @@ class VendorSerializer(serializers.ModelSerializer):
             'notes', 'created_at', 'updated_at',
         ]
         read_only_fields = ['created_at', 'updated_at']
+    
+    def get_orders_count(self, obj):
+        """Get actual count of orders for this vendor"""
+        return obj.orders.count()
+    
+    def get_active_issues(self, obj):
+        """Get count of open/active issues for this vendor"""
+        return obj.issues.exclude(status='Closed').count()
 
 
 class VendorListSerializer(serializers.ModelSerializer):
     """Simplified serializer for vendor list views"""
     contact = serializers.SerializerMethodField()
+    orders_count = serializers.SerializerMethodField()
+    active_issues = serializers.SerializerMethodField()
     
     class Meta:
         model = Vendor
@@ -46,3 +60,11 @@ class VendorListSerializer(serializers.ModelSerializer):
     def get_contact(self, obj):
         """Return primary contact (email or contact_person)"""
         return obj.email or obj.contact_person or 'No contact info'
+    
+    def get_orders_count(self, obj):
+        """Get actual count of orders for this vendor"""
+        return obj.orders.count()
+    
+    def get_active_issues(self, obj):
+        """Get count of open/active issues for this vendor"""
+        return obj.issues.exclude(status='Closed').count()

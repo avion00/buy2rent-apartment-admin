@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Payment } from '@/stores/useDataStore';
+import { Payment } from '@/services/paymentApi';
 import { CreditCard, DollarSign } from 'lucide-react';
 
 interface RecordPaymentModalProps {
@@ -21,19 +21,38 @@ export const RecordPaymentModal = ({ payment, open, onOpenChange, onSave }: Reco
   const [referenceNo, setReferenceNo] = useState('');
   const [note, setNote] = useState('');
 
+  // Get values from payment - support both API format (snake_case) and store format (camelCase)
+  const totalAmount = payment?.total_amount ?? (payment as any)?.totalAmount ?? 0;
+  const amountPaid = payment?.amount_paid ?? (payment as any)?.amountPaid ?? 0;
+  const vendorName = payment?.vendor_name ?? payment?.vendor_details?.name ?? (payment as any)?.vendor ?? 'Unknown';
+  const orderRef = payment?.order_reference ?? (payment as any)?.orderReference ?? '';
+
   useEffect(() => {
-    if (payment && open) {
-      const remaining = payment.totalAmount - payment.amountPaid;
-      setAmount(remaining);
+    if (open && payment) {
+      const total = payment?.total_amount ?? (payment as any)?.totalAmount ?? 0;
+      const paid = payment?.amount_paid ?? (payment as any)?.amountPaid ?? 0;
+      const remaining = total - paid;
+      setAmount(remaining > 0 ? remaining : 0);
       setPaymentMethod('Bank Transfer');
       setReferenceNo('');
       setNote('');
     }
-  }, [payment, open]);
+  }, [open, payment?.id]); // Only depend on open and payment.id
 
-  if (!payment) return null;
+  // Don't render dialog content if no payment, but still render Dialog for proper state management
+  if (!payment) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Loading...</DialogTitle>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
-  const remainingBalance = payment.totalAmount - payment.amountPaid;
+  const remainingBalance = totalAmount - amountPaid;
   const newBalance = remainingBalance - amount;
 
   const handleSubmit = () => {
@@ -56,7 +75,7 @@ export const RecordPaymentModal = ({ payment, open, onOpenChange, onSave }: Reco
             Record Payment
           </DialogTitle>
           <DialogDescription>
-            Record a new payment for <span className="font-semibold">{payment.vendor}</span> - {payment.orderReference}
+            Record a new payment for <span className="font-semibold">{vendorName}</span> - {orderRef}
           </DialogDescription>
         </DialogHeader>
         
@@ -65,11 +84,11 @@ export const RecordPaymentModal = ({ payment, open, onOpenChange, onSave }: Reco
           <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg border">
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Amount</p>
-              <p className="text-lg font-bold">{payment.totalAmount.toLocaleString()} HUF</p>
+              <p className="text-lg font-bold">{totalAmount.toLocaleString()} HUF</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Already Paid</p>
-              <p className="text-lg font-bold text-success">{payment.amountPaid.toLocaleString()} HUF</p>
+              <p className="text-lg font-bold text-success">{amountPaid.toLocaleString()} HUF</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Remaining</p>

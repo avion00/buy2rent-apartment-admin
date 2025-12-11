@@ -3,7 +3,8 @@ from .views import (
     DashboardStatsView,
     DashboardChartsView,
     DashboardRecentActivitiesView,
-    DashboardQuickStatsView
+    DashboardQuickStatsView,
+    DashboardOverviewView
 )
 
 app_name = 'dashboard'
@@ -13,4 +14,5 @@ urlpatterns = [
     path('charts/', DashboardChartsView.as_view(), name='dashboard-charts'),
     path('recent-activities/', DashboardRecentActivitiesView.as_view(), name='dashboard-recent'),
     path('quick-stats/', DashboardQuickStatsView.as_view(), name='dashboard-quick'),
+    path('overview/', DashboardOverviewView.as_view(), name='dashboard-overview'),
 ]

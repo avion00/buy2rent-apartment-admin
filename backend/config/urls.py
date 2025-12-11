@@ -30,7 +30,7 @@ from issues.views import IssueViewSet, IssuePhotoViewSet, AICommunicationLogView
 from activities.views import ActivityViewSet, AINoteViewSet, ManualNoteViewSet
 from accounts.user_management_views import UserManagementViewSet
 from notifications.views import NotificationViewSet, NotificationPreferenceViewSet
-from .views import api_overview
+from .views import api_overview, global_search
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 # Create router and register viewsets
@@ -61,6 +61,7 @@ urlpatterns = [
     path('auth/', include('accounts.urls')),  # Updated to use secure accounts app
     path('api/dashboard/', include('dashboard.urls')),  # Dashboard endpoints
     path('api/reports/', include('reports.urls')),  # Report generation endpoints
+    path('api/search/', global_search, name='global_search'),  # Global search endpoint
     
     # Product import endpoints are now part of the main ProductViewSet
     

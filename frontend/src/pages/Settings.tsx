@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,18 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  useSettings, 
+  useUpdateSettings, 
+  useResetSettings,
+  useUpdateNotificationSettings,
+  useUpdateDisplaySettings,
+  useUpdateRegionalSettings,
+} from '@/hooks/useSettingsApi';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   User, 
   Lock, 
@@ -28,7 +38,10 @@ import {
   Calendar,
   DollarSign,
   Settings as SettingsIcon,
-  Shield
+  Shield,
+  Loader2,
+  RefreshCw,
+  Building
 } from 'lucide-react';
 
 type SettingsSection = 'account' | 'security' | 'notifications' | 'display' | 'regional';
@@ -36,16 +49,25 @@ type SettingsSection = 'account' | 'security' | 'notifications' | 'display' | 'r
 const Settings = () => {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState<SettingsSection>('account');
   
-  // Account settings state
+  // API hooks
+  const { data: settings, isLoading, refetch } = useSettings();
+  const updateSettingsMutation = useUpdateSettings();
+  const resetSettingsMutation = useResetSettings();
+  const updateNotificationsMutation = useUpdateNotificationSettings();
+  const updateDisplayMutation = useUpdateDisplaySettings();
+  const updateRegionalMutation = useUpdateRegionalSettings();
+  
+  // Account settings state (from user profile + settings)
   const [accountData, setAccountData] = useState({
-    firstName: 'John',
-    lastName: 'Smith',
-    email: 'john.smith@example.com',
-    phone: '+1 (555) 123-4567',
-    company: 'Tech Solutions Inc.',
-    jobTitle: 'Property Manager'
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    company: '',
+    jobTitle: ''
   });
 
   // Security settings state
@@ -85,18 +107,90 @@ const Settings = () => {
   // Regional settings state
   const [regionalSettings, setRegionalSettings] = useState({
     language: 'en',
-    timezone: 'UTC-5',
-    dateFormat: 'MM/DD/YYYY',
-    timeFormat: '12h',
-    currency: 'USD',
-    numberFormat: 'en-US'
+    timezone: 'UTC+1',
+    dateFormat: 'YYYY-MM-DD',
+    timeFormat: '24h',
+    currency: 'HUF',
+    numberFormat: 'hu-HU'
   });
+  
+  // Two-factor state
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
-  const handleAccountSave = () => {
-    toast({
-      title: "Account Updated",
-      description: "Your account information has been saved successfully.",
-    });
+  // Load settings from API
+  useEffect(() => {
+    if (settings) {
+      // Account data from user + settings
+      setAccountData({
+        firstName: user?.first_name || '',
+        lastName: user?.last_name || '',
+        email: user?.email || settings.user_email || '',
+        phone: (user as any)?.phone || '',
+        company: settings.company || '',
+        jobTitle: settings.job_title || ''
+      });
+      
+      // Notification settings
+      setNotifications({
+        emailNotifications: settings.email_notifications,
+        pushNotifications: settings.push_notifications,
+        smsNotifications: settings.sms_notifications,
+        orderUpdates: settings.order_updates,
+        paymentAlerts: settings.payment_alerts,
+        deliveryNotifications: settings.delivery_notifications,
+        vendorMessages: settings.vendor_messages,
+        systemAlerts: settings.system_alerts,
+        weeklyReports: settings.weekly_reports,
+        monthlyReports: settings.monthly_reports,
+        soundEnabled: settings.sound_enabled,
+        desktopNotifications: settings.desktop_notifications
+      });
+      
+      // Display settings
+      setDisplaySettings({
+        compactView: settings.compact_view,
+        sidebarCollapsed: settings.sidebar_collapsed,
+        showAvatars: settings.show_avatars,
+        animationsEnabled: settings.animations_enabled
+      });
+      
+      // Apply theme from settings
+      if (settings.theme && settings.theme !== theme) {
+        setTheme(settings.theme);
+      }
+      
+      // Regional settings
+      setRegionalSettings({
+        language: settings.language,
+        timezone: settings.timezone,
+        dateFormat: settings.date_format,
+        timeFormat: settings.time_format,
+        currency: settings.currency,
+        numberFormat: settings.number_format
+      });
+      
+      // Security
+      setTwoFactorEnabled(settings.two_factor_enabled);
+    }
+  }, [settings, user]);
+
+  const handleAccountSave = async () => {
+    try {
+      await updateSettingsMutation.mutateAsync({
+        company: accountData.company,
+        job_title: accountData.jobTitle,
+      });
+      toast({
+        title: "Account Updated",
+        description: "Your account information has been saved successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save account settings.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handlePasswordChange = () => {
@@ -109,6 +203,7 @@ const Settings = () => {
       return;
     }
     
+    // TODO: Integrate with change password API
     toast({
       title: "Password Changed",
       description: "Your password has been updated successfully.",
@@ -121,26 +216,161 @@ const Settings = () => {
     });
   };
 
-  const handleNotificationSave = () => {
-    toast({
-      title: "Preferences Saved",
-      description: "Your notification preferences have been updated.",
-    });
+  const handleNotificationSave = async () => {
+    try {
+      await updateNotificationsMutation.mutateAsync({
+        email_notifications: notifications.emailNotifications,
+        push_notifications: notifications.pushNotifications,
+        sms_notifications: notifications.smsNotifications,
+        order_updates: notifications.orderUpdates,
+        payment_alerts: notifications.paymentAlerts,
+        delivery_notifications: notifications.deliveryNotifications,
+        vendor_messages: notifications.vendorMessages,
+        system_alerts: notifications.systemAlerts,
+        weekly_reports: notifications.weeklyReports,
+        monthly_reports: notifications.monthlyReports,
+        sound_enabled: notifications.soundEnabled,
+        desktop_notifications: notifications.desktopNotifications,
+      });
+      toast({
+        title: "Preferences Saved",
+        description: "Your notification preferences have been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save notification settings.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDisplaySave = () => {
-    toast({
-      title: "Display Settings Saved",
-      description: "Your display preferences have been updated.",
-    });
+  const handleDisplaySave = async () => {
+    try {
+      await updateDisplayMutation.mutateAsync({
+        theme: theme as 'light' | 'dark' | 'system',
+        compact_view: displaySettings.compactView,
+        sidebar_collapsed: displaySettings.sidebarCollapsed,
+        show_avatars: displaySettings.showAvatars,
+        animations_enabled: displaySettings.animationsEnabled,
+      });
+      
+      // Update localStorage for sidebar
+      localStorage.setItem('sidebarCollapsed', String(displaySettings.sidebarCollapsed));
+      window.dispatchEvent(
+        new CustomEvent('sidebarPreferenceChanged', { 
+          detail: { collapsed: displaySettings.sidebarCollapsed } 
+        })
+      );
+      
+      toast({
+        title: "Display Settings Saved",
+        description: "Your display preferences have been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save display settings.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleRegionalSave = () => {
-    toast({
-      title: "Regional Settings Saved",
-      description: "Your regional preferences have been updated.",
-    });
+  const handleRegionalSave = async () => {
+    try {
+      await updateRegionalMutation.mutateAsync({
+        language: regionalSettings.language,
+        timezone: regionalSettings.timezone,
+        date_format: regionalSettings.dateFormat,
+        time_format: regionalSettings.timeFormat,
+        currency: regionalSettings.currency,
+        number_format: regionalSettings.numberFormat,
+      });
+      toast({
+        title: "Regional Settings Saved",
+        description: "Your regional preferences have been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save regional settings.",
+        variant: "destructive"
+      });
+    }
   };
+  
+  const handleResetToDefaults = async (section: string) => {
+    try {
+      await resetSettingsMutation.mutateAsync();
+      toast({
+        title: "Settings Reset",
+        description: "All settings have been reset to defaults.",
+      });
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reset settings.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleTwoFactorToggle = async (enabled: boolean) => {
+    try {
+      await updateSettingsMutation.mutateAsync({
+        two_factor_enabled: enabled,
+      });
+      setTwoFactorEnabled(enabled);
+      toast({
+        title: enabled ? "2FA Enabled" : "2FA Disabled",
+        description: enabled 
+          ? "Two-factor authentication has been enabled." 
+          : "Two-factor authentication has been disabled.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update 2FA settings.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Loading state
+  if (isLoading) {
+    return (
+      <PageLayout title="Settings">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-24" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+          <div className="lg:col-span-3">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
 
   const menuItems = [
     { id: 'account' as SettingsSection, icon: User, label: 'Account' },
@@ -264,8 +494,12 @@ const Settings = () => {
                   })}>
                     Cancel
                   </Button>
-                  <Button onClick={handleAccountSave}>
-                    <Check className="mr-2 h-4 w-4" />
+                  <Button onClick={handleAccountSave} disabled={updateSettingsMutation.isPending}>
+                    {updateSettingsMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="mr-2 h-4 w-4" />
+                    )}
                     Save Changes
                   </Button>
                 </div>
@@ -381,7 +615,11 @@ const Settings = () => {
                         </p>
                       </div>
                     </div>
-                    <Switch />
+                    <Switch 
+                      checked={twoFactorEnabled}
+                      onCheckedChange={handleTwoFactorToggle}
+                      disabled={updateSettingsMutation.isPending}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -628,9 +866,24 @@ const Settings = () => {
 
                 <Separator />
                 <div className="flex justify-end gap-3">
-                  <Button variant="outline">Reset to Default</Button>
-                  <Button onClick={handleNotificationSave}>
-                    <Check className="mr-2 h-4 w-4" />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleResetToDefaults('notifications')}
+                    disabled={resetSettingsMutation.isPending}
+                  >
+                    {resetSettingsMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
+                    Reset to Default
+                  </Button>
+                  <Button onClick={handleNotificationSave} disabled={updateNotificationsMutation.isPending}>
+                    {updateNotificationsMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="mr-2 h-4 w-4" />
+                    )}
                     Save Preferences
                   </Button>
                 </div>
@@ -751,9 +1004,24 @@ const Settings = () => {
                 
                 <Separator />
                 <div className="flex justify-end gap-3">
-                  <Button variant="outline">Reset to Default</Button>
-                  <Button onClick={handleDisplaySave}>
-                    <Check className="mr-2 h-4 w-4" />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleResetToDefaults('display')}
+                    disabled={resetSettingsMutation.isPending}
+                  >
+                    {resetSettingsMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
+                    Reset to Default
+                  </Button>
+                  <Button onClick={handleDisplaySave} disabled={updateDisplayMutation.isPending}>
+                    {updateDisplayMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="mr-2 h-4 w-4" />
+                    )}
                     Save Settings
                   </Button>
                 </div>
@@ -893,6 +1161,7 @@ const Settings = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="HUF">HUF - Hungarian Forint (Ft)</SelectItem>
                           <SelectItem value="USD">USD - US Dollar ($)</SelectItem>
                           <SelectItem value="EUR">EUR - Euro (€)</SelectItem>
                           <SelectItem value="GBP">GBP - British Pound (£)</SelectItem>
@@ -929,9 +1198,24 @@ const Settings = () => {
                 
                 <Separator />
                 <div className="flex justify-end gap-3">
-                  <Button variant="outline">Reset to Default</Button>
-                  <Button onClick={handleRegionalSave}>
-                    <Check className="mr-2 h-4 w-4" />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleResetToDefaults('regional')}
+                    disabled={resetSettingsMutation.isPending}
+                  >
+                    {resetSettingsMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
+                    Reset to Default
+                  </Button>
+                  <Button onClick={handleRegionalSave} disabled={updateRegionalMutation.isPending}>
+                    {updateRegionalMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="mr-2 h-4 w-4" />
+                    )}
                     Save Settings
                   </Button>
                 </div>

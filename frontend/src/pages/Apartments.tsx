@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Eye, Edit, Trash2, Search, Loader2, RefreshCw, Upload, Download, Cloud, X, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Search, Loader2, RefreshCw, Upload, Download, Cloud, X, CheckCircle, AlertCircle, AlertTriangle, Building2, Hammer, Sofa, Clock, TrendingUp, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useApartments, useDeleteApartment } from '@/hooks/useApartmentApi';
 import { useClients } from '@/hooks/useClientApi';
@@ -99,6 +99,30 @@ const Apartments = () => {
   });
 
   const apartments = useMemo(() => apartmentsData?.results || [], [apartmentsData?.results]);
+
+  // Calculate stats from apartments data
+  const stats = useMemo(() => {
+    const allApartments = apartmentsData?.results || [];
+    const totalApartments = allApartments.length;
+    const furnishingCount = allApartments.filter(a => a.type === 'furnishing').length;
+    const renovatingCount = allApartments.filter(a => a.type === 'renovating').length;
+    const planningCount = allApartments.filter(a => a.status === 'Planning').length;
+    const orderingCount = allApartments.filter(a => a.status === 'Ordering').length;
+    const deliveryCount = allApartments.filter(a => a.status === 'Delivery').length;
+    const completeCount = allApartments.filter(a => a.status === 'Completed').length;
+    const inProgressCount = totalApartments - completeCount;
+    
+    return {
+      totalApartments,
+      furnishingCount,
+      renovatingCount,
+      planningCount,
+      orderingCount,
+      deliveryCount,
+      completeCount,
+      inProgressCount,
+    };
+  }, [apartmentsData?.results]);
 
   // Validation functions
   const validateForm = () => {
@@ -336,6 +360,99 @@ const Apartments = () => {
   return (
     <PageLayout title="Apartments">
       <div className="space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {/* Total Apartments */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-muted/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total</p>
+                  <p className="text-2xl font-bold mt-1">{stats.totalApartments}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Furnishing */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-yellow-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Furnishing</p>
+                  <p className="text-2xl font-bold mt-1 text-yellow-600">{stats.furnishingCount}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-yellow-500/10 flex items-center justify-center">
+                  <Sofa className="h-5 w-5 text-yellow-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Renovating */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-orange-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Renovating</p>
+                  <p className="text-2xl font-bold mt-1 text-orange-600">{stats.renovatingCount}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                  <Hammer className="h-5 w-5 text-orange-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* In Progress */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-blue-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">In Progress</p>
+                  <p className="text-2xl font-bold mt-1 text-blue-600">{stats.inProgressCount}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-blue-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Completed */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-green-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Completed</p>
+                  <p className="text-2xl font-bold mt-1 text-green-600">{stats.completeCount}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Delivery Stage */}
+          <Card className="border-border/50 bg-gradient-to-br from-background to-purple-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Delivery</p>
+                  <p className="text-2xl font-bold mt-1 text-purple-600">{stats.deliveryCount}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                  <Package className="h-5 w-5 text-purple-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Header Actions */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="flex gap-2 flex-1 max-w-md">
@@ -419,7 +536,7 @@ const Apartments = () => {
                     <TableHead>Designer</TableHead>
                     <TableHead>Start Date</TableHead>
                     <TableHead>Due Date</TableHead>
-                    <TableHead>Progress</TableHead>
+                    {/* <TableHead>Progress</TableHead> */}
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -470,12 +587,12 @@ const Apartments = () => {
                         <TableCell>{apartment.designer}</TableCell>
                         <TableCell>{apartment.start_date}</TableCell>
                         <TableCell>{apartment.due_date}</TableCell>
-                        <TableCell>
+                        {/* <TableCell>
                           <div className="flex items-center gap-2">
                             <Progress value={apartment.progress} className="w-[60px]" />
                             <span className="text-sm text-muted-foreground">{apartment.progress}%</span>
                           </div>
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button size="sm" variant="ghost" onClick={() => navigate(`/apartments/${apartment.id}`)}>
