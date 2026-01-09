@@ -129,8 +129,9 @@ class DashboardStatsView(APIView):
             except Exception:
                 payment_stats = {'total_payments': 0, 'total_amount': 0, 'total_paid': 0, 'unpaid': 0, 'partial': 0, 'paid': 0, 'overdue': 0}
             
-            # Issue statistics
+            # Issue statistics with AI email tracking
             try:
+                from issues.models import AICommunicationLog
                 # Issue statuses: 'Open', 'Pending Vendor Response', 'Resolution Agreed', 'Closed'
                 issue_stats = {
                     'total': Issue.objects.count(),
@@ -139,9 +140,17 @@ class DashboardStatsView(APIView):
                     'resolution_agreed': Issue.objects.filter(resolution_status='Resolution Agreed').count(),
                     'closed': Issue.objects.filter(resolution_status='Closed').count(),
                     'critical': Issue.objects.filter(priority='high', resolution_status__in=['Open', 'Pending Vendor Response']).count(),
+                    # AI Email Statistics
+                    'ai_activated': Issue.objects.filter(ai_activated=True).count(),
+                    'total_emails': AICommunicationLog.objects.filter(message_type='email').count(),
+                    'pending_approvals': AICommunicationLog.objects.filter(status='pending_approval').count(),
+                    'ai_emails_sent': AICommunicationLog.objects.filter(sender='AI', status='sent').count(),
+                    'vendor_responses': AICommunicationLog.objects.filter(sender='Vendor').count(),
                 }
             except Exception:
-                issue_stats = {'total': 0, 'open': 0, 'in_progress': 0, 'resolved': 0, 'critical': 0}
+                issue_stats = {'total': 0, 'open': 0, 'in_progress': 0, 'resolved': 0, 'critical': 0, 
+                              'ai_activated': 0, 'total_emails': 0, 'pending_approvals': 0, 
+                              'ai_emails_sent': 0, 'vendor_responses': 0}
             
             # Activity statistics
             try:
@@ -498,6 +507,8 @@ class DashboardQuickStatsView(APIView):
             deliveries_trend = 0
             overdue_payments = 0
             overdue_trend = 0
+            total_clients = 0
+            total_vendors = 0
             
             try:
                 active_apartments = Apartment.objects.count()
@@ -540,6 +551,16 @@ class DashboardQuickStatsView(APIView):
             except Exception:
                 pass
             
+            try:
+                total_clients = Client.objects.count()
+            except Exception:
+                pass
+            
+            try:
+                total_vendors = Vendor.objects.count()
+            except Exception:
+                pass
+            
             return Response({
                 'active_apartments': {
                     'value': active_apartments,
@@ -566,6 +587,8 @@ class DashboardQuickStatsView(APIView):
                     'trend': round(overdue_trend, 1),
                     'trend_label': 'vs last month'
                 },
+                'total_clients': total_clients,
+                'total_vendors': total_vendors,
             })
         except Exception as e:
             return Response({
@@ -574,6 +597,8 @@ class DashboardQuickStatsView(APIView):
                 'open_issues': {'value': 0, 'trend': 0, 'trend_label': 'no change'},
                 'deliveries_this_week': {'value': 0, 'trend': 0, 'trend_label': 'vs last week'},
                 'overdue_payments': {'value': 0, 'trend': 0, 'trend_label': 'vs last month'},
+                'total_clients': 0,
+                'total_vendors': 0,
                 'error': str(e)
             })
 

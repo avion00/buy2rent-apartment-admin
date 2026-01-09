@@ -235,6 +235,7 @@ const IssueNew = () => {
         replacement_eta: formData.replacementEta || undefined, 
         ai_activated: formData.aiActivated, 
         resolution_status: 'Open',
+        
         resolution_type: formData.resolutionType || undefined,
         resolution_notes: formData.resolutionNotes || undefined,
         delivery_date: formData.deliveryDate || undefined,
@@ -367,9 +368,9 @@ const IssueNew = () => {
                           <div className="flex items-center gap-4">
                             {/* Product Image with Status Indicator */}
                             <div className="relative flex-shrink-0">
-                              {(item.product_image || item.product_image_url) ? (
+                              {item.product_image ? (
                                 <img 
-                                  src={item.product_image || item.product_image_url} 
+                                  src={item.product_image} 
                                   alt={item.product_name || 'Product'} 
                                   className={cn(
                                     "w-14 h-14 rounded-lg object-cover border-2",

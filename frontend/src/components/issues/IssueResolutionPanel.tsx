@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Issue, Vendor } from '@/stores/useDataStore';
+import { Vendor } from '@/stores/useDataStore';
+import { issueApi, Issue } from '@/services/issueApi';
 import { Bot, Mail, Phone, Globe, CheckCircle2, Play, Pause, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -17,24 +18,56 @@ interface IssueResolutionPanelProps {
 }
 
 export function IssueResolutionPanel({ issue, vendor, onUpdateIssue }: IssueResolutionPanelProps) {
-  const [localAIActivated, setLocalAIActivated] = useState(issue.aiActivated || false);
+  const [localAIActivated, setLocalAIActivated] = useState(issue.ai_activated || false);
   const [localStatus, setLocalStatus] = useState(issue.status || 'Open');
 
-  const handleToggleAI = () => {
+  // Sync local state with issue prop
+  useEffect(() => {
+    setLocalAIActivated(issue.ai_activated || false);
+    setLocalStatus(issue.status || 'Open');
+  }, [issue.ai_activated, issue.status]);
+
+  const handleToggleAI = async () => {
     const newState = !localAIActivated;
     setLocalAIActivated(newState);
-    onUpdateIssue({ aiActivated: newState });
     
-    if (newState) {
-      toast.success('AI Chatbot activated');
-    } else {
-      toast.info('AI Chatbot paused');
+    try {
+      if (newState) {
+        // Activate AI and send initial email to vendor
+        const response = await issueApi.activateAIEmail(issue.id);
+        if (response.data?.success) {
+          onUpdateIssue({ ai_activated: true });
+          toast.success('AI Chatbot activated and email sent to vendor');
+        } else {
+          throw new Error(response.data?.message || 'Failed to activate AI');
+        }
+      } else {
+        // Just pause AI (update field only)
+        await issueApi.updateIssue(issue.id, { ai_activated: false });
+        onUpdateIssue({ ai_activated: false });
+        toast.info('AI Chatbot paused');
+      }
+    } catch (error: any) {
+      console.error('Failed to toggle AI:', error);
+      toast.error(error.message || 'Failed to update AI status');
+      // Revert local state on error
+      setLocalAIActivated(!newState);
     }
   };
 
-  const handleStatusChange = (newStatus: Issue['status']) => {
+  const handleStatusChange = async (newStatus: Issue['status']) => {
     setLocalStatus(newStatus);
-    onUpdateIssue({ status: newStatus });
+    
+    try {
+      await issueApi.updateIssue(issue.id, { status: newStatus });
+      onUpdateIssue({ status: newStatus });
+      toast.success('Status updated');
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast.error('Failed to update status');
+      // Revert local state on error
+      setLocalStatus(issue.status || 'Open');
+    }
   };
 
   return (

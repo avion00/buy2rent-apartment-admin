@@ -183,49 +183,53 @@ const ProductEdit = () => {
       // Use type assertion for fields not yet in TypeScript interface
       const productData = product as any;
       
+      console.log("📦 Product data loaded:", product);
+      console.log("📋 Category ID:", product.category);
+      console.log("🏢 Vendor ID:", product.vendor);
+      
       setFormData({
-        product: product.product || "",
-        description: product.description || "",
-        category: product.category || "",
-        vendor: product.vendor || "",
-        vendor_link: product.vendor_link || "",
-        sku: product.sku || "",
-        dimensions: product.dimensions || "",
-        weight: product.weight || "",
-        material: product.material || "",
-        color: product.color || "",
-        model_number: product.model_number || "",
-        brand: product.brand || "",
-        country_of_origin: product.country_of_origin || "",
-        sn: product.sn || "",
-        unit_price: product.unit_price?.toString() || "",
-        qty: product.qty || 1,
-        cost: product.cost || "",
-        total_cost: product.total_cost || "",
-        shipping_cost: product.shipping_cost || "0",
-        discount: product.discount || "0",
-        currency: product.currency || "HUF",
-        availability: product.availability || "In Stock",
-        status: product.status || "Design Approved",
-        room: product.room || "",
-        link: product.link || "",
-        size: product.size || "",
-        nm: product.nm || "",
-        plusz_nm: product.plusz_nm || "",
-        price_per_nm: product.price_per_nm || "",
-        price_per_package: product.price_per_package || "",
-        nm_per_package: product.nm_per_package || "",
-        all_package: product.all_package || "",
-        package_need_to_order: product.package_need_to_order || "",
-        all_price: product.all_price || "",
-        eta: product.eta || "",
-        ordered_on: product.ordered_on || "",
-        expected_delivery_date: product.expected_delivery_date || "",
-        actual_delivery_date: product.actual_delivery_date || "",
-        payment_status: product.payment_status || "Unpaid",
-        payment_due_date: product.payment_due_date || "",
-        payment_amount: product.payment_amount || "",
-        paid_amount: product.paid_amount || "0",
+        product: productData.product || "",
+        description: productData.description || "",
+        category: productData.category ? String(productData.category) : "",
+        vendor: productData.vendor ? String(productData.vendor) : "",
+        vendor_link: productData.vendor_link || "",
+        sku: productData.sku || "",
+        dimensions: productData.dimensions || "",
+        weight: productData.weight || "",
+        material: productData.material || "",
+        color: productData.color || "",
+        model_number: productData.model_number || "",
+        brand: productData.brand || "",
+        country_of_origin: productData.country_of_origin || "",
+        sn: productData.sn || "",
+        unit_price: productData.unit_price?.toString() || "",
+        qty: productData.qty || 1,
+        cost: productData.cost || "",
+        total_cost: productData.total_cost || "",
+        shipping_cost: productData.shipping_cost || "0",
+        discount: productData.discount || "0",
+        currency: productData.currency || "HUF",
+        availability: productData.availability || "In Stock",
+        status: Array.isArray(productData.status) ? productData.status[0] || "Design Approved" : (productData.status || "Design Approved"),
+        room: productData.room || "",
+        link: productData.link || "",
+        size: productData.size || "",
+        nm: productData.nm || "",
+        plusz_nm: productData.plusz_nm || "",
+        price_per_nm: productData.price_per_nm || "",
+        price_per_package: productData.price_per_package || "",
+        nm_per_package: productData.nm_per_package || "",
+        all_package: productData.all_package || "",
+        package_need_to_order: productData.package_need_to_order || "",
+        all_price: productData.all_price || "",
+        eta: productData.eta || "",
+        ordered_on: productData.ordered_on || "",
+        expected_delivery_date: productData.expected_delivery_date || "",
+        actual_delivery_date: productData.actual_delivery_date || "",
+        payment_status: productData.payment_status || "Unpaid",
+        payment_due_date: productData.payment_due_date || "",
+        payment_amount: productData.payment_amount || "",
+        paid_amount: productData.paid_amount || "0",
         delivery_type: productData.delivery_type || "",
         delivery_status_tags: productData.delivery_status_tags || "",
         delivery_address: productData.delivery_address || "",
@@ -504,8 +508,6 @@ const ProductEdit = () => {
         formDataToSend.append("replacement_approved", formData.replacement_approved.toString());
         if (formData.replacement_eta) formDataToSend.append("replacement_eta", formData.replacement_eta);
         if (formData.replacement_of) formDataToSend.append("replacement_of", formData.replacement_of);
-        if (formData.gallery_images) formDataToSend.append("gallery_images", formData.gallery_images);
-        if (formData.attachments) formDataToSend.append("attachments", formData.attachments);
         
         if (formData.notes) formDataToSend.append("notes", formData.notes);
         if (formData.manual_notes) formDataToSend.append("manual_notes", formData.manual_notes);
@@ -537,8 +539,8 @@ const ProductEdit = () => {
           // Pricing
           unit_price: formData.unit_price,
           qty: formData.qty,
-          cost: formData.cost || undefined,
-          total_cost: formData.total_cost || undefined,
+    // REMOVED: cost: formData.cost || undefined,
+    // REMOVED: total_cost: formData.total_cost || undefined,
           shipping_cost: formData.shipping_cost || undefined,
           discount: formData.discount || undefined,
           currency: formData.currency,
@@ -551,13 +553,13 @@ const ProductEdit = () => {
           link: formData.link || undefined,
           size: formData.size || undefined,
           nm: formData.nm || undefined,
-          plusz_nm: formData.plusz_nm || undefined,
+    // REMOVED: plusz_nm: formData.plusz_nm || undefined,
           price_per_nm: formData.price_per_nm || undefined,
           price_per_package: formData.price_per_package || undefined,
           nm_per_package: formData.nm_per_package || undefined,
-          all_package: formData.all_package || undefined,
-          package_need_to_order: formData.package_need_to_order || undefined,
-          all_price: formData.all_price || undefined,
+    // REMOVED: all_package: formData.all_package || undefined,
+    // REMOVED: package_need_to_order: formData.package_need_to_order || undefined,
+    // REMOVED: all_price: formData.all_price || undefined,
           
           // Dates
           eta: formData.eta || null,
@@ -588,43 +590,41 @@ const ProductEdit = () => {
           condition_on_arrival: formData.condition_on_arrival || undefined,
           
           // Delivery Type Specific
-          sender: formData.sender || undefined,
-          sender_address: formData.sender_address || undefined,
-          sender_phone: formData.sender_phone || undefined,
-          recipient: formData.recipient || undefined,
-          recipient_address: formData.recipient_address || undefined,
-          recipient_phone: formData.recipient_phone || undefined,
-          recipient_email: formData.recipient_email || undefined,
-          locker_provider: formData.locker_provider || undefined,
-          locker_id: formData.locker_id || undefined,
-          pickup_provider: formData.pickup_provider || undefined,
-          pickup_location: formData.pickup_location || undefined,
-          customs_description: formData.customs_description || undefined,
-          item_value: formData.item_value || undefined,
-          hs_category: formData.hs_category || undefined,
-          insurance: formData.insurance || undefined,
-          cod: formData.cod || undefined,
-          pickup_time: formData.pickup_time || undefined,
+    // REMOVED: sender: formData.sender || undefined,
+    // REMOVED: sender_address: formData.sender_address || undefined,
+    // REMOVED: sender_phone: formData.sender_phone || undefined,
+    // REMOVED: recipient: formData.recipient || undefined,
+    // REMOVED: recipient_address: formData.recipient_address || undefined,
+    // REMOVED: recipient_phone: formData.recipient_phone || undefined,
+    // REMOVED: recipient_email: formData.recipient_email || undefined,
+    // REMOVED: locker_provider: formData.locker_provider || undefined,
+    // REMOVED: locker_id: formData.locker_id || undefined,
+    // REMOVED: pickup_provider: formData.pickup_provider || undefined,
+    // REMOVED: pickup_location: formData.pickup_location || undefined,
+    // REMOVED: customs_description: formData.customs_description || undefined,
+    // REMOVED: item_value: formData.item_value || undefined,
+    // REMOVED: hs_category: formData.hs_category || undefined,
+    // REMOVED: insurance: formData.insurance || undefined,
+    // REMOVED: cod: formData.cod || undefined,
+    // REMOVED: pickup_time: formData.pickup_time || undefined,
           delivery_deadline: formData.delivery_deadline || undefined,
           special_instructions: formData.special_instructions || undefined,
           
           // Issues
-          issue_state: formData.issue_state,
-          issue_type: formData.issue_type || undefined,
-          issue_description: formData.issue_description || undefined,
-          replacement_requested: formData.replacement_requested,
-          replacement_approved: formData.replacement_approved,
-          replacement_eta: formData.replacement_eta || null,
+    // REMOVED: issue_state: formData.issue_state,
+    // REMOVED: issue_type: formData.issue_type || undefined,
+    // REMOVED: issue_description: formData.issue_description || undefined,
+    // REMOVED: replacement_requested: formData.replacement_requested,
+    // REMOVED: replacement_approved: formData.replacement_approved,
+    // REMOVED: replacement_eta: formData.replacement_eta || null,
           replacement_of: formData.replacement_of || undefined,
-          gallery_images: formData.gallery_images || undefined,
-          attachments: formData.attachments || undefined,
           
           notes: formData.notes || undefined,
           manual_notes: formData.manual_notes || undefined,
           ai_summary_notes: formData.ai_summary_notes || undefined,
         };
 
-        await updateProductMutation.mutateAsync({ id: id!, data: productData });
+        await updateProductMutation.mutateAsync({ id: id!, data: productData as any });
       }
 
       toast({
@@ -691,12 +691,10 @@ const ProductEdit = () => {
           <Card>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-6 mt-6">
+                <TabsList className="grid w-full grid-cols-4 mt-6">
                   <TabsTrigger value="basic">Basic Info</TabsTrigger>
                   <TabsTrigger value="measurements">Measurements</TabsTrigger>
                   <TabsTrigger value="pricing">Pricing</TabsTrigger>
-                  <TabsTrigger value="delivery">Delivery</TabsTrigger>
-                  <TabsTrigger value="issues">Issues</TabsTrigger>
                   <TabsTrigger value="additional">Additional</TabsTrigger>
                 </TabsList>
 
@@ -1305,885 +1303,6 @@ const ProductEdit = () => {
                   </div>
                 </TabsContent>
 
-                {/* Delivery Tab */}
-                <TabsContent value="delivery" className="space-y-6 mt-6">
-                  <h3 className="text-lg font-semibold mb-4">Delivery Information</h3>
-
-                  {/* Common Delivery Fields (Always Visible) */}
-                  <div className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="deliveryType">Delivery Type *</Label>
-                        <Select
-                          value={formData.delivery_type || undefined}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, delivery_type: value })
-                          }
-                        >
-                          <SelectTrigger id="deliveryType">
-                            <SelectValue placeholder="Select delivery type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">-- No Delivery --</SelectItem>
-                            <SelectItem value="home_courier">🚚 Home Courier</SelectItem>
-                            <SelectItem value="parcel_locker">📦 Parcel Locker</SelectItem>
-                            <SelectItem value="pickup_point">🏪 Pickup Point</SelectItem>
-                            <SelectItem value="international">✈️ International</SelectItem>
-                            <SelectItem value="same_day">⚡ Same Day</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="orderedOn">Ordered On</Label>
-                        <Input
-                          id="orderedOn"
-                          type="date"
-                          value={formData.ordered_on}
-                          onChange={(e) =>
-                            setFormData({ ...formData, ordered_on: e.target.value })
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="expectedDeliveryDate">Expected Delivery Date</Label>
-                        <Input
-                          id="expectedDeliveryDate"
-                          type="date"
-                          value={formData.expected_delivery_date}
-                          onChange={(e) =>
-                            setFormData({ ...formData, expected_delivery_date: e.target.value })
-                          }
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="actualDeliveryDate">Actual Delivery Date</Label>
-                        <Input
-                          id="actualDeliveryDate"
-                          type="date"
-                          value={formData.actual_delivery_date}
-                          onChange={(e) =>
-                            setFormData({ ...formData, actual_delivery_date: e.target.value })
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="deliveryStatusTags">Delivery Status Tags</Label>
-                      <Input
-                        id="deliveryStatusTags"
-                        value={formData.delivery_status_tags || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, delivery_status_tags: e.target.value })
-                        }
-                        placeholder="e.g., In Transit, Delayed, Delivered"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Separate multiple tags with commas
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Dynamic Block - Changes based on delivery_type */}
-                  {formData.delivery_type && formData.delivery_type !== "none" && (
-                    <div className="p-4 rounded-lg border bg-muted/40 space-y-4">
-                      {/* Home Courier */}
-                      {formData.delivery_type === "home_courier" && (
-                        <>
-                          <h4 className="text-md font-semibold">🚚 Home Courier Details</h4>
-                          <div className="grid gap-6 md:grid-cols-2">
-                            {/* Sender Information */}
-                            <div className="space-y-3">
-                              <h5 className="text-sm font-medium text-muted-foreground">Sender Information</h5>
-                              <div className="space-y-2">
-                                <Label htmlFor="sender">Sender Name</Label>
-                                <Input
-                                  id="sender"
-                                  value={formData.sender || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, sender: e.target.value })
-                                  }
-                                  placeholder="Company Name"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="sender_address">Sender Address</Label>
-                                <Input
-                                  id="sender_address"
-                                  value={formData.sender_address || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, sender_address: e.target.value })
-                                  }
-                                  placeholder="Full address"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="sender_phone">Sender Phone</Label>
-                                <Input
-                                  id="sender_phone"
-                                  value={formData.sender_phone || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, sender_phone: e.target.value })
-                                  }
-                                  placeholder="+36 20 123 4567"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Recipient Information */}
-                            <div className="space-y-3">
-                              <h5 className="text-sm font-medium text-muted-foreground">Recipient Information</h5>
-                              <div className="space-y-2">
-                                <Label htmlFor="recipient">Recipient Name</Label>
-                                <Input
-                                  id="recipient"
-                                  value={formData.recipient || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, recipient: e.target.value })
-                                  }
-                                  placeholder="Customer Name"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="recipient_address">Recipient Address</Label>
-                                <Input
-                                  id="recipient_address"
-                                  value={formData.recipient_address || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, recipient_address: e.target.value })
-                                  }
-                                  placeholder="Delivery address"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="recipient_phone">Recipient Phone</Label>
-                                <Input
-                                  id="recipient_phone"
-                                  value={formData.recipient_phone || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, recipient_phone: e.target.value })
-                                  }
-                                  placeholder="+36 30 987 6543"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="weight">Weight (kg)</Label>
-                              <Input
-                                id="weight"
-                                type="number"
-                                step="0.1"
-                                value={formData.weight || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, weight: e.target.value })
-                                }
-                                placeholder="5.5"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="size">Size</Label>
-                              <Input
-                                id="size"
-                                value={formData.size || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, size: e.target.value })
-                                }
-                                placeholder="Medium"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="insurance">Insurance</Label>
-                              <Select
-                                value={formData.insurance || "no"}
-                                onValueChange={(value) =>
-                                  setFormData({ ...formData, insurance: value })
-                                }
-                              >
-                                <SelectTrigger id="insurance">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="yes">Yes</SelectItem>
-                                  <SelectItem value="no">No</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="cod">Cash on Delivery</Label>
-                              <Input
-                                id="cod"
-                                type="number"
-                                value={formData.cod || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, cod: e.target.value })
-                                }
-                                placeholder="0 or amount"
-                              />
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      {/* Parcel Locker */}
-                      {formData.delivery_type === "parcel_locker" && (
-                        <>
-                          <h4 className="text-md font-semibold">📦 Parcel Locker Details</h4>
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="locker_provider">Locker Provider</Label>
-                              <Input
-                                id="locker_provider"
-                                value={formData.locker_provider || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, locker_provider: e.target.value })
-                                }
-                                placeholder="e.g., Packeta, GLS ParcelShop"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="locker_id">Locker ID</Label>
-                              <Input
-                                id="locker_id"
-                                value={formData.locker_id || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, locker_id: e.target.value })
-                                }
-                                placeholder="LOC-12345"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-3">
-                            <div className="space-y-2">
-                              <Label htmlFor="recipient">Recipient Name</Label>
-                              <Input
-                                id="recipient"
-                                value={formData.recipient || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, recipient: e.target.value })
-                                }
-                                placeholder="Customer Name"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="recipient_phone">Recipient Phone</Label>
-                              <Input
-                                id="recipient_phone"
-                                value={formData.recipient_phone || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, recipient_phone: e.target.value })
-                                }
-                                placeholder="+36 30 987 6543"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="recipient_email">Recipient Email</Label>
-                              <Input
-                                id="recipient_email"
-                                type="email"
-                                value={formData.recipient_email || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, recipient_email: e.target.value })
-                                }
-                                placeholder="customer@example.com"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-3">
-                            <div className="space-y-2">
-                              <Label htmlFor="weight">Weight (kg)</Label>
-                              <Input
-                                id="weight"
-                                type="number"
-                                step="0.1"
-                                value={formData.weight || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, weight: e.target.value })
-                                }
-                                placeholder="5.5"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="size">Size</Label>
-                              <Input
-                                id="size"
-                                value={formData.size || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, size: e.target.value })
-                                }
-                                placeholder="Medium"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="cod">Cash on Delivery</Label>
-                              <Input
-                                id="cod"
-                                type="number"
-                                value={formData.cod || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, cod: e.target.value })
-                                }
-                                placeholder="0 or amount"
-                              />
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      {/* Pickup Point */}
-                      {formData.delivery_type === "pickup_point" && (
-                        <>
-                          <h4 className="text-md font-semibold">🏪 Pickup Point Details</h4>
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="pickup_provider">Pickup Provider</Label>
-                              <Input
-                                id="pickup_provider"
-                                value={formData.pickup_provider || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, pickup_provider: e.target.value })
-                                }
-                                placeholder="e.g., DPD Pickup, GLS Point"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="pickup_location">Pickup Location</Label>
-                              <Input
-                                id="pickup_location"
-                                value={formData.pickup_location || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, pickup_location: e.target.value })
-                                }
-                                placeholder="Store address or ID"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-3">
-                            <div className="space-y-2">
-                              <Label htmlFor="recipient">Recipient Name</Label>
-                              <Input
-                                id="recipient"
-                                value={formData.recipient || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, recipient: e.target.value })
-                                }
-                                placeholder="Customer Name"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="recipient_phone">Recipient Phone</Label>
-                              <Input
-                                id="recipient_phone"
-                                value={formData.recipient_phone || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, recipient_phone: e.target.value })
-                                }
-                                placeholder="+36 30 987 6543"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="recipient_email">Recipient Email</Label>
-                              <Input
-                                id="recipient_email"
-                                type="email"
-                                value={formData.recipient_email || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, recipient_email: e.target.value })
-                                }
-                                placeholder="customer@example.com"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-3">
-                            <div className="space-y-2">
-                              <Label htmlFor="weight">Weight (kg)</Label>
-                              <Input
-                                id="weight"
-                                type="number"
-                                step="0.1"
-                                value={formData.weight || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, weight: e.target.value })
-                                }
-                                placeholder="5.5"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="size">Size</Label>
-                              <Input
-                                id="size"
-                                value={formData.size || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, size: e.target.value })
-                                }
-                                placeholder="Medium"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="cod">Cash on Delivery</Label>
-                              <Input
-                                id="cod"
-                                type="number"
-                                value={formData.cod || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, cod: e.target.value })
-                                }
-                                placeholder="0 or amount"
-                              />
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      {/* International */}
-                      {formData.delivery_type === "international" && (
-                        <>
-                          <h4 className="text-md font-semibold">✈️ International Delivery Details</h4>
-                          <div className="grid gap-6 md:grid-cols-2">
-                            {/* Sender */}
-                            <div className="space-y-3">
-                              <h5 className="text-sm font-medium text-muted-foreground">Sender Information</h5>
-                              <div className="space-y-2">
-                                <Label htmlFor="sender">Sender Name</Label>
-                                <Input
-                                  id="sender"
-                                  value={formData.sender || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, sender: e.target.value })
-                                  }
-                                  placeholder="Company Name"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="sender_address">Sender Address</Label>
-                                <Input
-                                  id="sender_address"
-                                  value={formData.sender_address || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, sender_address: e.target.value })
-                                  }
-                                  placeholder="Full address with country"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Recipient */}
-                            <div className="space-y-3">
-                              <h5 className="text-sm font-medium text-muted-foreground">Recipient Information</h5>
-                              <div className="space-y-2">
-                                <Label htmlFor="recipient">Recipient Name</Label>
-                                <Input
-                                  id="recipient"
-                                  value={formData.recipient || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, recipient: e.target.value })
-                                  }
-                                  placeholder="Customer Name"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="recipient_address">Recipient Address</Label>
-                                <Input
-                                  id="recipient_address"
-                                  value={formData.recipient_address || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, recipient_address: e.target.value })
-                                  }
-                                  placeholder="International address"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="weight">Weight (kg)</Label>
-                              <Input
-                                id="weight"
-                                type="number"
-                                step="0.1"
-                                value={formData.weight || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, weight: e.target.value })
-                                }
-                                placeholder="5.5"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="size">Size</Label>
-                              <Input
-                                id="size"
-                                value={formData.size || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, size: e.target.value })
-                                }
-                                placeholder="Medium"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="customs_description">Customs Description</Label>
-                              <Input
-                                id="customs_description"
-                                value={formData.customs_description || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, customs_description: e.target.value })
-                                }
-                                placeholder="Product description for customs"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="item_value">Item Value</Label>
-                              <Input
-                                id="item_value"
-                                type="number"
-                                value={formData.item_value || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, item_value: e.target.value })
-                                }
-                                placeholder="Declared value"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="hs_category">HS Category</Label>
-                              <Input
-                                id="hs_category"
-                                value={formData.hs_category || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, hs_category: e.target.value })
-                                }
-                                placeholder="Harmonized System code"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="insurance">Insurance</Label>
-                              <Select
-                                value={formData.insurance || "no"}
-                                onValueChange={(value) =>
-                                  setFormData({ ...formData, insurance: value })
-                                }
-                              >
-                                <SelectTrigger id="insurance">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="yes">Yes</SelectItem>
-                                  <SelectItem value="no">No</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      {/* Same Day */}
-                      {formData.delivery_type === "same_day" && (
-                        <>
-                          <h4 className="text-md font-semibold">⚡ Same Day Delivery Details</h4>
-                          <div className="grid gap-6 md:grid-cols-2">
-                            {/* Sender */}
-                            <div className="space-y-3">
-                              <h5 className="text-sm font-medium text-muted-foreground">Sender Information</h5>
-                              <div className="space-y-2">
-                                <Label htmlFor="sender">Sender Name</Label>
-                                <Input
-                                  id="sender"
-                                  value={formData.sender || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, sender: e.target.value })
-                                  }
-                                  placeholder="Company Name"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="sender_address">Sender Address</Label>
-                                <Input
-                                  id="sender_address"
-                                  value={formData.sender_address || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, sender_address: e.target.value })
-                                  }
-                                  placeholder="Pickup address"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Recipient */}
-                            <div className="space-y-3">
-                              <h5 className="text-sm font-medium text-muted-foreground">Recipient Information</h5>
-                              <div className="space-y-2">
-                                <Label htmlFor="recipient">Recipient Name</Label>
-                                <Input
-                                  id="recipient"
-                                  value={formData.recipient || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, recipient: e.target.value })
-                                  }
-                                  placeholder="Customer Name"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="recipient_address">Recipient Address</Label>
-                                <Input
-                                  id="recipient_address"
-                                  value={formData.recipient_address || ""}
-                                  onChange={(e) =>
-                                    setFormData({ ...formData, recipient_address: e.target.value })
-                                  }
-                                  placeholder="Delivery address"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="pickup_time">Pickup Time</Label>
-                              <Input
-                                id="pickup_time"
-                                type="time"
-                                value={formData.pickup_time || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, pickup_time: e.target.value })
-                                }
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="delivery_deadline">Delivery Deadline</Label>
-                              <Input
-                                id="delivery_deadline"
-                                type="time"
-                                value={formData.delivery_deadline || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, delivery_deadline: e.target.value })
-                                }
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="weight">Weight (kg)</Label>
-                              <Input
-                                id="weight"
-                                type="number"
-                                step="0.1"
-                                value={formData.weight || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, weight: e.target.value })
-                                }
-                                placeholder="5.5"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="size">Size</Label>
-                              <Input
-                                id="size"
-                                value={formData.size || ""}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, size: e.target.value })
-                                }
-                                placeholder="Medium"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="special_instructions">Special Instructions</Label>
-                            <EnhancedTextarea
-                              id="special_instructions"
-                              value={formData.special_instructions || ""}
-                              onChange={(e) =>
-                                setFormData({ ...formData, special_instructions: e.target.value })
-                              }
-                              placeholder="Any special delivery instructions..."
-                              rows={3}
-                            />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* Issue Management Tab */}
-                <TabsContent value="issues" className="space-y-6 mt-6">
-                  <h3 className="text-lg font-semibold mb-4">Issue Management</h3>
-
-                  {/* Issue State & Type */}
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="issueState">Issue State *</Label>
-                      <Select
-                        value={formData.issue_state}
-                        onValueChange={(value: any) =>
-                          setFormData({ ...formData, issue_state: value })
-                        }
-                      >
-                        <SelectTrigger id="issueState">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="No Issue">✅ No Issue</SelectItem>
-                          <SelectItem value="Issue Reported">⚠️ Issue Reported</SelectItem>
-                          <SelectItem value="AI Resolving">🤖 AI Resolving</SelectItem>
-                          <SelectItem value="Resolved">✔️ Resolved</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="issue_type">Issue Type</Label>
-                      <Input
-                        id="issue_type"
-                        value={formData.issue_type}
-                        onChange={(e) =>
-                          setFormData({ ...formData, issue_type: e.target.value })
-                        }
-                        placeholder="e.g., Damaged, Wrong Item, Missing"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Issue Description */}
-                  <div className="space-y-2">
-                    <Label htmlFor="issue_description">Issue Description</Label>
-                    <EnhancedTextarea
-                      id="issue_description"
-                      value={formData.issue_description}
-                      onChange={(e) =>
-                        setFormData({ ...formData, issue_description: e.target.value })
-                      }
-                      placeholder="Describe the issue in detail..."
-                      rows={4}
-                    />
-                  </div>
-
-                  {/* Replacement Section */}
-                  {formData.issue_state !== "No Issue" && (
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-                      <h4 className="text-md font-semibold">Replacement Information</h4>
-                      
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="replacement_requested"
-                              checked={formData.replacement_requested}
-                              onChange={(e) =>
-                                setFormData({ ...formData, replacement_requested: e.target.checked })
-                              }
-                              className="h-4 w-4 rounded border-gray-300"
-                            />
-                            <Label htmlFor="replacement_requested" className="cursor-pointer">
-                              Replacement Requested
-                            </Label>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="replacement_approved"
-                              checked={formData.replacement_approved}
-                              onChange={(e) =>
-                                setFormData({ ...formData, replacement_approved: e.target.checked })
-                              }
-                              className="h-4 w-4 rounded border-gray-300"
-                            />
-                            <Label htmlFor="replacement_approved" className="cursor-pointer">
-                              Replacement Approved
-                            </Label>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                          <Label htmlFor="replacement_eta">Replacement ETA</Label>
-                          <Input
-                            id="replacement_eta"
-                            type="date"
-                            value={formData.replacement_eta}
-                            onChange={(e) =>
-                              setFormData({ ...formData, replacement_eta: e.target.value })
-                            }
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="replacement_of">Replacement Of (Product ID)</Label>
-                          <Input
-                            id="replacement_of"
-                            value={formData.replacement_of}
-                            onChange={(e) =>
-                              setFormData({ ...formData, replacement_of: e.target.value })
-                            }
-                            placeholder="Original product ID"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Gallery Images & Attachments */}
-                  <div className="space-y-4">
-                    <h4 className="text-md font-semibold">Documentation</h4>
-                    
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="gallery_images">Gallery Images (URLs)</Label>
-                        <EnhancedTextarea
-                          id="gallery_images"
-                          value={formData.gallery_images}
-                          onChange={(e) =>
-                            setFormData({ ...formData, gallery_images: e.target.value })
-                          }
-                          placeholder="Enter image URLs, one per line"
-                          rows={3}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Add multiple image URLs (one per line) for issue documentation
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="attachments">Attachments (URLs)</Label>
-                        <EnhancedTextarea
-                          id="attachments"
-                          value={formData.attachments}
-                          onChange={(e) =>
-                            setFormData({ ...formData, attachments: e.target.value })
-                          }
-                          placeholder="Enter attachment URLs, one per line"
-                          rows={3}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Add document URLs (invoices, reports, etc.)
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
                 {/* Additional Tab */}
                 <TabsContent value="additional" className="space-y-6 mt-6">
                   <h3 className="text-lg font-semibold mb-4">Additional Information</h3>
@@ -2276,25 +1395,70 @@ const ProductEdit = () => {
                 </TabsContent>
               </Tabs>
 
-              <div className="flex gap-4 justify-end mt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate(`/products/${id}`)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={updateProductMutation.isPending}
-                >
-                  {updateProductMutation.isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {/* Pagination Navigation */}
+              <div className="flex gap-4 justify-between mt-6 border-t pt-6">
+                <div>
+                  {activeTab !== "basic" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const tabs = ["basic", "measurements", "pricing", "additional"];
+                        const currentIndex = tabs.indexOf(activeTab);
+                        if (currentIndex > 0) {
+                          setActiveTab(tabs[currentIndex - 1]);
+                        }
+                      }}
+                    >
+                      ← Previous
+                    </Button>
                   )}
-                  {updateProductMutation.isPending
-                    ? "Saving..."
-                    : "Save Changes"}
-                </Button>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigate(`/products/${id}`);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+
+                  {activeTab !== "additional" ? (
+                    <Button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const tabs = ["basic", "measurements", "pricing", "additional"];
+                        const currentIndex = tabs.indexOf(activeTab);
+                        if (currentIndex < tabs.length - 1) {
+                          setActiveTab(tabs[currentIndex + 1]);
+                        }
+                      }}
+                    >
+                      Next →
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      disabled={updateProductMutation.isPending}
+                    >
+                      {updateProductMutation.isPending && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      {updateProductMutation.isPending
+                        ? "Saving..."
+                        : "Save Changes"}
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

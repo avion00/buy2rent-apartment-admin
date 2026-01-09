@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, FileText, Truck, ArrowUpDown, TrendingUp, Package, DollarSign, Clock, Loader2, Edit, Trash2, MoreHorizontal, Eye, CheckCircle, Copy } from 'lucide-react';
+import { Plus, Search, FileText, Truck, ArrowUpDown, TrendingUp, Package, DollarSign, Clock, Loader2, Edit, Trash2, MoreHorizontal, Eye, CheckCircle, Copy, XCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -126,11 +126,7 @@ const Orders = () => {
     const statusLower = status.toLowerCase();
     const colors: Record<string, string> = {
       'draft': 'bg-gray-500/10 text-gray-500',
-      'pending': 'bg-yellow-500/10 text-yellow-500',
       'sent': 'bg-blue-500/10 text-blue-500',
-      'confirmed': 'bg-green-500/10 text-green-500',
-      'delivered': 'bg-purple-500/10 text-purple-500',
-      'cancelled': 'bg-red-500/10 text-red-500',
     };
     return colors[statusLower] || 'bg-gray-500/10 text-gray-500';
   };
@@ -185,9 +181,9 @@ const Orders = () => {
                     Pending
                   </p>
                   <p className="text-3xl font-bold">
-                    {loading ? '-' : statistics?.pending_orders || orders.filter(o => o.status.toLowerCase() === 'pending' || o.status.toLowerCase() === 'sent').length}
+                    {loading ? '-' : statistics?.pending_orders || orders.filter(o => o.status.toLowerCase() === 'sent').length}
                   </p>
-                  <p className="text-xs text-muted-foreground">Awaiting confirmation</p>
+                  <p className="text-xs text-muted-foreground">Sent to vendor</p>
                 </div>
                 <Clock className="h-8 w-8 text-yellow-500 opacity-50" />
               </div>
@@ -202,9 +198,9 @@ const Orders = () => {
                     Received
                   </p>
                   <p className="text-3xl font-bold">
-                    {loading ? '-' : statistics?.delivered_orders || orders.filter(o => o.status.toLowerCase() === 'delivered' || o.status.toLowerCase() === 'received').length}
+                    {loading ? '-' : statistics?.delivered_orders || 0}
                   </p>
-                  <p className="text-xs text-muted-foreground">Successfully delivered</p>
+                  <p className="text-xs text-muted-foreground">Check Deliveries page</p>
                 </div>
                 <Package className="h-8 w-8 text-green-500 opacity-50" />
               </div>
@@ -282,10 +278,8 @@ const Orders = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="Draft">Draft</SelectItem>
-              <SelectItem value="Sent">Sent</SelectItem>
-              <SelectItem value="Confirmed">Confirmed</SelectItem>
-              <SelectItem value="Received">Received</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
             </SelectContent>
           </Select>
 
@@ -450,19 +444,28 @@ const Orders = () => {
                               <Truck className="mr-3 h-4 w-4 text-muted-foreground" />
                               <span>Delivery Tracking</span>
                             </DropdownMenuItem>
-                            {!order.is_delivered && (
+                            {order.status.toLowerCase() === 'draft' && (
                               <DropdownMenuItem 
-                                onClick={() => markDelivered(order.id)}
+                                onClick={() => updateStatus(String(order.id), 'sent')}
                                 className="cursor-pointer py-2.5"
                               >
-                                <CheckCircle className="mr-3 h-4 w-4 text-green-500" />
-                                <span className="text-green-600">Mark as Delivered</span>
+                                <CheckCircle className="mr-3 h-4 w-4 text-blue-500" />
+                                <span className="text-blue-600">Mark as Sent</span>
                               </DropdownMenuItem>
                             )}
                             
                             <DropdownMenuSeparator />
                             
                             {/* Danger Zone */}
+                            {(order.status.toLowerCase() === 'draft' || order.status.toLowerCase() === 'sent') && (
+                              <DropdownMenuItem 
+                                onClick={() => updateStatus(String(order.id), 'cancelled')}
+                                className="cursor-pointer py-2.5 text-orange-600 focus:text-orange-600 focus:bg-orange-500/10"
+                              >
+                                <XCircle className="mr-3 h-4 w-4" />
+                                <span>Cancel Order</span>
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem 
                               onClick={() => {
                                 setSelectedOrder(order);

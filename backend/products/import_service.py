@@ -42,7 +42,7 @@ class ProductImportService:
         
         return errors
     
-    def process_import(self, file, apartment_id, user=None):
+    def process_import(self, file, apartment_id, vendor_id=None, user=None):
         """
         Main method to process file import
         """
@@ -54,6 +54,17 @@ class ProductImportService:
             
             # Get apartment
             apartment = Apartment.objects.get(id=apartment_id)
+            
+            # Get vendor if provided
+            vendor = None
+            if vendor_id:
+                try:
+                    vendor = Vendor.objects.get(id=vendor_id)
+                    logger.info(f"✅ Vendor selected for import: {vendor.name} (ID: {vendor.id})")
+                except Vendor.DoesNotExist:
+                    return {'success': False, 'errors': ['Invalid vendor_id provided']}
+            else:
+                logger.warning("⚠️  No vendor_id provided for import")
             
             # Create import session and save the uploaded file permanently
             import_session = ImportSession.objects.create(
@@ -73,9 +84,9 @@ class ProductImportService:
             try:
                 # Process file based on type
                 if file.name.lower().endswith('.csv'):
-                    result = self._process_csv(file_path, apartment, import_session, user)
+                    result = self._process_csv(file_path, apartment, import_session, user, vendor)
                 else:
-                    result = self._process_excel_with_images(file_path, apartment, import_session, user)
+                    result = self._process_excel_with_images(file_path, apartment, import_session, user, vendor)
                 
                 # Update import session
                 import_session.status = 'completed' if result['success'] else 'failed'
@@ -114,7 +125,7 @@ class ProductImportService:
         
         return temp_path
     
-    def _process_csv(self, file_path, apartment, import_session, user):
+    def _process_csv(self, file_path, apartment, import_session, user, vendor=None):
         """Process CSV file"""
         try:
             df = pd.read_csv(file_path)
@@ -129,7 +140,7 @@ class ProductImportService:
                 }
             )
             
-            return self._process_dataframe(df, apartment, category, import_session, user, 'CSV_Import')
+            return self._process_dataframe(df, apartment, category, import_session, user, 'CSV_Import', vendor)
             
         except Exception as e:
             return {'success': False, 'errors': [f"CSV processing error: {str(e)}"]}
@@ -192,8 +203,8 @@ class ProductImportService:
         except Exception as e:
             return {'success': False, 'errors': [f"Excel processing error: {str(e)}"]}
     
-    def _process_dataframe(self, df, apartment, category, import_session, user, sheet_name):
-        """Process a pandas DataFrame"""
+    def _process_dataframe(self, df, apartment, category, import_session, user, sheet_name, vendor=None):
+        """Process a pandas DataFrame and update products with vendor"""
         successful_imports = 0
         failed_imports = 0
         errors = []
@@ -256,15 +267,53 @@ class ProductImportService:
                         else:
                             import_data[str(key)] = None
                     
-                    product = Product.objects.create(
-                        apartment=apartment,
-                        category=category,
-                        import_session=import_session,
-                        import_row_number=index + 2,  # +2 for header and 0-based index
-                        import_data=import_data,
-                        created_by=user.username if user else 'system',
-                        **product_data
-                    )
+                    # Try to find existing product by SKU or product name
+                    existing_product = None
+                    if product_data.get('sku'):
+                        existing_product = Product.objects.filter(
+                            apartment=apartment,
+                            sku=product_data['sku']
+                        ).first()
+                    
+                    if not existing_product and product_data.get('product'):
+                        existing_product = Product.objects.filter(
+                            apartment=apartment,
+                            product=product_data['product']
+                        ).first()
+                    
+                    if existing_product:
+                        # Update existing product
+                        for key, value in product_data.items():
+                            setattr(existing_product, key, value)
+                        
+                        # Update vendor - ALWAYS assign vendor if provided
+                        if vendor:
+                            existing_product.vendor = vendor
+                            logger.info(f"✅ Assigned vendor '{vendor.name}' to existing product '{existing_product.product}'")
+                        
+                        existing_product.import_session = import_session
+                        existing_product.import_row_number = index + 2
+                        existing_product.import_data = import_data
+                        existing_product.save()
+                        
+                        product = existing_product
+                        logger.info(f"Updated existing product: {product.product} (SKU: {product.sku}) with vendor: {product.vendor.name if product.vendor else 'None'}")
+                    else:
+                        # Create new product
+                        product = Product.objects.create(
+                            apartment=apartment,
+                            category=category,
+                            vendor=vendor,
+                            import_session=import_session,
+                            import_row_number=index + 2,
+                            import_data=import_data,
+                            created_by=user.username if user else 'system',
+                            **product_data
+                        )
+                        if vendor:
+                            logger.info(f"✅ Created new product: {product.product} (SKU: {product.sku}) with vendor: {vendor.name}")
+                        else:
+                            logger.warning(f"⚠️  Created new product: {product.product} (SKU: {product.sku}) WITHOUT vendor")
                     
                     # Handle image if provided
                     if product_data.get('image_url'):
@@ -342,10 +391,9 @@ class ProductImportService:
         data['material'] = self._get_value(row, column_mapping, 'material', '')
         data['dimensions'] = self._get_value(row, column_mapping, 'size', '')  # Use size as dimensions
         data['weight'] = self._get_value(row, column_mapping, 'weight', '')
-        # Handle image URLs - all image columns now map to product_image
+        # Handle image URLs - all image columns map to product_image only
         image_url = self._get_value(row, column_mapping, 'product_image', '')
-        data['image_url'] = image_url
-        data['product_image'] = image_url  # Also set product_image field
+        data['product_image'] = image_url  # Store in product_image field only
         data['vendor_link'] = self._get_value(row, column_mapping, 'vendor_link', '')
         
         return data
@@ -371,24 +419,21 @@ class ProductImportService:
                 # Option 1: Download and store locally (recommended)
                 downloaded_url = self._download_and_store_image(product, image_url)
                 if downloaded_url:
-                    product.image_url = downloaded_url
-                    product.product_image = downloaded_url  # Also store in product_image field
+                    product.product_image = downloaded_url
                 else:
                     # Fallback: store original URL if download fails
-                    product.image_url = image_url
                     product.product_image = image_url
             else:
                 # If it's not a URL, treat it as a filename or description
                 product.product_image = image_url
                 
-            product.save(update_fields=['image_url', 'product_image'])
+            product.save(update_fields=['product_image'])
             
         except Exception as e:
             logger.error(f"Error processing image for product {product.id}: {str(e)}")
             # Store original URL as fallback
-            product.image_url = image_url
             product.product_image = image_url
-            product.save(update_fields=['image_url', 'product_image'])
+            product.save(update_fields=['product_image'])
     
     def _download_and_store_image(self, product, image_url):
         """Download image from URL and store it locally"""
@@ -576,7 +621,7 @@ class ProductImportService:
             logger.error(f"Error extracting images with openpyxl: {str(e)}")
             return {}
     
-    def _process_excel_with_images(self, file_path, apartment, import_session, user):
+    def _process_excel_with_images(self, file_path, apartment, import_session, user, vendor=None):
         """
         Enhanced Excel processing that extracts embedded images using openpyxl
         """
@@ -621,7 +666,7 @@ class ProductImportService:
                     
                     # Process dataframe with image mapping
                     result = self._process_dataframe_with_images(
-                        df, apartment, category, import_session, user, sheet_name, sheet_images
+                        df, apartment, category, import_session, user, sheet_name, sheet_images, vendor
                     )
                     
                     total_products += result.get('total_products', 0)
@@ -647,8 +692,8 @@ class ProductImportService:
         except Exception as e:
             return {'success': False, 'errors': [f"Excel with images processing error: {str(e)}"]}
     
-    def _process_dataframe_with_images(self, df, apartment, category, import_session, user, sheet_name, sheet_images):
-        """Process dataframe and assign images based on row mapping"""
+    def _process_dataframe_with_images(self, df, apartment, category, import_session, user, sheet_name, sheet_images, vendor=None):
+        """Process dataframe and assign images based on row mapping, update products with vendor"""
         successful_imports = 0
         failed_imports = 0
         errors = []
@@ -711,17 +756,54 @@ class ProductImportService:
                     else:
                         import_data[str(key)] = None
                 
-                # Create product
+                # Try to find existing product by SKU or product name
                 with transaction.atomic():
-                    product = Product.objects.create(
-                        apartment=apartment,
-                        category=category,
-                        import_session=import_session,
-                        import_row_number=index + 2,  # +2 for header and 0-based index
-                        import_data=import_data,
-                        created_by=user.username if user else 'system',
-                        **product_data
-                    )
+                    existing_product = None
+                    if product_data.get('sku'):
+                        existing_product = Product.objects.filter(
+                            apartment=apartment,
+                            sku=product_data['sku']
+                        ).first()
+                    
+                    if not existing_product and product_data.get('product'):
+                        existing_product = Product.objects.filter(
+                            apartment=apartment,
+                            product=product_data['product']
+                        ).first()
+                    
+                    if existing_product:
+                        # Update existing product
+                        for key, value in product_data.items():
+                            setattr(existing_product, key, value)
+                        
+                        # Update vendor - ALWAYS assign vendor if provided
+                        if vendor:
+                            existing_product.vendor = vendor
+                            logger.info(f"✅ Assigned vendor '{vendor.name}' to existing product '{existing_product.product}'")
+                        
+                        existing_product.import_session = import_session
+                        existing_product.import_row_number = index + 2
+                        existing_product.import_data = import_data
+                        existing_product.save()
+                        
+                        product = existing_product
+                        logger.info(f"Updated existing product: {product.product} (SKU: {product.sku}) with vendor: {product.vendor.name if product.vendor else 'None'}")
+                    else:
+                        # Create new product
+                        product = Product.objects.create(
+                            apartment=apartment,
+                            category=category,
+                            vendor=vendor,
+                            import_session=import_session,
+                            import_row_number=index + 2,
+                            import_data=import_data,
+                            created_by=user.username if user else 'system',
+                            **product_data
+                        )
+                        if vendor:
+                            logger.info(f"✅ Created new product: {product.product} (SKU: {product.sku}) with vendor: {vendor.name}")
+                        else:
+                            logger.warning(f"⚠️  Created new product: {product.product} (SKU: {product.sku}) WITHOUT vendor")
                     
                     # Handle images: both embedded (from openpyxl) and URL-based (from cells)
                     excel_row = index + 2  # +2 because Excel has header row and is 1-based
@@ -732,15 +814,14 @@ class ProductImportService:
                     # First, check for embedded images
                     if excel_row in sheet_images:
                         image_path = sheet_images[excel_row]
-                        product.image_url = image_path
                         product.product_image = image_path
-                        product.save(update_fields=['image_url', 'product_image'])
+                        product.save(update_fields=['product_image'])
                         logger.info(f"✅ Assigned embedded image to product '{product.product}' (row {excel_row}): {image_path}")
                     
                     # Second, check for URL-based images from cells (if no embedded image found)
-                    elif product_data.get('image_url'):
-                        self._process_product_image(product, product_data['image_url'])
-                        logger.info(f"Processing URL-based image for product '{product.product}': {product_data['image_url']}")
+                    elif product_data.get('product_image'):
+                        self._process_product_image(product, product_data['product_image'])
+                        logger.info(f"Processing URL-based image for product '{product.product}': {product_data['product_image']}")
                     else:
                         logger.warning(f"⚠️  No image found for product '{product.product}' at Excel row {excel_row}")
                     

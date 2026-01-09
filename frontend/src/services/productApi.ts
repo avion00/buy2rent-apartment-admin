@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-
-const API_BASE_URL = 'http://localhost:8000/api';
+import { API_BASE_URL } from '../config/api';
 
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
@@ -82,6 +81,36 @@ export interface Vendor {
   updated_at: string;
 }
 
+// Order status info type
+export interface OrderStatusInfo {
+  status: string;
+  po_number: string;
+  order_id: string;
+  placed_on: string | null;
+  quantity: number;
+  expected_delivery: string | null;
+  shipping_address: string | null;
+}
+
+// Delivery status info type
+export interface DeliveryStatusInfo {
+  status: string;
+  order_reference: string;
+  tracking_number: string | null;
+  expected_date: string | null;
+  actual_date: string | null;
+  location: string | null;
+}
+
+// Issue status info type
+export interface IssueStatusInfo {
+  status: string;
+  priority: string | null;
+  type: string | null;
+  issue_id: string | null;
+  created_at: string | null;
+}
+
 // Product type definition
 export interface Product {
   id: string;
@@ -124,7 +153,7 @@ export interface Product {
   color: string;
   model_number: string;
   sn: string;
-  product_image: string;
+  product_image: string; // Primary image field - used for all image operations
   cost: string;
   total_cost: string;
   link: string;
@@ -173,8 +202,6 @@ export interface Product {
   replacement_approved: boolean;
   replacement_eta: string | null;
   replacement_of: string | null;
-  image_url: string;
-  image_file: string | null;
   thumbnail_url: string;
   gallery_images: string[];
   attachments: string[];
@@ -188,6 +215,13 @@ export interface Product {
   created_by: string;
   created_at: string;
   updated_at: string;
+  // Order tracking fields
+  order_status_info: OrderStatusInfo[];
+  has_active_order: boolean;
+  is_ordered: boolean;
+  delivery_status_info: DeliveryStatusInfo[];
+  payment_status_from_orders: string;
+  issue_status_info: IssueStatusInfo;
 }
 
 // Product form data for creating/updating
@@ -297,8 +331,15 @@ export const productApi = {
   },
 
   // Update product (PATCH)
-  updateProduct: async (id: string, data: Partial<ProductFormData>): Promise<Product> => {
-    const response = await axiosInstance.patch(`/products/${id}/`, data);
+  updateProduct: async (id: string, data: Partial<ProductFormData> | FormData): Promise<Product> => {
+    // For FormData, don't set Content-Type - let browser set it with boundary
+    const config = data instanceof FormData ? {
+      headers: {
+        'Content-Type': undefined, // Let browser set multipart/form-data with boundary
+      },
+    } : {};
+    
+    const response = await axiosInstance.patch(`/products/${id}/`, data, config);
     return response.data;
   },
 
@@ -316,10 +357,18 @@ export const productApi = {
   },
 
   // Import products from Excel/CSV
-  importProducts: async (file: File, apartmentId: string): Promise<any> => {
+  importProducts: async (file: File, apartmentId: string, vendorId: string): Promise<any> => {
+    console.log("🔍 DEBUG productApi: Received parameters:", { file: file.name, apartmentId, vendorId });
+    
     const formData = new FormData();
     formData.append('file', file);
     formData.append('apartment_id', apartmentId);
+    formData.append('vendor_id', vendorId);
+    
+    console.log("🔍 DEBUG productApi: FormData contents:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
     
     const response = await axiosInstance.post('/products/import_excel/', formData, {
       headers: {
@@ -369,6 +418,7 @@ export const productApi = {
     start_date?: string;
     due_date?: string;
     address?: string;
+    vendor_id?: string;
   }): Promise<{
     success: boolean;
     message: string;
@@ -393,6 +443,7 @@ export const productApi = {
     if (data.start_date) formData.append('start_date', data.start_date);
     if (data.due_date) formData.append('due_date', data.due_date);
     if (data.address) formData.append('address', data.address);
+    if (data.vendor_id) formData.append('vendor_id', data.vendor_id);
     
     const response = await axiosInstance.post('/products/create_apartment_and_import/', formData, {
       headers: {

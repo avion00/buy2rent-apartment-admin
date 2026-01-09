@@ -1,0 +1,11 @@
+2025-12-21 18:17:06 +01:00: Browserslist: browsers data (caniuse-lite) is 14 months old. Please run:
+2025-12-21 18:17:06 +01:00:   npx update-browserslist-db@latest
+2025-12-21 18:17:06 +01:00:   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+2025-12-22 02:12:46 +01:00: (node:2791630) Warning: An error event has already been emitted on the socket. Please use the destroy method on the socket while handling a 'clientError' event.
+2025-12-22 02:12:46 +01:00: (Use `node --trace-warnings ...` to show where the warning was created)
+2025-12-22 06:30:35 +01:00: The request url "/root/buy2rent/frontend/.env" is outside of Vite serving allow list.
+2025-12-22 06:30:35 +01:00: 
+2025-12-22 06:30:35 +01:00: - /root/buy2rent/frontend
+2025-12-22 06:30:35 +01:00: 
+2025-12-22 06:30:35 +01:00: Refer to docs https://vite.dev/config/server-options.html#server-fs-allow for configurations and more details.
+2025-12-22 06:30:35 +01:00: 

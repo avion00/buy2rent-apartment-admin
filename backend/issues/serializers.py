@@ -142,9 +142,12 @@ class IssuePhotoSerializer(serializers.ModelSerializer):
 
 
 class AICommunicationLogSerializer(serializers.ModelSerializer):
+    approved_by_username = serializers.CharField(source='approved_by.username', read_only=True)
+    issue_title = serializers.CharField(source='issue.type', read_only=True)
+    
     class Meta:
         model = AICommunicationLog
-        fields = ['id', 'timestamp', 'sender', 'message']
+        fields = '__all__'
         read_only_fields = ['timestamp']
 
 
@@ -180,6 +183,8 @@ class IssueSerializer(serializers.ModelSerializer):
             'vendor_contact', 'impact', 'replacement_eta', 'ai_activated', 
             'resolution_status', 'resolution_type', 'resolution_notes',
             'delivery_date', 'invoice_number', 'tracking_number', 'auto_notify_vendor',
+            'vendor_last_replied_at', 'first_sent_at', 'followup_count', 'sla_response_hours',
+            'last_summary', 'last_summary_at', 'next_action',
             'photos', 'ai_communication_log', 'items', 'items_data', 'items_count', 'created_at', 'updated_at'
         ]
         read_only_fields = ['reported_on', 'created_at', 'updated_at']

@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-
-const API_BASE_URL = 'http://localhost:8000/api';
+import { API_BASE_URL } from '../config/api';
 
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
@@ -47,8 +46,17 @@ export interface IssuePhoto {
 export interface AICommunicationLog {
   id: string;
   timestamp: string;
-  sender: 'AI' | 'Vendor' | 'System';
+  sender: 'AI' | 'Vendor' | 'System' | 'Admin';
   message: string;
+  message_type?: 'email' | 'internal' | 'system';
+  subject?: string;
+  email_from?: string;
+  email_to?: string;
+  status?: string;
+  ai_generated?: boolean;
+  ai_confidence?: number;
+  approved_by?: string;
+  approved_at?: string;
 }
 
 export interface Issue {
@@ -287,6 +295,72 @@ export const issueApi = {
   // Upload photo to an issue
   uploadPhoto: async (issueId: string, photoUrl: string): Promise<IssuePhoto> => {
     const response = await axiosInstance.post(`/issues/${issueId}/photos/`, { url: photoUrl });
+    return response.data;
+  },
+
+  // AI Email Management endpoints
+  activateAIEmail: async (issueId: string) => {
+    const response = await axiosInstance.post(`/issues/${issueId}/activate_ai_email/`);
+    return response;
+  },
+
+  getEmailThread: async (issueId: string) => {
+    const response = await axiosInstance.get(`/issues/${issueId}/email_thread/`);
+    return response;
+  },
+
+  generateAIReply: async (issueId: string, vendorMessage: string) => {
+    const response = await axiosInstance.post(`/issues/${issueId}/generate_ai_reply/`, {
+      vendor_message: vendorMessage
+    });
+    return response;
+  },
+
+  addVendorResponse: async (issueId: string, data: {
+    message: string;
+    subject?: string;
+    from_email?: string;
+  }) => {
+    const response = await axiosInstance.post(`/issues/${issueId}/add_vendor_response/`, data);
+    return response;
+  },
+
+  analyzeVendorResponse: async (issueId: string, message: string) => {
+    const response = await axiosInstance.post(`/issues/${issueId}/analyze_vendor_response/`, {
+      message
+    });
+    return response;
+  },
+
+  // New AI Email Automation endpoints
+  getConversation: async (issueId: string) => {
+    const response = await axiosInstance.get(`/issues/${issueId}/conversation/`);
+    return response.data;
+  },
+
+  getSummary: async (issueId: string) => {
+    const response = await axiosInstance.get(`/issues/${issueId}/summary/`);
+    return response.data;
+  },
+
+  sendManualMessage: async (issueId: string, data: {
+    subject: string;
+    message: string;
+    to_email?: string;
+  }) => {
+    const response = await axiosInstance.post(`/issues/${issueId}/send_manual_message/`, data);
+    return response.data;
+  },
+
+  // Bulk Email endpoint
+  sendBulkEmail: async (data: {
+    issue_ids: string[];
+    subject: string;
+    message: string;
+    include_issue_details?: boolean;
+    include_photos?: boolean;
+  }) => {
+    const response = await axiosInstance.post('/issues/bulk-email/', data);
     return response.data;
   },
 };

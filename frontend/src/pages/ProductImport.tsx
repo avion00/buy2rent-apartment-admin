@@ -6,10 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, ArrowLeft, CheckCircle, AlertCircle, FileSpreadsheet, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { productApi } from "@/services/productApi";
 import { useToast } from "@/hooks/use-toast";
+import { useVendors } from "@/hooks/useVendorApi";
 
 const ProductImport = () => {
   const navigate = useNavigate();
@@ -22,6 +24,11 @@ const ProductImport = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [importResult, setImportResult] = useState<any>(null);
   const [fileSize, setFileSize] = useState<string>("");
+  const [selectedVendorId, setSelectedVendorId] = useState<string>("");
+  
+  // Fetch vendors
+  const { data: vendorsData, isLoading: isLoadingVendors } = useVendors();
+  const vendors = vendorsData?.results || [];
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' B';
@@ -71,7 +78,13 @@ const ProductImport = () => {
         });
       }, 200);
 
-      const result = await productApi.importProducts(file, apartmentId);
+      console.log("🔍 DEBUG: Sending import request with:", {
+        file: file.name,
+        apartmentId,
+        selectedVendorId: selectedVendorId || 'none'
+      });
+
+      const result = await productApi.importProducts(file, apartmentId, selectedVendorId || '');
       
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -114,7 +127,7 @@ const ProductImport = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'product_import_template.xlsx';
+      a.download = 'apartment-template.xlsx';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -134,6 +147,44 @@ const ProductImport = () => {
           Back
         </Button>
         
+        {/* Vendor Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">Select Vendor (Optional)</CardTitle>
+            <CardDescription className="mt-1">
+              Optionally choose a vendor to assign to all imported products
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select
+              value={selectedVendorId}
+              onValueChange={setSelectedVendorId}
+              disabled={isUploading}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a vendor" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingVendors ? (
+                  <SelectItem value="loading" disabled>
+                    Loading vendors...
+                  </SelectItem>
+                ) : vendors.length === 0 ? (
+                  <SelectItem value="no-vendors" disabled>
+                    No vendors available
+                  </SelectItem>
+                ) : (
+                  vendors.map((vendor: any) => (
+                    <SelectItem key={vendor.id} value={vendor.id}>
+                      {vendor.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+
         {/* File Upload */}
         <Card className="border-2 border-dashed">
           <CardHeader>

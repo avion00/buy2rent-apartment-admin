@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Email Conversations</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .issue-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .issue-id {
+            font-size: 12px;
+            color: #7f8c8d;
+            font-family: monospace;
+        }
+        .issue-type {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-active { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .email-thread {
+            margin-top: 15px;
+        }
+        .email-message {
+            display: flex;
+            margin-bottom: 15px;
+            align-items: flex-start;
+        }
+        .email-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .avatar-ai { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .avatar-vendor { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .email-content {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px 15px;
+        }
+        .email-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .email-sender {
+            font-weight: 600;
+            color: #495057;
+        }
+        .email-subject {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .email-body {
+            color: #495057;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .ai-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        .pending-badge {
+            background: #fff3cd;
+            color: #856404;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        .approve-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .approve-btn:hover {
+            background: #218838;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI Email Conversations</h1>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_issues }}</div>
+                <div class="stat-label">Active Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ total_emails }}</div>
+                <div class="stat-label">Total Emails</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ pending_count }}</div>
+                <div class="stat-label">Pending Approval</div>
+            </div>
+        </div>
+
+        {% for issue_data in issues %}
+        <div class="issue-card">
+            <div class="issue-header">
+                <div>
+                    <div class="issue-type">{{ issue_data.issue.type }}</div>
+                    <div class="issue-id">ID: {{ issue_data.issue.id }}</div>
+                </div>
+                <div>
+                    <span class="status-badge {% if issue_data.issue.ai_activated %}status-active{% else %}status-pending{% endif %}">
+                        {% if issue_data.issue.ai_activated %}AI Active{% else %}AI Inactive{% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="email-thread">
+                {% for email in issue_data.emails %}
+                <div class="email-message">
+                    <div class="email-avatar {% if email.sender == 'AI' %}avatar-ai{% else %}avatar-vendor{% endif %}">
+                        {% if email.sender == 'AI' %}AI{% else %}V{% endif %}
+                    </div>
+                    <div class="email-content">
+                        <div class="email-header">
+                            <div>
+                                <span class="email-sender">{{ email.sender }}</span>
+                                {% if email.ai_generated %}<span class="ai-badge">AI Generated</span>{% endif %}
+                                {% if email.status == 'pending_approval' %}<span class="pending-badge">Pending Approval</span>{% endif %}
+                            </div>
+                            <div>{{ email.timestamp|date:"M d, H:i" }}</div>
+                        </div>
+                        <div class="email-subject">{{ email.subject }}</div>
+                        <div class="email-body">{{ email.message|truncatewords:50 }}</div>
+                        {% if email.status == 'pending_approval' %}
+                        <button class="approve-btn" onclick="approveMessage('{{ email.id }}')">Approve & Send</button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function approveMessage(messageId) {
+            fetch(`/api/ai-communication-logs/${messageId}/approve/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Message approved and sent!');
+                location.reload();
+            })
+            .catch(error => {
+                alert('Error approving message: ' + error);
+            });
+        }
+    </script>
+</body>
+</html>

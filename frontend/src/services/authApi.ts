@@ -1,11 +1,10 @@
 import axios, { AxiosInstance } from 'axios';
-
-const AUTH_BASE_URL = 'http://localhost:8000/auth';
+import { AUTH_BASE_URL } from '../config/api';
 
 // Create axios instance for auth requests
 const authAxios: AxiosInstance = axios.create({
   baseURL: AUTH_BASE_URL,
-  timeout: 30000,
+  timeout: 10000, // Reduced to 10 seconds for faster failure on auth issues
   headers: {
     'Content-Type': 'application/json',
   },
@@ -37,6 +36,14 @@ authAxios.interceptors.response.use(
 
     // If error is 401 and we haven't tried to refresh yet
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Don't retry refresh endpoint itself to prevent infinite loops
+      if (originalRequest.url?.includes('/refresh/')) {
+        tokenManager.clearTokens();
+        isRefreshing = false;
+        processQueue(error);
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         // If already refreshing, queue this request
         return new Promise((resolve, reject) => {
@@ -56,9 +63,10 @@ authAxios.interceptors.response.use(
       const refreshToken = tokenManager.getRefreshToken();
 
       if (!refreshToken) {
-        // No refresh token, redirect to login
+        // No refresh token, clear state and reject
+        isRefreshing = false;
         tokenManager.clearTokens();
-        window.location.href = '/login';
+        processQueue(error);
         return Promise.reject(error);
       }
 
@@ -85,10 +93,9 @@ authAxios.interceptors.response.use(
         // Retry original request
         return authAxios(originalRequest);
       } catch (refreshError) {
-        // Refresh failed, clear tokens and redirect to login
+        // Refresh failed, clear tokens and process queue
         processQueue(refreshError);
         tokenManager.clearTokens();
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

@@ -20,7 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useDataStore } from '@/stores/useDataStore';
+import { useDashboardQuickStats } from '@/hooks/useDashboardApi';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -48,51 +48,30 @@ export function Sidebar({ isCollapsed, onToggle, className, isMobileOpen = false
   const { theme, setTheme } = useTheme();
   const isDark = theme === 'dark';
   
-  // Get real data from store
-  const { apartments, clients, vendors, products, deliveries, payments, issues } = useDataStore();
+  // Get real data from API
+  const { data: quickStats, isLoading: isLoadingStats } = useDashboardQuickStats();
 
   const toggleTheme = () => {
     setTheme(isDark ? 'light' : 'dark');
   };
   
-  // Calculate dynamic stats
+  // Calculate dynamic stats from API
   const stats = useMemo(() => {
-    const totalApartments = apartments.length;
-    const activeApartments = apartments.filter(a => a.status === 'In Progress' || a.status === 'Active').length;
-    const completedApartments = apartments.filter(a => a.status === 'Completed' || a.status === 'Done').length;
-    
-    // Count pending deliveries
-    const pendingDeliveries = deliveries.filter(d => 
-      d.status === 'Scheduled' || d.status === 'In Transit'
-    ).length;
-    
-    // Count open issues
-    const openIssues = issues.filter(i => 
-      i.resolutionStatus === 'Open' || i.resolutionStatus === 'Pending Vendor Response'
-    ).length;
-    
-    // Count pending payments
-    const pendingPayments = payments.filter(p => 
-      p.status === 'Partial' || p.status === 'Unpaid'
-    ).length;
-    
-    // Calculate overall progress
-    const totalProgress = apartments.reduce((sum, a) => sum + (a.progress || 0), 0);
-    const avgProgress = totalApartments > 0 ? Math.round(totalProgress / totalApartments) : 0;
+    // Use API data when available, fallback to 0
+    const totalApartments = quickStats?.active_apartments?.value ?? 0;
+    const pendingDeliveries = quickStats?.deliveries_this_week?.value ?? 0;
+    const openIssues = quickStats?.open_issues?.value ?? 0;
+    const totalClients = quickStats?.total_clients ?? 0;
+    const totalVendors = quickStats?.total_vendors ?? 0;
     
     return {
       totalApartments,
-      activeApartments,
-      completedApartments,
       pendingDeliveries,
       openIssues,
-      pendingPayments,
-      avgProgress,
-      totalClients: clients.length,
-      totalVendors: vendors.length,
-      totalProducts: products.length,
+      totalClients,
+      totalVendors,
     };
-  }, [apartments, clients, vendors, products, deliveries, payments, issues]);
+  }, [quickStats]);
   
   const navSections: NavSection[] = [
     {
@@ -108,7 +87,7 @@ export function Sidebar({ isCollapsed, onToggle, className, isMobileOpen = false
         { title: 'Apartments', icon: Building, href: '/apartments', color: 'text-emerald-500' },
         { title: 'Orders', icon: ShoppingCart, href: '/orders', color: 'text-orange-500' },
         { title: 'Deliveries', icon: Truck, href: '/deliveries', badge: stats.pendingDeliveries > 0 ? stats.pendingDeliveries : undefined, color: 'text-cyan-500' },
-        { title: 'Payments', icon: CreditCard, href: '/payments', badge: stats.pendingPayments > 0 ? stats.pendingPayments : undefined, color: 'text-green-500' },
+        { title: 'Payments', icon: CreditCard, href: '/payments', color: 'text-green-500' },
         { title: 'Issues', icon: AlertCircle, href: '/issues', badge: stats.openIssues > 0 ? stats.openIssues : undefined, color: 'text-red-500' },
         { title: 'Vendors', icon: Store, href: '/vendors', color: 'text-amber-500' },
       ]

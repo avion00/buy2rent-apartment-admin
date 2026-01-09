@@ -5,6 +5,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, JsonResponse
+from django.conf import settings
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from drf_spectacular.openapi import OpenApiTypes
 from config.swagger_utils import add_viewset_tags
@@ -18,6 +19,7 @@ from .serializers import (
 from .import_service import ProductImportService
 import pandas as pd
 import io
+import os
 
 
 @add_viewset_tags('Products', 'Product')
@@ -44,6 +46,32 @@ class ProductViewSet(viewsets.ModelViewSet):
         if apartment_id is not None:
             queryset = queryset.filter(apartment=apartment_id)
         return queryset
+    
+    def perform_create(self, serializer):
+        """Handle product creation with image file upload"""
+        instance = serializer.save()
+        self._handle_image_upload(instance)
+    
+    def perform_update(self, serializer):
+        """Handle product update with image file upload"""
+        instance = serializer.save()
+        self._handle_image_upload(instance)
+    
+    def _handle_image_upload(self, instance):
+        """
+        Handle image_file upload and store URL in product_image field.
+        This ensures all images are stored in the product_image field regardless of source.
+        """
+        image_file = self.request.FILES.get('image_file')
+        if image_file:
+            # Save the uploaded file to image_file field
+            instance.image_file = image_file
+            instance.save(update_fields=['image_file'])
+            
+            # Copy the URL to product_image for unified access
+            if instance.image_file:
+                instance.product_image = instance.image_file.url
+                instance.save(update_fields=['product_image'])
 
     @extend_schema(
         tags=['Products'],
@@ -250,6 +278,14 @@ class ProductViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            # Get vendor ID (optional)
+            vendor_id = request.data.get('vendor_id')
+            # Convert empty string to None
+            if vendor_id == '' or vendor_id == 'null' or vendor_id == 'undefined':
+                vendor_id = None
+            print(f"🔍 DEBUG: Received vendor_id: {vendor_id}")
+            print(f"🔍 DEBUG: Request data: {request.data}")
+            
             # Get uploaded file
             uploaded_file = request.FILES.get('file')
             if not uploaded_file:
@@ -260,12 +296,14 @@ class ProductViewSet(viewsets.ModelViewSet):
             
             # Validate apartment exists
             apartment = get_object_or_404(Apartment, id=apartment_id)
+            print(f"🔍 DEBUG: About to call process_import with vendor_id: {vendor_id}")
             
             # Process import
             import_service = ProductImportService()
             result = import_service.process_import(
                 file=uploaded_file,
                 apartment_id=apartment_id,
+                vendor_id=vendor_id,
                 user=request.user
             )
             
@@ -411,11 +449,18 @@ class ProductViewSet(viewsets.ModelViewSet):
             
             apartment = Apartment.objects.create(**apartment_data)
             
+            # Get vendor ID (optional)
+            vendor_id = request.data.get('vendor_id')
+            # Convert empty string to None
+            if vendor_id == '' or vendor_id == 'null' or vendor_id == 'undefined':
+                vendor_id = None
+            
             # Process import with the new apartment
             import_service = ProductImportService()
             result = import_service.process_import(
                 file=uploaded_file,
                 apartment_id=str(apartment.id),
+                vendor_id=vendor_id,
                 user=request.user
             )
             
@@ -469,46 +514,23 @@ class ProductViewSet(viewsets.ModelViewSet):
         Download Excel template for product import
         """
         try:
-            # Create sample template with all Excel columns
-            template_data = {
-                'S.N': [1, 2, 3],
-                'Room': ['Living Room', 'Bedroom', 'Kitchen'],
-                'Product Name': ['Sample Product 1', 'Sample Product 2', 'Sample Product 3'],
-                'Product Image': ['', '', ''],
-                'Quantity': [1, 2, 1],
-                'Cost': ['1000 Ft', '2000 Ft', '1500 Ft'],
-                'Total Cost': ['1000 Ft', '4000 Ft', '1500 Ft'],
-                'Description': ['Product description 1', 'Product description 2', 'Product description 3'],
-                'link': ['https://example.com/product1', 'https://example.com/product2', 'https://example.com/product3'],
-                'size': ['Small', 'Medium', 'Large'],
-                'nm': ['10', '20', '15'],
-                'plusz nm': ['2', '3', '1'],
-                'price/nm': ['100 Ft', '100 Ft', '100 Ft'],
-                'price/package': ['500 Ft', '1000 Ft', '750 Ft'],
-                'nm/package': ['5', '10', '7.5'],
-                'all package': ['2', '2', '2'],
-                'package need to order': ['2', '2', '2'],
-                'all price': ['1000 Ft', '2000 Ft', '1500 Ft']
-            }
+            # Serve the actual apartment-template.xlsx file from templates folder
+            template_path = os.path.join(settings.BASE_DIR, 'templates', 'apartment-template.xlsx')
             
-            df = pd.DataFrame(template_data)
+            if not os.path.exists(template_path):
+                return Response(
+                    {'error': 'Template file not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             
-            # Create Excel file in memory with multiple sheets
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name='Heating', index=False)
-                df.to_excel(writer, sheet_name='Laminated floors', index=False)
-                df.to_excel(writer, sheet_name='Furniture', index=False)
-            
-            output.seek(0)
-            
-            response = HttpResponse(
-                output.getvalue(),
-                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-            response['Content-Disposition'] = 'attachment; filename="product_import_template.xlsx"'
-            
-            return response
+            with open(template_path, 'rb') as template_file:
+                response = HttpResponse(
+                    template_file.read(),
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+                response['Content-Disposition'] = 'attachment; filename="apartment-template.xlsx"'
+                
+                return response
             
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -565,6 +587,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
         ]
     )
+
     @action(detail=False, methods=['get'])
     def by_category(self, request):
         """
@@ -606,6 +629,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         ],
         responses={200: ImportSessionSerializer(many=True)}
     )
+    
     @action(detail=False, methods=['get'])
     def import_sessions(self, request):
         """
@@ -643,6 +667,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
         ]
     )
+
     @action(detail=False, methods=['delete'])
     def delete_import_session(self, request):
         """

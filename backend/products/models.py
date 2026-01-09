@@ -93,7 +93,7 @@ class Product(models.Model):
     
     # Excel Import Fields - Additional columns from your Excel files
     sn = models.CharField(max_length=50, blank=True, help_text="Serial Number from Excel")
-    product_image = models.URLField(max_length=500, blank=True, help_text="Product Image URL from Excel")
+    product_image = models.URLField(max_length=500, blank=True, help_text="Primary product image URL (used for all image operations: upload, import, display)")
     cost = models.CharField(max_length=100, blank=True, help_text="Cost as text from Excel")
     total_cost = models.CharField(max_length=100, blank=True, help_text="Total Cost as text from Excel")
     link = models.URLField(max_length=500, blank=True, help_text="Product Link from Excel")
@@ -191,8 +191,9 @@ class Product(models.Model):
     )
     
     # Images and files
-    image_url = models.URLField(max_length=500, blank=True, help_text="Product image URL (up to 500 characters)")
-    image_file = models.ImageField(upload_to='products/images/', blank=True, null=True, help_text="Uploaded product image")
+    # DEPRECATED: Use product_image field instead for all image operations
+    image_url = models.URLField(max_length=500, blank=True, help_text="DEPRECATED: Use product_image instead")
+    image_file = models.ImageField(upload_to='products/images/', blank=True, null=True, help_text="DEPRECATED: Use product_image instead")
     thumbnail_url = models.URLField(max_length=500, blank=True, help_text="Thumbnail image URL")
     gallery_images = models.JSONField(default=list, blank=True, help_text="Additional product images")
     attachments = models.JSONField(default=list, blank=True, help_text="Product documents and files")
@@ -235,3 +236,183 @@ class Product(models.Model):
         if self.issue_state != 'No Issue':
             tags.append('Issue Reported')
         return tags
+    
+    @property
+    def order_status_info(self):
+        """
+        Get order status information for this product.
+        Returns a list of order statuses where this product appears.
+        """
+        from orders.models import OrderItem
+        
+        # Get all order items that reference this product
+        order_items = OrderItem.objects.filter(product=self).select_related('order')
+        
+        # Collect unique order statuses
+        order_statuses = []
+        seen_statuses = set()
+        
+        for item in order_items:
+            status = item.order.status
+            if status not in seen_statuses:
+                order_statuses.append({
+                    'status': status,
+                    'po_number': item.order.po_number,
+                    'order_id': str(item.order.id),
+                    'placed_on': item.order.placed_on.isoformat() if item.order.placed_on else None,
+                    'quantity': item.quantity,
+                    'expected_delivery': item.order.expected_delivery.isoformat() if item.order.expected_delivery else None,
+                    'shipping_address': item.order.shipping_address or None,
+                })
+                seen_statuses.add(status)
+        
+        return order_statuses
+    
+    @property
+    def has_active_order(self):
+        """Check if product has any active orders (draft or sent)"""
+        from orders.models import OrderItem
+        
+        active_statuses = ['draft', 'sent']
+        return OrderItem.objects.filter(
+            product=self,
+            order__status__in=active_statuses
+        ).exists()
+    
+    @property
+    def payment_status_from_orders(self):
+        """
+        Calculate payment status based on payments for orders containing this product.
+        Returns 'Paid', 'Partially Paid', or 'Unpaid'
+        """
+        from orders.models import OrderItem
+        from payments.models import Payment
+        
+        # Get all order items for this product
+        order_items = OrderItem.objects.filter(product=self).select_related('order')
+        
+        if not order_items.exists():
+            return 'Unpaid'
+        
+        total_amount_due = 0
+        total_amount_paid = 0
+        
+        for item in order_items:
+            # Calculate this item's share of the order total
+            item_total = float(item.quantity) * float(item.unit_price)
+            total_amount_due += item_total
+            
+            # Get payments for this order
+            payments = Payment.objects.filter(order=item.order)
+            for payment in payments:
+                # Check if this specific item is included in the payment
+                if payment.order_items.filter(id=item.id).exists():
+                    # Calculate proportional payment for this item
+                    if payment.total_amount > 0:
+                        item_proportion = item_total / float(payment.total_amount)
+                        total_amount_paid += float(payment.amount_paid) * item_proportion
+        
+        if total_amount_due == 0:
+            return 'Unpaid'
+        
+        if total_amount_paid >= total_amount_due:
+            return 'Paid'
+        elif total_amount_paid > 0:
+            return 'Partially Paid'
+        else:
+            return 'Unpaid'
+    
+    @property
+    def issue_status_info(self):
+        """
+        Get the latest issue status for this product from the Issues page.
+        Returns a dict with status, priority, and type information.
+        """
+        from issues.models import Issue
+        
+        # Get the most recent issue for this product
+        latest_issue = Issue.objects.filter(product=self).order_by('-created_at').first()
+        
+        if not latest_issue:
+            return {
+                'status': 'No Issue',
+                'priority': None,
+                'type': None,
+                'issue_id': None
+            }
+        
+        return {
+            'status': latest_issue.status,
+            'priority': latest_issue.priority,
+            'type': latest_issue.type,
+            'issue_id': str(latest_issue.id),
+            'created_at': latest_issue.created_at.isoformat() if latest_issue.created_at else None
+        }
+    
+    @property
+    def is_ordered(self):
+        """Check if product has been ordered"""
+        from orders.models import OrderItem
+        return OrderItem.objects.filter(product=self).exists()
+    
+    @property
+    def delivery_status_info(self):
+        """
+        Get delivery status information for this product.
+        Returns a list of delivery statuses where this product's orders appear.
+        """
+        from orders.models import OrderItem
+        from deliveries.models import Delivery
+        
+        # Get all order items that reference this product
+        order_items = OrderItem.objects.filter(product=self).select_related('order')
+        
+        # Collect delivery information from orders
+        delivery_statuses = []
+        seen_deliveries = set()
+        
+        for item in order_items:
+            # Check if the order has an associated delivery
+            try:
+                delivery = Delivery.objects.get(order=item.order)
+                delivery_key = str(delivery.id)
+                
+                if delivery_key not in seen_deliveries:
+                    # Get the latest location from status history
+                    latest_location = None
+                    latest_status_history = delivery.status_history.filter(location__isnull=False).exclude(location='').order_by('-created_at').first()
+                    if latest_status_history:
+                        latest_location = latest_status_history.location
+                    
+                    delivery_statuses.append({
+                        'status': delivery.status,
+                        'order_reference': delivery.order_reference,
+                        'delivery_id': str(delivery.id),
+                        'expected_date': delivery.expected_date.isoformat() if delivery.expected_date else None,
+                        'actual_date': delivery.actual_date.isoformat() if delivery.actual_date else None,
+                        'tracking_number': delivery.tracking_number,
+                        'priority': delivery.priority,
+                        'location': latest_location,
+                    })
+                    seen_deliveries.add(delivery_key)
+            except Delivery.DoesNotExist:
+                # No delivery record for this order yet
+                pass
+        
+        return delivery_statuses
+    
+    @property
+    def combined_status_info(self):
+        """
+        Get combined status information including orders and deliveries.
+        This provides a comprehensive view of the product's lifecycle.
+        """
+        order_info = self.order_status_info
+        delivery_info = self.delivery_status_info
+        
+        return {
+            'orders': order_info,
+            'deliveries': delivery_info,
+            'is_ordered': self.is_ordered,
+            'has_active_order': self.has_active_order,
+        }

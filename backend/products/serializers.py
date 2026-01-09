@@ -8,13 +8,24 @@ from vendors.serializers import VendorSerializer
 class ProductSerializer(serializers.ModelSerializer):
     apartment_details = ApartmentSerializer(source='apartment', read_only=True)
     vendor_details = VendorSerializer(source='vendor', read_only=True)
-    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
+    vendor_name = serializers.SerializerMethodField()
     category_details = serializers.SerializerMethodField()
     category_name = serializers.CharField(source='category.name', read_only=True)
     total_amount = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     outstanding_balance = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     status = serializers.SerializerMethodField()
     delivery_status_tags = serializers.SerializerMethodField()
+    order_status_info = serializers.ReadOnlyField()
+    has_active_order = serializers.ReadOnlyField()
+    is_ordered = serializers.ReadOnlyField()
+    delivery_status_info = serializers.ReadOnlyField()
+    combined_status_info = serializers.ReadOnlyField()
+    payment_status_from_orders = serializers.ReadOnlyField()
+    issue_status_info = serializers.ReadOnlyField()
+    
+    def get_vendor_name(self, obj):
+        """Return vendor name or None if no vendor assigned"""
+        return obj.vendor.name if obj.vendor else None
     
     def get_status(self, obj):
         """Ensure status is always returned as an array"""
@@ -62,8 +73,7 @@ class ProductSerializer(serializers.ModelSerializer):
         # Default fallback
         return []
     
-    # Enhanced image URL fields that provide full URLs
-    image_url = serializers.SerializerMethodField()
+    # Enhanced product_image field that provides full URL
     product_image = serializers.SerializerMethodField()
     
     def validate_replacement_of(self, value):
@@ -100,13 +110,27 @@ class ProductSerializer(serializers.ModelSerializer):
             }
         return None
     
-    def get_image_url(self, obj):
-        """Get full image URL"""
-        return self._get_full_image_url(obj.image_url)
-    
     def get_product_image(self, obj):
-        """Get full product image URL"""
-        return self._get_full_image_url(obj.product_image)
+        """
+        Get full product image URL - unified method for all image sources.
+        Priority: product_image > image_file > image_url (for backward compatibility)
+        """
+        # Priority 1: product_image field (primary)
+        if obj.product_image:
+            return self._get_full_image_url(obj.product_image)
+        
+        # Priority 2: image_file (for backward compatibility with uploaded files)
+        if obj.image_file:
+            try:
+                return self._get_full_image_url(obj.image_file.url)
+            except:
+                pass
+        
+        # Priority 3: image_url (for backward compatibility)
+        if obj.image_url:
+            return self._get_full_image_url(obj.image_url)
+        
+        return None
     
     def _get_full_image_url(self, image_path):
         """Convert relative image path to full URL"""
@@ -260,9 +284,12 @@ class ProductSerializer(serializers.ModelSerializer):
             'replacement_approved', 'replacement_eta', 'replacement_of',
             'image_url', 'image_file', 'thumbnail_url', 'gallery_images', 'attachments', 
             'import_row_number', 'import_data', 'notes', 'manual_notes', 'ai_summary_notes',
-            'created_by', 'created_at', 'updated_at'
+            'created_by', 'created_at', 'updated_at',
+            # Order and delivery tracking
+            'order_status_info', 'has_active_order', 'is_ordered', 'delivery_status_info', 'combined_status_info', 'payment_status_from_orders'
         ]
-        read_only_fields = ['created_at', 'updated_at', 'total_amount', 'outstanding_balance']
+        read_only_fields = ['created_at', 'updated_at', 'total_amount', 'outstanding_balance', 
+                           'order_status_info', 'has_active_order', 'is_ordered', 'delivery_status_info', 'combined_status_info', 'payment_status_from_orders']
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):

@@ -6,13 +6,12 @@ from vendors.models import Vendor
 
 class Delivery(models.Model):
     STATUS_CHOICES = [
-        ('Scheduled', 'Scheduled'),
+        ('Confirmed', 'Confirmed'),
         ('In Transit', 'In Transit'),
-        ('Delivered', 'Delivered'),
         ('Delayed', 'Delayed'),
+        ('Received', 'Received'),
         ('Cancelled', 'Cancelled'),
         ('Returned', 'Returned'),
-        ('Issue Reported', 'Issue Reported'),
     ]
     
     PRIORITY_CHOICES = [

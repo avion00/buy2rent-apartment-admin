@@ -4,9 +4,11 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { EnhancedTextarea } from '@/components/ui/enhanced-textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,10 +18,10 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Package, Building2, Store, ShoppingCart, DollarSign, Loader2, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, Package, Building2, Store, ShoppingCart, DollarSign, Loader2, ArrowLeft, CheckSquare, Square } from 'lucide-react';
 import { apartmentApi, Apartment } from '@/services/apartmentApi';
 import { vendorApi, Vendor } from '@/services/vendorApi';
-import { useProducts } from '@/hooks/useProductApi';
+import { productApi, Product } from '@/services/productApi';
 import { orderApi } from '@/services/orderApi';
 
 interface OrderItem {
@@ -30,11 +32,16 @@ interface OrderItem {
   unitPrice: number;
 }
 
+interface SelectedProduct {
+  id: string;
+  quantity: number;
+}
+
 const OrderNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [apartmentId, setApartmentId] = useState('');
-  const [vendorId, setVendorId] = useState('');
+  const [vendorId, setVendorId] = useState('all');
   const [poNumber, setPoNumber] = useState('');
   const [confirmationCode, setConfirmationCode] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -48,23 +55,22 @@ const OrderNew = () => {
 
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [loadingLookups, setLoadingLookups] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const {
-    data: productsData,
-    isLoading: loadingProducts,
-  } = useProducts();
-  const allProducts = productsData?.results || [];
-
-  const products = useMemo(
-    () =>
-      allProducts.filter((product: any) => {
-        const matchesApartment = !apartmentId || product.apartment === apartmentId;
-        const matchesVendor = !vendorId || product.vendor === vendorId;
-        return matchesApartment && matchesVendor;
-      }),
-    [allProducts, apartmentId, vendorId]
+  const filteredProducts = useMemo(
+    () => {
+      if (!apartmentId) return [];
+      
+      return products.filter((product) => {
+        const matchesVendor = !vendorId || vendorId === 'all' || product.vendor === vendorId;
+        return matchesVendor;
+      });
+    },
+    [products, apartmentId, vendorId]
   );
 
   // Load apartments & vendors on mount
@@ -99,45 +105,106 @@ const OrderNew = () => {
     };
   }, [toast]);
 
-  const addItem = () => {
-    const usedIds = new Set(items.map((i) => i.productId));
-    const candidate = products.find((p) => !usedIds.has(p.id)) || products[0];
+  // Load products when apartment changes
+  useEffect(() => {
+    let cancelled = false;
+    
+    const loadProducts = async () => {
+      if (!apartmentId) {
+        setProducts([]);
+        setSelectedProducts([]);
+        return;
+      }
 
-    if (!candidate) {
+      try {
+        setLoadingProducts(true);
+        const response = await productApi.getProducts({ 
+          apartment: apartmentId,
+          page_size: 1000 
+        });
+        if (cancelled) return;
+        setProducts(response.results || []);
+        setSelectedProducts([]);
+      } catch (error) {
+        console.error('Failed to load products', error);
+        toast({
+          title: 'Failed to load products',
+          description: 'Could not load products for this apartment.',
+          variant: 'destructive',
+        });
+      } finally {
+        if (!cancelled) setLoadingProducts(false);
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apartmentId, toast]);
+
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts((prev) => {
+      const exists = prev.find((p) => p.id === productId);
+      if (exists) {
+        return prev.filter((p) => p.id !== productId);
+      } else {
+        return [...prev, { id: productId, quantity: 1 }];
+      }
+    });
+  };
+
+  const updateProductQuantity = (productId: string, quantity: number) => {
+    setSelectedProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, quantity } : p))
+    );
+  };
+
+  const addSelectedToOrder = () => {
+    if (selectedProducts.length === 0) {
+      toast({
+        title: 'No products selected',
+        description: 'Please select at least one product to add to the order.',
+        variant: 'destructive',
+      });
       return;
     }
 
-    const defaultPrice = Math.round(Number(candidate.unit_price) || 0);
+    const newItems: OrderItem[] = [];
+    
+    for (const sp of selectedProducts) {
+      const product = products.find((p) => p.id === sp.id);
+      if (product) {
+        newItems.push({
+          productId: product.id,
+          productName: product.product,
+          sku: product.sku || '',
+          quantity: sp.quantity,
+          unitPrice: Math.round(Number(product.unit_price) || 0),
+        });
+      }
+    }
 
-    setItems((prev) => [
-      ...prev,
-      {
-        productId: candidate.id,
-        productName: candidate.product,
-        sku: candidate.sku || '',
-        quantity: 1,
-        unitPrice: defaultPrice,
-      },
-    ]);
-  };
+    const existingIds = new Set(items.map((i) => i.productId));
+    const uniqueNewItems = newItems.filter((item) => !existingIds.has(item.productId));
 
-  const addAllProducts = () => {
-    if (!products.length) return;
+    if (uniqueNewItems.length === 0) {
+      toast({
+        title: 'Products already added',
+        description: 'All selected products are already in the order.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-    const usedIds = new Set(items.map((i) => i.productId));
-    const newProducts = products.filter((p) => !usedIds.has(p.id));
-
-    if (!newProducts.length) return;
-
-    const newItems = newProducts.map((p) => ({
-      productId: p.id,
-      productName: p.product,
-      sku: p.sku || '',
-      quantity: 1,
-      unitPrice: Math.round(Number(p.unit_price) || 0),
-    }));
-
-    setItems((prev) => [...prev, ...newItems]);
+    setItems((prev) => [...prev, ...uniqueNewItems]);
+    setSelectedProducts([]);
+    
+    toast({
+      title: 'Products added',
+      description: `Added ${uniqueNewItems.length} product(s) to the order.`,
+    });
   };
 
   const removeItem = (index: number) => {
@@ -153,13 +220,30 @@ const OrderNew = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!apartmentId || !vendorId || items.length === 0) {
+    if (!apartmentId || items.length === 0) {
       toast({
         title: "Validation Error",
-        description: "Please fill all required fields",
+        description: "Please select an apartment and add at least one item",
         variant: "destructive"
       });
       return;
+    }
+    
+    // Determine vendor from selected items if not explicitly selected
+    let orderVendor = vendorId;
+    if (!orderVendor || orderVendor === 'all') {
+      // Get vendor from the first product in the order
+      const firstProduct = products.find(p => p.id === items[0]?.productId);
+      if (firstProduct?.vendor) {
+        orderVendor = firstProduct.vendor;
+      } else {
+        toast({
+          title: "Validation Error",
+          description: "Unable to determine vendor for this order. Please select a vendor.",
+          variant: "destructive"
+        });
+        return;
+      }
     }
     if (!poNumber.trim()) {
       toast({
@@ -192,7 +276,7 @@ const OrderNew = () => {
 
       const payload: any = {
         apartment: apartmentId,
-        vendor: vendorId,
+        vendor: orderVendor,
         po_number: poNumber.trim(),
         confirmation_code: confirmationCode.trim() || undefined,
         tracking_number: trackingNumber.trim() || undefined,
@@ -201,6 +285,7 @@ const OrderNew = () => {
         shipping_address: shippingAddress.trim() || undefined,
         notes: notes.trim() || undefined,
         items: items.map((item) => ({
+          product: item.productId, // Link to the product
           product_name: item.productName,
           sku: item.sku,
           quantity: item.quantity,
@@ -263,7 +348,8 @@ const OrderNew = () => {
   const selectedApartment = apartments.find((a) => a.id === apartmentId);
   const selectedVendor = vendors.find((v) => v.id === vendorId);
 
-  const canAddItems = !!apartmentId && !!vendorId && products.length > 0;
+  const canSelectProducts = !!apartmentId && filteredProducts.length > 0;
+  const hasSelectedProducts = selectedProducts.length > 0;
 
   return (
     <PageLayout title="New Order">
@@ -339,13 +425,14 @@ const OrderNew = () => {
                     <CardContent className="p-4">
                       <Label htmlFor="vendor" className="flex items-center gap-1.5 text-sm font-medium mb-2">
                         <Store className="h-4 w-4 text-primary" />
-                        Vendor *
+                        Vendor (Optional Filter)
                       </Label>
-                      <Select value={vendorId} onValueChange={setVendorId} disabled={loadingLookups}>
+                      <Select value={vendorId} onValueChange={setVendorId} disabled={loadingLookups || !apartmentId}>
                         <SelectTrigger className="h-10">
-                          <SelectValue placeholder={loadingLookups ? 'Loading...' : 'Select vendor'} />
+                          <SelectValue placeholder={!apartmentId ? 'Select apartment first' : loadingLookups ? 'Loading...' : 'All vendors'} />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="all">All Vendors</SelectItem>
                           {vendors.map((vendor) => (
                             <SelectItem key={vendor.id} value={vendor.id}>
                               <span>{vendor.name}</span>
@@ -437,130 +524,168 @@ const OrderNew = () => {
                 {/* Notes */}
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>
-                  <Input
+                  <EnhancedTextarea
                     id="notes"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Add any notes about this order"
+                    rows={3}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Product Selection Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Store className="h-5 w-5 text-primary" />
+                    Available Products ({filteredProducts.length})
+                  </CardTitle>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={addSelectedToOrder}
+                    className="gap-1.5"
+                    disabled={!hasSelectedProducts}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Selected to Order ({selectedProducts.length})
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {loadingProducts ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Loader2 className="h-12 w-12 mx-auto mb-3 opacity-50 animate-spin" />
+                    <p>Loading products...</p>
+                  </div>
+                ) : !apartmentId ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Building2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>Please select an apartment first</p>
+                    <p className="text-sm">Products will appear here after selecting an apartment</p>
+                  </div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No products found</p>
+                    <p className="text-sm">
+                      {vendorId && vendorId !== 'all'
+                        ? 'Try selecting a different vendor or "All Vendors"'
+                        : 'This apartment has no products yet'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="max-h-96 overflow-y-auto space-y-2">
+                    {filteredProducts.map((product) => {
+                      const isSelected = selectedProducts.some((p) => p.id === product.id);
+                      const selectedProduct = selectedProducts.find((p) => p.id === product.id);
+
+                      return (
+                        <Card
+                          key={product.id}
+                          className={`border transition-all cursor-pointer ${
+                            isSelected ? 'border-primary bg-primary/5' : 'hover:border-primary/30'
+                          }`}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-center gap-4">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleProductSelection(product.id)}
+                                className="h-5 w-5"
+                              />
+                              <div className="flex-1 grid grid-cols-12 gap-4 items-center">
+                                <div className="col-span-12 md:col-span-5">
+                                  <p className="font-medium">{product.product}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {product.sku && `SKU: ${product.sku} · `}
+                                    {product.vendor_name || 'No vendor'}
+                                  </p>
+                                </div>
+                                <div className="col-span-6 md:col-span-3">
+                                  <p className="text-sm text-muted-foreground">Unit Price</p>
+                                  <p className="font-semibold">{Number(product.unit_price).toFixed(0)} HUF</p>
+                                </div>
+                                <div className="col-span-6 md:col-span-2">
+                                  <Label className="text-xs text-muted-foreground mb-1 block">Quantity</Label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={selectedProduct?.quantity || 1}
+                                    onChange={(e) => {
+                                      const qty = parseInt(e.target.value) || 1;
+                                      if (isSelected) {
+                                        updateProductQuantity(product.id, qty);
+                                      } else {
+                                        setSelectedProducts((prev) => [
+                                          ...prev,
+                                          { id: product.id, quantity: qty },
+                                        ]);
+                                      }
+                                    }}
+                                    className="h-8"
+                                    disabled={!isSelected}
+                                  />
+                                </div>
+                                <div className="col-span-12 md:col-span-2 text-right">
+                                  <p className="text-xs text-muted-foreground">Total</p>
+                                  <p className="font-bold text-primary">
+                                    {(Number(product.unit_price) * (selectedProduct?.quantity || 1)).toFixed(0)} HUF
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Order Items Section */}
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-primary" />
-                    Order Items ({items.length})
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={addItem}
-                      className="gap-1.5"
-                      disabled={!canAddItems}
-                    >
-                      <Plus className="h-4 w-4" />
-                      {canAddItems ? 'Add Item' : 'Select apartment & vendor first'}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={addAllProducts}
-                      className="gap-1.5"
-                      disabled={!canAddItems}
-                    >
-                      Add All
-                    </Button>
-                  </div>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-primary" />
+                  Order Items ({items.length})
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {items.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No items added yet</p>
-                    <p className="text-sm">Select an apartment and vendor, then add items to your order</p>
+                    <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No items in order yet</p>
+                    <p className="text-sm">Select products above and click "Add Selected to Order"</p>
                   </div>
                 ) : (
                   items.map((item, index) => (
                     <Card key={index} className="border hover:border-primary/30 transition-all">
                       <CardContent className="p-4">
-                        <div className="grid grid-cols-12 gap-4 items-end">
+                        <div className="grid grid-cols-12 gap-4 items-center">
                           <div className="col-span-12 md:col-span-5">
-                            <Label className="text-sm font-medium mb-2 block">
-                              Product Name *
-                            </Label>
-                            <Select
-                              value={item.productId || undefined}
-                              onValueChange={(value) => {
-                                const product = products.find((p) => p.id === value);
-                                if (!product) return;
-
-                                const rawPrice = Number(product.unit_price);
-                                const roundedPrice = Number.isNaN(rawPrice)
-                                  ? 0
-                                  : Math.round(rawPrice);
-
-                                setItems((prev) => {
-                                  const next = [...prev];
-                                  const current = next[index];
-                                  next[index] = {
-                                    ...current,
-                                    productId: product.id,
-                                    productName: product.product,
-                                    sku: product.sku || '',
-                                    unitPrice: roundedPrice,
-                                  };
-                                  return next;
-                                });
-                              }}
-                            >
-                              <SelectTrigger disabled={!canAddItems || loadingProducts}>
-                                <SelectValue
-                                  placeholder={
-                                    loadingProducts
-                                      ? 'Loading products...'
-                                      : products.length
-                                      ? 'Select product'
-                                      : 'No products available'
-                                  }
-                                />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-64">
-                                {products.map((product) => (
-                                  <SelectItem key={product.id} value={product.id}>
-                                    <div className="flex flex-col">
-                                      <span className="font-medium">{product.product}</span>
-                                      <span className="text-xs text-muted-foreground">
-                                        {product.sku ? `${product.sku} · ` : ''}{Number(product.unit_price).toFixed(0)} HUF
-                                      </span>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <p className="font-medium">{item.productName}</p>
+                            {item.sku && (
+                              <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
+                            )}
                           </div>
                           <div className="col-span-4 md:col-span-2">
-                            <Label className="text-sm font-medium mb-2 block">
-                              Qty *
-                            </Label>
+                            <Label className="text-xs text-muted-foreground mb-1 block">Qty</Label>
                             <Input
                               type="number"
                               min="1"
                               placeholder="0"
                               value={item.quantity}
                               onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                              className="h-9"
                             />
                           </div>
                           <div className="col-span-4 md:col-span-3">
-                            <Label className="text-sm font-medium mb-2 block">
-                              Price (HUF) *
-                            </Label>
+                            <Label className="text-xs text-muted-foreground mb-1 block">Price (HUF)</Label>
                             <Input
                               type="number"
                               min="1"
@@ -576,6 +701,7 @@ const OrderNew = () => {
                                     : parseInt(e.target.value, 10)
                                 )
                               }
+                              className="h-9"
                             />
                           </div>
                           <div className="col-span-4 md:col-span-2 flex items-center gap-2">
@@ -583,10 +709,10 @@ const OrderNew = () => {
                               <p className="text-xs text-muted-foreground">Total</p>
                               <p className="font-bold">{item.quantity * item.unitPrice} HUF</p>
                             </div>
-                            <Button 
-                              type="button" 
-                              size="icon" 
-                              variant="ghost" 
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
                               onClick={() => removeItem(index)}
                               className="h-9 w-9 hover:bg-destructive/10 hover:text-destructive"
                             >

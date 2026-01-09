@@ -132,7 +132,31 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
         order = Order.objects.create(**validated_data)
+        
         for item_data in items_data:
+            # If product is already set (from frontend), keep it
+            if item_data.get('product'):
+                product = item_data['product']
+                # Store product image URL at order time
+                if hasattr(product, 'product_image') and product.product_image:
+                    item_data['product_image_url'] = product.product_image
+            # Try to link product if product_name matches but no product FK set
+            elif item_data.get('product_name'):
+                try:
+                    # Try to find product by name and apartment
+                    product = Product.objects.filter(
+                        product=item_data['product_name'],
+                        apartment=order.apartment
+                    ).first()
+                    
+                    if product:
+                        item_data['product'] = product
+                        # Store product image URL at order time
+                        if product.product_image:
+                            item_data['product_image_url'] = product.product_image
+                except Exception as e:
+                    print(f"Error linking product: {e}")
+            
             OrderItem.objects.create(order=order, **item_data)
         return order
     
@@ -150,6 +174,27 @@ class OrderSerializer(serializers.ModelSerializer):
             instance.items.all().delete()
             # Create new items
             for item_data in items_data:
+                # If product is already set, keep it
+                if item_data.get('product'):
+                    product = item_data['product']
+                    # Store product image URL at order time
+                    if hasattr(product, 'product_image') and product.product_image:
+                        item_data['product_image_url'] = product.product_image
+                # Try to link product if product_name matches but no product FK set
+                elif item_data.get('product_name'):
+                    try:
+                        product = Product.objects.filter(
+                            product=item_data['product_name'],
+                            apartment=instance.apartment
+                        ).first()
+                        
+                        if product:
+                            item_data['product'] = product
+                            if product.product_image:
+                                item_data['product_image_url'] = product.product_image
+                    except Exception:
+                        pass
+                
                 OrderItem.objects.create(order=instance, **item_data)
         
         return instance

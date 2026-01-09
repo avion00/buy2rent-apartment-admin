@@ -417,9 +417,9 @@ export default function IssueDetail() {
                     <div className="flex gap-4">
                       {/* Product Image */}
                       <div className="flex-shrink-0">
-                        {(issue.order_item_details.product_image || issue.product_details?.product_image || issue.product_details?.image_url) ? (
+                        {(issue.order_item_details.product_image || issue.product_details?.product_image) ? (
                           <img 
-                            src={issue.order_item_details.product_image || issue.product_details?.product_image || issue.product_details?.image_url} 
+                            src={issue.order_item_details.product_image || issue.product_details?.product_image} 
                             alt={issue.order_item_details.product_name || 'Product'} 
                             className="w-24 h-24 rounded-lg object-cover border-2 border-muted"
                           />
@@ -473,9 +473,9 @@ export default function IssueDetail() {
                     <div className="flex gap-4">
                       {/* Product Image */}
                       <div className="flex-shrink-0">
-                        {(issue.product_details.product_image || issue.product_details.image_url) ? (
+                        {issue.product_details.product_image ? (
                           <img 
-                            src={issue.product_details.product_image || issue.product_details.image_url} 
+                            src={issue.product_details.product_image} 
                             alt={issue.product_details.product || 'Product'} 
                             className="w-24 h-24 rounded-lg object-cover border-2 border-muted"
                           />

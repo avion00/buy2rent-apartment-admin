@@ -1,0 +1,52 @@
+2025-12-14 15:45:42 +01:00: AI email auto-activated for issue 83a453f3-c6c8-48d7-aa6a-c45a7c30824e
+2025-12-15 16:20:39 +01:00: AI email auto-activated for issue 86a36a5e-ba9e-44e1-a900-fad413a2f696
+2025-12-15 16:20:39 +01:00: AI email auto-activated for issue 50c3686b-4f10-4d1d-b78c-c0f8f10ccb73
+2025-12-15 16:20:39 +01:00: AI email auto-activated for issue f0697da0-0a6d-4964-a0d0-51ecd442cb87
+2025-12-16 09:33:46 +01:00: AI email auto-activated for issue bf752c77-0e6d-453a-b25c-717669577c24
+2025-12-16 09:33:46 +01:00: AI email auto-activated for issue 06e7d237-7188-4ca1-9f5f-d161c30fc4c1
+2025-12-21 18:03:09 +01:00: AI email auto-activated for issue 9d853c96-308a-451a-a0d6-82f44e4d6832
+2025-12-23 11:46:22 +01:00: AI email auto-activated for issue c74cbc45-0ad5-4c8a-bb88-d83dd6014340
+2025-12-23 11:46:22 +01:00: AI email auto-activated for issue a1d55bbc-abcb-4509-98fe-2cc00a747286
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Received vendor_id: 
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Received vendor_id: 
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Received vendor_id: 
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Received vendor_id: a796e86f-12d1-447d-9167-6f12caf06c7e
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': ['a796e86f-12d1-447d-9167-6f12caf06c7e'], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: a796e86f-12d1-447d-9167-6f12caf06c7e
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Received vendor_id: 
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Received vendor_id: 
+2026-01-06 19:26:06 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: Received vendor_id: None
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: None
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: Received vendor_id: None
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: None
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: Received vendor_id: 80a80547-5845-4cf8-9b90-326363859530
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': ['80a80547-5845-4cf8-9b90-326363859530'], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: 80a80547-5845-4cf8-9b90-326363859530
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: Received vendor_id: None
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: None
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: Received vendor_id: a796e86f-12d1-447d-9167-6f12caf06c7e
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': ['a796e86f-12d1-447d-9167-6f12caf06c7e'], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:35:23 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: a796e86f-12d1-447d-9167-6f12caf06c7e
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Received vendor_id: None
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: None
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Received vendor_id: None
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: None
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Received vendor_id: None
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: aaaaapartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: None
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Received vendor_id: a796e86f-12d1-447d-9167-6f12caf06c7e
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': ['a796e86f-12d1-447d-9167-6f12caf06c7e'], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: a796e86f-12d1-447d-9167-6f12caf06c7e
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Received vendor_id: None
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: aaa.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-06 19:55:42 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: None

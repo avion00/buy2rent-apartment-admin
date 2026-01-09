@@ -27,10 +27,12 @@ from orders.views import OrderViewSet
 from deliveries.views import DeliveryViewSet
 from payments.views import PaymentViewSet, PaymentHistoryViewSet
 from issues.views import IssueViewSet, IssuePhotoViewSet, AICommunicationLogViewSet
+from issues.views_web import email_conversations_view
 from activities.views import ActivityViewSet, AINoteViewSet, ManualNoteViewSet
 from accounts.user_management_views import UserManagementViewSet
 from notifications.views import NotificationViewSet, NotificationPreferenceViewSet
 from .views import api_overview, global_search
+from utils.views import enhance_text
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 # Create router and register viewsets
@@ -62,6 +64,10 @@ urlpatterns = [
     path('api/dashboard/', include('dashboard.urls')),  # Dashboard endpoints
     path('api/reports/', include('reports.urls')),  # Report generation endpoints
     path('api/search/', global_search, name='global_search'),  # Global search endpoint
+    path('api/utils/enhance-text/', enhance_text, name='enhance_text'),  # AI text enhancement
+    
+    # Email conversations view
+    path('email-conversations/', email_conversations_view, name='email_conversations'),
     
     # Product import endpoints are now part of the main ProductViewSet
     

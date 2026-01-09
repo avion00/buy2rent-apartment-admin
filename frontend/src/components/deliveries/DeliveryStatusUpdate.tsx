@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Clock, Truck, PackageCheck, XCircle, Calendar, User } from 'lucide-react';
+import { Clock, Truck, PackageCheck, XCircle, Calendar, User, AlertTriangle } from 'lucide-react';
 import { LocationPicker } from './LocationPicker';
 
 interface StatusUpdateData {
@@ -43,20 +43,9 @@ export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpd
 
   const statusOptions = [
     { 
-      value: 'Scheduled', 
-      label: 'Scheduled', 
+      value: 'Confirmed', 
+      label: 'Confirmed', 
       icon: Clock, 
-      color: 'text-blue-600 dark:text-blue-400', 
-      bgColor: 'bg-blue-500/10',
-      borderColor: 'border-blue-500/30',
-      hoverBg: 'hover:bg-blue-500/15',
-      selectedBorder: 'border-blue-500',
-      selectedBg: 'bg-blue-500/10'
-    },
-    { 
-      value: 'In Transit', 
-      label: 'In Transit', 
-      icon: Truck, 
       color: 'text-yellow-600 dark:text-yellow-400', 
       bgColor: 'bg-yellow-500/10',
       borderColor: 'border-yellow-500/30',
@@ -65,8 +54,30 @@ export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpd
       selectedBg: 'bg-yellow-500/10'
     },
     { 
-      value: 'Delivered', 
-      label: 'Delivered', 
+      value: 'In Transit', 
+      label: 'In Transit', 
+      icon: Truck, 
+      color: 'text-blue-600 dark:text-blue-400', 
+      bgColor: 'bg-blue-500/10',
+      borderColor: 'border-blue-500/30',
+      hoverBg: 'hover:bg-blue-500/15',
+      selectedBorder: 'border-blue-500',
+      selectedBg: 'bg-blue-500/10'
+    },
+    { 
+      value: 'Delayed', 
+      label: 'Delayed', 
+      icon: AlertTriangle, 
+      color: 'text-orange-600 dark:text-orange-400', 
+      bgColor: 'bg-orange-500/10',
+      borderColor: 'border-orange-500/30',
+      hoverBg: 'hover:bg-orange-500/15',
+      selectedBorder: 'border-orange-500',
+      selectedBg: 'bg-orange-500/10'
+    },
+    { 
+      value: 'Received', 
+      label: 'Received', 
       icon: PackageCheck, 
       color: 'text-green-600 dark:text-green-400', 
       bgColor: 'bg-green-500/10',
@@ -76,8 +87,8 @@ export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpd
       selectedBg: 'bg-green-500/10'
     },
     { 
-      value: 'Delayed', 
-      label: 'Delayed', 
+      value: 'Returned', 
+      label: 'Returned', 
       icon: XCircle, 
       color: 'text-red-600 dark:text-red-400', 
       bgColor: 'bg-red-500/10',
@@ -96,7 +107,7 @@ export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpd
     if (!delivery || !selectedStatus) return;
 
     // Validation based on status
-    if (selectedStatus === 'Delivered' && !receivedBy) {
+    if (selectedStatus === 'Received' && !receivedBy) {
       toast({
         title: "Validation Error",
         description: "Please enter who received the delivery",
@@ -105,40 +116,34 @@ export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpd
       return;
     }
 
-    if (selectedStatus === 'Delayed' && !delayReason) {
-      toast({
-        title: "Validation Error",
-        description: "Please provide a reason for the delay",
-        variant: "destructive"
-      });
-      return;
-    }
-
     // Build status notes based on the status
     let statusNotes = '';
     switch (selectedStatus) {
-      case 'Scheduled':
-        statusNotes = scheduledReason || `Scheduled for ${scheduledTime}`;
+      case 'Confirmed':
+        statusNotes = 'Vendor confirmed the order';
         break;
       case 'In Transit':
         statusNotes = currentLocation ? `Package is at ${currentLocation}` : 'Package is in transit';
         break;
-      case 'Delivered':
-        statusNotes = `Delivered and received by ${receivedBy}`;
-        break;
       case 'Delayed':
-        statusNotes = delayReason;
+        statusNotes = delayReason || 'Delivery delayed';
+        break;
+      case 'Received':
+        statusNotes = `Received by ${receivedBy}`;
+        break;
+      case 'Returned':
+        statusNotes = delayReason || 'Items returned to vendor';
         break;
       default:
         statusNotes = `Status changed to ${selectedStatus}`;
     }
 
     onStatusUpdate(delivery.id, selectedStatus, {
-      receivedBy: selectedStatus === 'Delivered' ? receivedBy : undefined,
-      actualDelivery: selectedStatus === 'Delivered' ? (actualDelivery || new Date().toISOString().split('T')[0]) : undefined,
+      receivedBy: selectedStatus === 'Received' ? receivedBy : undefined,
+      actualDelivery: selectedStatus === 'Received' ? (actualDelivery || new Date().toISOString().split('T')[0]) : undefined,
       statusNotes,
       location: currentLocation || undefined,
-      delayReason: selectedStatus === 'Delayed' ? delayReason : undefined,
+      delayReason: (selectedStatus === 'Delayed' || selectedStatus === 'Returned') ? delayReason : undefined,
     });
 
     toast({
@@ -166,28 +171,16 @@ export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpd
     if (!selectedStatus) return null;
 
     switch (selectedStatus) {
-      case 'Scheduled':
+      case 'Confirmed':
         return (
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label htmlFor="scheduledTime" className="text-sm font-medium">
-                Scheduled Time <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="scheduledTime"
-                type="datetime-local"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="h-10"
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="scheduledReason" className="text-sm font-medium">
-                Reason for Scheduling
+                Confirmation Notes
               </Label>
               <Textarea
                 id="scheduledReason"
-                placeholder="Why is this delivery being scheduled?"
+                placeholder="Add any notes about vendor confirmation..."
                 value={scheduledReason}
                 onChange={(e) => setScheduledReason(e.target.value)}
                 rows={2}
@@ -225,7 +218,7 @@ export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpd
           </div>
         );
 
-      case 'Delivered':
+      case 'Received':
         return (
           <div className="space-y-3">
             <div className="space-y-2">
@@ -260,39 +253,46 @@ export const DeliveryStatusUpdate = ({ open, onOpenChange, delivery, onStatusUpd
           <div className="space-y-3">
             <div className="space-y-2">
               <Label htmlFor="delayReason" className="text-sm font-medium">
-                Reason for Delay <span className="text-destructive">*</span>
+                Reason for Delay
               </Label>
               <Textarea
                 id="delayReason"
-                placeholder="Explain the reason for the delay"
+                placeholder="Explain why the delivery is delayed..."
                 value={delayReason}
                 onChange={(e) => setDelayReason(e.target.value)}
-                rows={2}
+                rows={3}
                 className="resize-none"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="delayDuration" className="text-sm font-medium">
-                Expected Delay Duration
+              <Label htmlFor="currentLocation" className="text-sm font-medium">
+                Current Location (Optional)
               </Label>
               <Input
-                id="delayDuration"
-                placeholder="e.g., 2 hours, 1 day"
-                value={delayDuration}
-                onChange={(e) => setDelayDuration(e.target.value)}
+                id="currentLocation"
+                placeholder="Where is the package now?"
+                value={currentLocation}
+                onChange={(e) => setCurrentLocation(e.target.value)}
                 className="h-10"
               />
             </div>
+          </div>
+        );
+
+      case 'Returned':
+        return (
+          <div className="space-y-3">
             <div className="space-y-2">
-              <Label htmlFor="newEstimatedDate" className="text-sm font-medium">
-                New Estimated Delivery
+              <Label htmlFor="delayReason" className="text-sm font-medium">
+                Reason for Return
               </Label>
-              <Input
-                id="newEstimatedDate"
-                type="datetime-local"
-                value={newEstimatedDate}
-                onChange={(e) => setNewEstimatedDate(e.target.value)}
-                className="h-10"
+              <Textarea
+                id="delayReason"
+                placeholder="Explain why items are being returned to vendor..."
+                value={delayReason}
+                onChange={(e) => setDelayReason(e.target.value)}
+                rows={3}
+                className="resize-none"
               />
             </div>
           </div>

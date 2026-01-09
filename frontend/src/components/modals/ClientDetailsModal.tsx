@@ -271,7 +271,7 @@ export const ClientDetailsModal = ({
               ) : (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
                   {clientProducts.map((product: any) => {
-                    const productImage = product.product_image || product.image_url || product.thumbnail_url;
+                    const productImage = product.product_image;
                     const categoryName = product.category_name || product.category_details?.name;
                     const room = product.room;
                     

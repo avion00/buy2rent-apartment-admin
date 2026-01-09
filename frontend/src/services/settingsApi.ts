@@ -1,10 +1,11 @@
 import axios from 'axios';
+import { AUTH_BASE_URL } from '../config/api';
 
 // Auth endpoints are at /auth/ not /api/auth/
-const AUTH_BASE_URL = 'http://localhost:8000';
+const BASE_URL = AUTH_BASE_URL.replace('/auth', '');
 
 const authAxios = axios.create({
-  baseURL: AUTH_BASE_URL,
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

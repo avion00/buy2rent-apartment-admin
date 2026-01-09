@@ -42,3 +42,9 @@ django-debug-toolbar
 
 # Optional: For API testing
 httpie
+reportlab
+
+# AI and Email Services
+openai
+aiohttp
+sendgrid

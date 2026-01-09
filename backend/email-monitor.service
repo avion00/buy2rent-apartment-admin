@@ -1,0 +1,15 @@
+[Unit]
+Description=Buy2Rent Email Monitor Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/buy2rent/backend
+Environment="PATH=/root/buy2rent/backend/myenv/bin"
+ExecStart=/root/buy2rent/backend/myenv/bin/python /root/buy2rent/backend/manage.py monitor_vendor_emails
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

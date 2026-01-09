@@ -1,9 +1,8 @@
 import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+import { API_BASE_URL } from '../config/api';
 
 const axiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -31,6 +30,8 @@ export interface DashboardKPI {
   open_issues: KPIStat;
   deliveries_this_week: KPIStat;
   overdue_payments: KPIStat;
+  total_clients?: number;
+  total_vendors?: number;
 }
 
 export interface OrdersChartData {

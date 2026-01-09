@@ -385,9 +385,9 @@ const PaymentNew = () => {
                               <TableRow key={item.id || idx}>
                                 <TableCell>
                                   <div className="flex items-center gap-3">
-                                    {item.product_image || item.product_image_url ? (
+                                    {item.product_image ? (
                                       <img 
-                                        src={item.product_image || item.product_image_url} 
+                                        src={item.product_image} 
                                         alt={item.product_name || 'Product'}
                                         className="w-10 h-10 rounded object-cover"
                                       />

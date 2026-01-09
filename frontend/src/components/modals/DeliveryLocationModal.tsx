@@ -41,9 +41,9 @@ export const DeliveryLocationModal = ({ open, onOpenChange, product }: DeliveryL
         <div className="space-y-6">
           {/* Product Info */}
           <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
-            {product.imageUrl ? (
+            {product.product_image ? (
               <img
-                src={product.imageUrl}
+                src={product.product_image}
                 alt={product.product}
                 className="h-16 w-16 rounded object-cover"
               />

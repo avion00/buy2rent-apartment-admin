@@ -45,6 +45,7 @@ import { Plus, Eye, Edit, Trash2, Search, Loader2, RefreshCw, Upload, Download, 
 import { useToast } from '@/hooks/use-toast';
 import { useApartments, useDeleteApartment } from '@/hooks/useApartmentApi';
 import { useClients } from '@/hooks/useClientApi';
+import { useVendors } from '@/hooks/useVendorApi';
 import { Skeleton } from '@/components/ui/skeleton';
 import { productApi } from '@/services/productApi';
 
@@ -74,6 +75,7 @@ const Apartments = () => {
     designer: '',
     start_date: '',
     due_date: '',
+    vendor: '',
   });
   
   const typeFilter = searchParams.get('type') || 'furnishing';
@@ -97,6 +99,10 @@ const Apartments = () => {
     page_size: 100, // Get all clients
     ordering: 'name', // Sort by name
   });
+  
+  // Fetch vendors for the dropdown
+  const { data: vendorsData, isLoading: isLoadingVendors } = useVendors();
+  const vendors = vendorsData?.results || [];
 
   const apartments = useMemo(() => apartmentsData?.results || [], [apartmentsData?.results]);
 
@@ -250,6 +256,7 @@ const Apartments = () => {
         start_date: apartmentForm.start_date,
         due_date: apartmentForm.due_date,
         address: apartmentForm.address,
+        vendor_id: apartmentForm.vendor || undefined,
       });
 
       if (result.success) {
@@ -304,6 +311,7 @@ const Apartments = () => {
       designer: '',
       start_date: '',
       due_date: '',
+      vendor: '',
     });
     setUploadedFiles([]);
     setFormErrors({});
@@ -817,10 +825,67 @@ const Apartments = () => {
                       Upload Excel or CSV files containing product information for this apartment.
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2"
+                    onClick={async () => {
+                      try {
+                        const blob = await productApi.downloadImportTemplate();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'apartment-template.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        toast({
+                          title: "Success",
+                          description: "Template downloaded successfully",
+                        });
+                      } catch (error) {
+                        toast({
+                          title: "Error",
+                          description: "Failed to download template",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
                     <Download className="h-4 w-4" />
                     Download Template
                   </Button>
+                </div>
+
+                {/* Vendor Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="apt-vendor">Vendor (Optional)</Label>
+                  <Select
+                    value={apartmentForm.vendor}
+                    onValueChange={(value) => setApartmentForm({ ...apartmentForm, vendor: value })}
+                    disabled={isLoadingVendors}
+                  >
+                    <SelectTrigger id="apt-vendor">
+                      <SelectValue placeholder={isLoadingVendors ? "Loading vendors..." : "Select a vendor (optional)"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vendors.length > 0 ? (
+                        vendors.map((vendor: any) => (
+                          <SelectItem key={vendor.id} value={vendor.id}>
+                            {vendor.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-vendors" disabled>
+                          No vendors available
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Optionally assign a vendor to all imported products
+                  </p>
                 </div>
 
                 {/* File Upload Area */}

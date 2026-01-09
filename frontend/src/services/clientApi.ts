@@ -1,7 +1,5 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
-
-const API_BASE_URL = 'http://localhost:8000/api';
-const AUTH_BASE_URL = 'http://localhost:8000/auth';
+import { API_BASE_URL, AUTH_BASE_URL } from '../config/api';
 
 // Create axios instance with optimized config for smooth async operations
 const axiosInstance: AxiosInstance = axios.create({
@@ -83,16 +81,19 @@ axiosInstance.interceptors.response.use(
       const refreshToken = localStorage.getItem('refresh_token');
       
       if (!refreshToken) {
-        // No refresh token, redirect to login
+        // No refresh token, clear state and reject
+        isRefreshing = false;
+        processQueue(error, null);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
         return Promise.reject(error);
       }
 
       try {
         const response = await axios.post(`${AUTH_BASE_URL}/refresh/`, {
           refresh: refreshToken,
+        }, {
+          timeout: 10000, // 10 second timeout for refresh requests
         });
 
         const { access } = response.data;
@@ -108,11 +109,10 @@ axiosInstance.interceptors.response.use(
         // Retry the original request with new token
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        // Refresh failed, clear tokens and redirect to login
+        // Refresh failed, clear tokens and process queue
         processQueue(refreshError, null);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

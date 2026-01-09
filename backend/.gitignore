@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environment
+myenv/
+venv/
+env/
+ENV/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3.backup
+db.sqlite3-journal
+/media/
+/static/
+*.pot
+
+# Environment variables
+.env
+.env.dev
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.xlsx
+*.xls
+
+# Documentation archives
+docs/archive/
+
+# Sample data
+sample_data/

@@ -28,9 +28,9 @@ export function ProductIssueCard({ product, issue }: ProductIssueCardProps) {
       <CardContent className="space-y-6">
         {/* Product Basic Info */}
         <div className="flex items-start gap-4">
-          {product.imageUrl ? (
+          {product.product_image ? (
             <img 
-              src={product.imageUrl} 
+              src={product.product_image} 
               alt={product.product}
               className="w-24 h-24 object-cover rounded-lg border"
             />

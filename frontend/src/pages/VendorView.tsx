@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import {
   Table,
@@ -142,11 +142,35 @@ const VendorView = () => {
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-6">
-              <Avatar className="h-24 w-24">
-                <AvatarFallback className="text-4xl">
-                  {vendor.logo}
-                </AvatarFallback>
-              </Avatar>
+              <div className="flex items-center justify-center bg-muted rounded-full w-24 h-24 overflow-hidden">
+                {vendor.website ? (
+                  <img 
+                    src={`https://logo.clearbit.com/${new URL(vendor.website).hostname}`}
+                    alt={`${vendor.name} logo`}
+                    className="w-20 h-20 object-contain"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.dataset.fallbackAttempted) {
+                        target.dataset.fallbackAttempted = 'true';
+                        target.src = `https://www.google.com/s2/favicons?domain=${new URL(vendor.website).hostname}&sz=128`;
+                      } else {
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const fallback = document.createElement('span');
+                          fallback.className = 'text-4xl';
+                          fallback.textContent = vendor.logo || vendor.name.charAt(0).toUpperCase();
+                          parent.appendChild(fallback);
+                        }
+                      }
+                    }}
+                  />
+                ) : (
+                  <span className="text-4xl">
+                    {vendor.logo || vendor.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
               
               <div className="flex-1 space-y-4">
                 <div>
@@ -387,9 +411,9 @@ const VendorView = () => {
                         {products.map((product) => (
                           <TableRow key={product.id}>
                             <TableCell>
-                              {product.product_image || product.image_url ? (
+                              {product.product_image ? (
                                 <img 
-                                  src={product.product_image || product.image_url} 
+                                  src={product.product_image} 
                                   alt={product.product}
                                   className="w-16 h-16 object-cover rounded-md"
                                   onError={(e) => {
@@ -398,7 +422,7 @@ const VendorView = () => {
                                   }}
                                 />
                               ) : null}
-                              <div className={`w-16 h-16 bg-muted rounded-md flex items-center justify-center ${product.product_image || product.image_url ? 'hidden' : ''}`}>
+                              <div className={`w-16 h-16 bg-muted rounded-md flex items-center justify-center ${product.product_image ? 'hidden' : ''}`}>
                                 <ImageIcon className="h-6 w-6 text-muted-foreground" />
                               </div>
                             </TableCell>

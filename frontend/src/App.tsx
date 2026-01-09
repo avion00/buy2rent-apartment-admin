@@ -28,6 +28,7 @@ import OrderView from "./pages/OrderView";
 import OrderEdit from "./pages/OrderEdit";
 import Deliveries from "./pages/Deliveries";
 import Issues from "./pages/Issues";
+import IssuesWithAI from "./pages/IssuesWithAI";
 import IssueNew from "./pages/IssueNew";
 import IssueDetail from "./pages/IssueDetail";
 import IssueEdit from "./pages/IssueEdit";
@@ -42,6 +43,7 @@ import VendorEdit from "./pages/VendorEdit";
 import Users from "./pages/Users";
 import Automations from "./pages/Automations";
 import Settings from "./pages/Settings";
+import BulkEmail from "./pages/BulkEmail";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +80,7 @@ const App = () => (
           <Route path="/deliveries" element={<ProtectedRoute><Deliveries /></ProtectedRoute>} />
           <Route path="/issues" element={<ProtectedRoute><Issues /></ProtectedRoute>} />
           <Route path="/issues/new" element={<ProtectedRoute><IssueNew /></ProtectedRoute>} />
+          <Route path="/issues/bulk-email" element={<ProtectedRoute><BulkEmail /></ProtectedRoute>} />
           <Route path="/issues/:issueId" element={<ProtectedRoute><IssueDetail /></ProtectedRoute>} />
           <Route path="/issues/:issueId/edit" element={<ProtectedRoute><IssueEdit /></ProtectedRoute>} />
           <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />

@@ -31,26 +31,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
-    checkAuth();
+    // Check for existing session with timeout protection
+    const timeoutId = setTimeout(() => {
+      console.warn('Auth check timed out after 15 seconds');
+      setLoading(false);
+    }, 15000); // 15 second timeout
+
+    checkAuth().finally(() => {
+      clearTimeout(timeoutId);
+    });
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const checkAuth = async () => {
     try {
       const token = tokenManager.getAccessToken();
-      if (token) {
-        // Validate token and get user profile
-        const profile = await authApi.getProfile();
-        setUser({
-          ...profile,
-          name: profile.first_name && profile.last_name 
-            ? `${profile.first_name} ${profile.last_name}`
-            : profile.username,
-        });
+      const refreshToken = tokenManager.getRefreshToken();
+      
+      // If no tokens at all, skip auth check
+      if (!token && !refreshToken) {
+        setLoading(false);
+        return;
+      }
+
+      // If we have a refresh token but no access token, try to refresh first
+      if (!token && refreshToken) {
+        try {
+          const refreshResponse = await authApi.refreshToken(refreshToken);
+          tokenManager.setTokens(refreshResponse.access, refreshToken);
+        } catch (refreshError) {
+          console.error('Token refresh failed during auth check:', refreshError);
+          tokenManager.clearTokens();
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Now try to get user profile
+      if (tokenManager.getAccessToken()) {
+        try {
+          const profile = await authApi.getProfile();
+          setUser({
+            ...profile,
+            name: profile.first_name && profile.last_name 
+              ? `${profile.first_name} ${profile.last_name}`
+              : profile.username,
+          });
+        } catch (profileError) {
+          // If profile fetch fails even after token refresh, clear everything
+          console.error('Profile fetch failed:', profileError);
+          tokenManager.clearTokens();
+          setUser(null);
+        }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       tokenManager.clearTokens();
+      setUser(null);
     } finally {
       setLoading(false);
     }

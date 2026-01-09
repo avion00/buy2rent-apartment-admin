@@ -18,38 +18,19 @@ interface StatusUpdateProps {
   onStatusUpdate: (orderId: string | number, newStatus: string) => void;
 }
 
-// Status flow mapping - lowercase to match backend values
+// Status flow mapping - simplified to Draft → Sent only
 const statusFlow: Record<string, string> = {
-  'draft': 'pending',
-  'pending': 'sent',
-  'sent': 'confirmed',
-  'confirmed': 'in_transit',
-  'in_transit': 'delivered',
-  'delivered': 'received',
-  'received': 'received',
-  'cancelled': 'cancelled',
-  'returned': 'returned',
-  // Also support capitalized versions for backward compatibility
-  'Draft': 'pending',
-  'Pending': 'sent',
-  'Sent': 'confirmed',
-  'Confirmed': 'in_transit',
-  'In Transit': 'delivered',
-  'Delivered': 'received',
-  'Received': 'received',
+  'draft': 'sent',
+  'sent': 'sent',
+  // Support capitalized versions
+  'Draft': 'sent',
+  'Sent': 'sent',
 };
 
 // Display names for statuses
 const statusDisplayNames: Record<string, string> = {
   'draft': 'Draft',
-  'pending': 'Pending',
   'sent': 'Sent',
-  'confirmed': 'Confirmed',
-  'in_transit': 'In Transit',
-  'delivered': 'Delivered',
-  'received': 'Received',
-  'cancelled': 'Cancelled',
-  'returned': 'Returned',
 };
 
 export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: StatusUpdateProps) => {
@@ -60,7 +41,7 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
 
   const currentStatus = order.status.toLowerCase();
   const nextStatus = statusFlow[order.status] || statusFlow[currentStatus];
-  const isTerminalStatus = ['received', 'cancelled', 'returned'].includes(currentStatus);
+  const isTerminalStatus = currentStatus === 'sent'; // Sent is the final order status
   
   // Get display names
   const currentDisplayName = statusDisplayNames[currentStatus] || order.status;
@@ -71,8 +52,9 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
     
     if (isTerminalStatus) {
       toast({
-        title: "Already Completed",
-        description: "This order has already been received",
+        title: "Already Sent",
+        description: "This order has already been sent to vendor. Track fulfillment in Deliveries page.",
+        variant: "default",
       });
       return;
     }
@@ -92,14 +74,7 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
     const normalizedStatus = status.toLowerCase();
     const colors: Record<string, string> = {
       'draft': 'bg-gray-500/10 text-gray-500',
-      'pending': 'bg-orange-500/10 text-orange-500',
       'sent': 'bg-blue-500/10 text-blue-500',
-      'confirmed': 'bg-purple-500/10 text-purple-500',
-      'in_transit': 'bg-yellow-500/10 text-yellow-500',
-      'delivered': 'bg-teal-500/10 text-teal-500',
-      'received': 'bg-green-500/10 text-green-500',
-      'cancelled': 'bg-red-500/10 text-red-500',
-      'returned': 'bg-pink-500/10 text-pink-500',
     };
     return colors[normalizedStatus] || 'bg-gray-500/10 text-gray-500';
   };
@@ -132,11 +107,11 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
           </div>
 
           {isTerminalStatus ? (
-            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
-              <p className="text-sm font-medium">Order Already Received</p>
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-center">
+              <CheckCircle2 className="h-12 w-12 text-blue-500 mx-auto mb-2" />
+              <p className="text-sm font-medium">Order Already Sent</p>
               <p className="text-xs text-muted-foreground mt-1">
-                This order has reached its final status
+                Track fulfillment in the Deliveries page
               </p>
             </div>
           ) : (
@@ -145,35 +120,11 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
               <div className="space-y-2 text-sm">
                 <p className="font-medium">What happens next?</p>
                 <ul className="space-y-1 text-muted-foreground ml-4 list-disc text-xs">
-                  {nextStatus === 'pending' && (
-                    <li>Order will be marked as pending review</li>
-                  )}
                   {nextStatus === 'sent' && (
-                    <li>Order will be marked as sent to vendor</li>
-                  )}
-                  {nextStatus === 'confirmed' && (
                     <>
-                      <li>Order confirmed by vendor</li>
-                      <li>Payment may be processed</li>
-                    </>
-                  )}
-                  {nextStatus === 'in_transit' && (
-                    <>
-                      <li>Order is being shipped</li>
-                      <li>Delivery tracking will be available</li>
-                    </>
-                  )}
-                  {nextStatus === 'delivered' && (
-                    <>
-                      <li>Items have been delivered</li>
-                      <li>Awaiting confirmation of receipt</li>
-                    </>
-                  )}
-                  {nextStatus === 'received' && (
-                    <>
-                      <li>Items marked as received</li>
-                      <li>Order will be completed</li>
-                      <li>Quality check should be done</li>
+                      <li>Order will be marked as sent to vendor</li>
+                      <li>Create a delivery record to track fulfillment</li>
+                      <li>Vendor will confirm and ship items</li>
                     </>
                   )}
                 </ul>

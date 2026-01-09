@@ -183,13 +183,7 @@ const ProductView = () => {
                 {tag}
               </Badge>
             ))}
-            {(() => {
-              const tags = product.delivery_status_tags;
-              if (typeof tags === 'string' && tags) {
-                return tags.split(',').map(t => t.trim()).filter(t => t !== '');
-              }
-              return Array.isArray(tags) ? tags : [];
-            })().map((tag) => (
+            {(product.delivery_status_tags || []).map((tag) => (
               <Badge key={tag} variant="outline" className={getStatusColor(tag)}>
                 {tag}
               </Badge>
@@ -422,14 +416,14 @@ const ProductView = () => {
         </div>
 
         <div className="space-y-6">
-          {(product.product_image || product.image_url || product.imageUrl) ? (
+          {product.product_image ? (
             <Card>
               <CardHeader>
                 <CardTitle>Product Image</CardTitle>
               </CardHeader>
               <CardContent>
                 <img
-                  src={product.product_image || product.image_url || product.imageUrl}
+                  src={product.product_image}
                   alt={product.product}
                   className="w-full rounded-lg object-cover aspect-square"
                 />

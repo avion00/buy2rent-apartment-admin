@@ -1,0 +1,4 @@
+#!/bin/bash
+# Quick shortcut to start local development
+cd "$(dirname "$0")"
+./start-local-dev.sh

@@ -75,7 +75,6 @@ import { cn } from "@/lib/utils";
 import { useDataStore } from "@/stores/useDataStore";
 import { format, differenceInDays, subDays } from "date-fns";
 import { IssueManagementModal } from "@/components/modals/IssueManagementModal";
-import { BulkEmailModal } from "@/components/modals/BulkEmailModal";
 import * as XLSX from "xlsx";
 import {
   AlertDialog,
@@ -132,8 +131,6 @@ const Issues = () => {
   // Modal states
   const [selectedIssue, setSelectedIssue] = useState<any>(null);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
-  const [isBulkEmailOpen, setIsBulkEmailOpen] = useState(false);
-  const [selectedIssuesForEmail, setSelectedIssuesForEmail] = useState<any[]>([]);
   
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -410,8 +407,7 @@ const Issues = () => {
       toast.error("No issues to email");
       return;
     }
-    setSelectedIssuesForEmail(filteredIssues);
-    setIsBulkEmailOpen(true);
+    navigate('/issues/bulk-email', { state: { selectedIssues: filteredIssues } });
   };
 
   // Drag and drop handler for Kanban board
@@ -893,8 +889,7 @@ const Issues = () => {
                                           // Get single product image for fallback
                                           const singleProductImage = items[0]?.product_image ||
                                             issue.order_item_details?.product_image || 
-                                            issue.product_details?.product_image || 
-                                            issue.product_details?.image_url;
+                                            issue.product_details?.product_image;
 
                                           return (
                                             <>
@@ -1243,13 +1238,6 @@ const Issues = () => {
       {selectedIssue && (
         <IssueManagementModal product={selectedIssue} open={isIssueModalOpen} onOpenChange={setIsIssueModalOpen} />
       )}
-
-      {/* Bulk Email Modal */}
-      <BulkEmailModal
-        open={isBulkEmailOpen}
-        onOpenChange={setIsBulkEmailOpen}
-        selectedIssues={selectedIssuesForEmail}
-      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

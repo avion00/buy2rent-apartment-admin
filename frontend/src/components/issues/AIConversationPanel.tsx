@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Issue } from '@/stores/useDataStore';
-import { Bot, User, Send, AlertCircle, Sparkles, MessageSquare } from 'lucide-react';
+import { Bot, User, Send, AlertCircle, Sparkles, MessageSquare, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { issueApi, AICommunicationLog, Issue } from '@/services/issueApi';
 
 interface AIConversationPanelProps {
   issue: Issue;
@@ -17,46 +17,59 @@ interface AIConversationPanelProps {
 export function AIConversationPanel({ issue, onUpdateIssue }: AIConversationPanelProps) {
   const [newMessage, setNewMessage] = useState('');
   const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [conversation, setConversation] = useState<AICommunicationLog[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleSendMessage = () => {
+  // Fetch conversation on mount and when issue changes
+  useEffect(() => {
+    const fetchConversation = async () => {
+      try {
+        setLoading(true);
+        const data = await issueApi.getConversation(issue.id);
+        setConversation(data.conversation || []);
+      } catch (error) {
+        console.error('Failed to fetch conversation:', error);
+        toast.error('Failed to load conversation');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConversation();
+  }, [issue.id]);
+
+  const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
-    const updatedLog = [
-      ...(issue.aiCommunicationLog || []),
-      {
-        timestamp: new Date().toISOString(),
-        sender: 'System' as const,
+    setIsAIProcessing(true);
+
+    try {
+      // Send message to vendor via email
+      await issueApi.sendManualMessage(issue.id, {
+        subject: `Re: Issue #${issue.id}`,
         message: newMessage,
-      },
-    ];
+        to_email: issue.vendor_details?.email || ''
+      });
 
-    onUpdateIssue({ aiCommunicationLog: updatedLog });
-    setNewMessage('');
-    toast.success('Message added to log');
-
-    // Simulate AI response
-    if (issue.aiActivated) {
-      setIsAIProcessing(true);
-      setTimeout(() => {
-        const aiResponse = {
-          timestamp: new Date().toISOString(),
-          sender: 'AI' as const,
-          message: `Processing your request: "${newMessage}". I will communicate with ${issue.vendor} regarding this update.`,
-        };
-        
-        onUpdateIssue({
-          aiCommunicationLog: [...updatedLog, aiResponse],
-        });
-        setIsAIProcessing(false);
-      }, 2000);
+      // Refresh conversation to show the sent message
+      const data = await issueApi.getConversation(issue.id);
+      setConversation(data.conversation || []);
+      
+      setNewMessage('');
+      toast.success('Message sent to vendor successfully');
+    } catch (error: any) {
+      console.error('Failed to send message:', error);
+      toast.error(error.response?.data?.message || 'Failed to send message to vendor');
+    } finally {
+      setIsAIProcessing(false);
     }
   };
 
   const getConversationSummary = () => {
-    const logs = issue.aiCommunicationLog || [];
+    const logs = conversation || [];
     const aiMessages = logs.filter(log => log.sender === 'AI').length;
     const vendorMessages = logs.filter(log => log.sender === 'Vendor').length;
-    const systemMessages = logs.filter(log => log.sender === 'System').length;
+    const systemMessages = logs.filter(log => log.sender === 'System' || log.sender === 'Admin').length;
 
     return { total: logs.length, aiMessages, vendorMessages, systemMessages };
   };
@@ -118,12 +131,12 @@ export function AIConversationPanel({ issue, onUpdateIssue }: AIConversationPane
                 Communication Log
               </CardTitle>
               <CardDescription>
-                {issue.aiActivated 
+                {issue.ai_activated 
                   ? 'AI is actively managing this conversation with the vendor'
                   : 'Manual conversation tracking'}
               </CardDescription>
             </div>
-            {issue.aiActivated && (
+            {issue.ai_activated && (
               <Badge variant="default" className="gap-1">
                 <Sparkles className="h-3 w-3" />
                 AI Active
@@ -132,10 +145,15 @@ export function AIConversationPanel({ issue, onUpdateIssue }: AIConversationPane
           </div>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[500px] pr-4">
-            <div className="space-y-4">
-              {issue.aiCommunicationLog && issue.aiCommunicationLog.length > 0 ? (
-                issue.aiCommunicationLog.map((log, index) => {
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <ScrollArea className="h-[500px] pr-4">
+              <div className="space-y-4">
+                {conversation && conversation.length > 0 ? (
+                  conversation.map((log, index) => {
                   const isHumanAction = log.message.toLowerCase().includes('please arrange') || 
                                       log.message.toLowerCase().includes('action required') ||
                                       log.message.toLowerCase().includes('human action');
@@ -220,9 +238,10 @@ export function AIConversationPanel({ issue, onUpdateIssue }: AIConversationPane
                     <p className="text-sm text-muted-foreground">AI is processing...</p>
                   </div>
                 </div>
-              )}
-            </div>
-          </ScrollArea>
+                )}
+              </div>
+            </ScrollArea>
+          )}
 
           {/* Message Input */}
           <div className="flex gap-2 mt-4">

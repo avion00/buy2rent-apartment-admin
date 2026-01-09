@@ -265,8 +265,37 @@ const Vendors = () => {
                         onClick={() => navigate(`/vendors/${vendor.id}`)}
                       >
                         <TableCell>
-                          <div className="flex items-center justify-center text-3xl bg-muted rounded-lg w-12 h-12">
-                            {vendor.logo}
+                          <div className="flex items-center justify-center bg-muted rounded-lg w-12 h-12 overflow-hidden">
+                            {vendor.website ? (
+                              <>
+                                <img 
+                                  src={`https://logo.clearbit.com/${new URL(vendor.website).hostname}`}
+                                  alt={`${vendor.name} logo`}
+                                  className="w-10 h-10 object-contain"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    // Try Google favicon as fallback
+                                    if (!target.dataset.fallbackAttempted) {
+                                      target.dataset.fallbackAttempted = 'true';
+                                      target.src = `https://www.google.com/s2/favicons?domain=${new URL(vendor.website).hostname}&sz=128`;
+                                    } else {
+                                      target.style.display = 'none';
+                                      const parent = target.parentElement;
+                                      if (parent) {
+                                        const fallback = document.createElement('span');
+                                        fallback.className = 'text-2xl';
+                                        fallback.textContent = vendor.logo || vendor.name.charAt(0).toUpperCase();
+                                        parent.appendChild(fallback);
+                                      }
+                                    }
+                                  }}
+                                />
+                              </>
+                            ) : (
+                              <span className="text-2xl">
+                                {vendor.logo || vendor.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>

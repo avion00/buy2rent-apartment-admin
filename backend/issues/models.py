@@ -12,6 +12,7 @@ class Issue(models.Model):
         ('Pending Vendor Response', 'Pending Vendor Response'),
         ('Resolution Agreed', 'Resolution Agreed'),
         ('Closed', 'Closed'),
+        ('Escalated', 'Escalated'),
     ]
     
     PRIORITY_CHOICES = [
@@ -59,6 +60,15 @@ class Issue(models.Model):
     
     # Notification settings
     auto_notify_vendor = models.BooleanField(default=True, help_text="Automatically notify vendor about this issue")
+    
+    # AI Email Automation fields
+    vendor_last_replied_at = models.DateTimeField(null=True, blank=True, help_text="Last time vendor replied")
+    first_sent_at = models.DateTimeField(null=True, blank=True, help_text="First email sent to vendor")
+    followup_count = models.IntegerField(default=0, help_text="Number of follow-up emails sent")
+    sla_response_hours = models.IntegerField(default=24, help_text="Expected response time in hours")
+    last_summary = models.TextField(blank=True, help_text="AI-generated conversation summary")
+    last_summary_at = models.DateTimeField(null=True, blank=True, help_text="When summary was last updated")
+    next_action = models.TextField(blank=True, help_text="AI-suggested next action")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -143,6 +153,22 @@ class AICommunicationLog(models.Model):
         ('AI', 'AI'),
         ('Vendor', 'Vendor'),
         ('System', 'System'),
+        ('Admin', 'Admin'),
+    ]
+    
+    MESSAGE_TYPE_CHOICES = [
+        ('email', 'Email'),
+        ('internal', 'Internal Note'),
+        ('system', 'System Message'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('pending_approval', 'Pending Approval'),
+        ('sent', 'Sent'),
+        ('delivered', 'Delivered'),
+        ('failed', 'Failed'),
+        ('received', 'Received'),
     ]
     
     # Secure UUID Primary Key
@@ -159,8 +185,34 @@ class AICommunicationLog(models.Model):
     sender = models.CharField(max_length=20, choices=SENDER_CHOICES)
     message = models.TextField()
     
+    # Enhanced email tracking fields
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPE_CHOICES, default='internal')
+    subject = models.CharField(max_length=500, blank=True)
+    email_from = models.EmailField(blank=True)
+    email_to = models.EmailField(blank=True)
+    email_message_id = models.CharField(max_length=255, blank=True, help_text="Email Message-ID header")
+    email_thread_id = models.CharField(max_length=255, blank=True, help_text="Email thread identifier")
+    in_reply_to = models.CharField(max_length=255, blank=True)
+    
+    # AI and approval fields
+    ai_generated = models.BooleanField(default=False)
+    ai_confidence = models.FloatField(null=True, blank=True, help_text="AI confidence score (0-1)")
+    ai_model = models.CharField(max_length=50, blank=True, default='gpt-4')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='internal')
+    approved_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_messages')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    
+    # Control fields
+    requires_approval = models.BooleanField(default=False)
+    manual_override = models.BooleanField(default=False, help_text="Message was manually edited")
+    
     class Meta:
         ordering = ['timestamp']
+        indexes = [
+            models.Index(fields=['issue', 'timestamp']),
+            models.Index(fields=['email_thread_id']),
+            models.Index(fields=['status']),
+        ]
     
     def __str__(self):
         return f"{self.sender} - {self.timestamp}"

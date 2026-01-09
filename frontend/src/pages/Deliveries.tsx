@@ -81,10 +81,11 @@ const Deliveries = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'Scheduled': 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-      'In Transit': 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
-      'Delivered': 'bg-green-500/10 text-green-600 dark:text-green-400',
-      'Delayed': 'bg-red-500/10 text-red-600 dark:text-red-400',
+      'Confirmed': 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
+      'In Transit': 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+      'Delayed': 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+      'Received': 'bg-green-500/10 text-green-600 dark:text-green-400',
+      'Returned': 'bg-red-500/10 text-red-600 dark:text-red-400',
     };
     return colors[status] || 'bg-muted text-muted-foreground';
   };
@@ -130,11 +131,11 @@ const Deliveries = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <p className="text-sm text-muted-foreground">Scheduled</p>
+                  <p className="text-sm text-muted-foreground">Confirmed</p>
                   <p className="text-2xl font-bold">
-                    {deliveriesData.filter(d => d.status === 'Scheduled').length}
+                    {deliveriesData.filter(d => d.status === 'Confirmed').length}
                   </p>
-                  <p className="text-sm text-muted-foreground">Upcoming</p>
+                  <p className="text-sm text-muted-foreground">Vendor accepted</p>
                 </div>
                 <div className="p-2.5 rounded-xl bg-blue-500/10">
                   <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -165,9 +166,9 @@ const Deliveries = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <p className="text-sm text-muted-foreground">Delivered</p>
+                  <p className="text-sm text-muted-foreground">Received</p>
                   <p className="text-2xl font-bold">
-                    {deliveriesData.filter(d => d.status === 'Delivered').length}
+                    {deliveriesData.filter(d => d.status === 'Received').length}
                   </p>
                   <p className="text-sm text-muted-foreground">Completed</p>
                 </div>
@@ -181,17 +182,17 @@ const Deliveries = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <p className="text-sm text-muted-foreground">Delayed</p>
+                  <p className="text-sm text-muted-foreground">Issues</p>
                   <p className="text-2xl font-bold">
-                    {deliveriesData.filter(d => d.status === 'Delayed').length}
+                    {deliveriesData.filter(d => d.status === 'Delayed' || d.status === 'Returned').length}
                   </p>
-                  <p className="text-sm text-destructive flex items-center gap-1">
+                  <p className="text-sm text-orange-600 dark:text-orange-400 flex items-center gap-1">
                     <AlertTriangle className="h-4 w-4" />
-                    Attention
+                    Delayed/Returned
                   </p>
                 </div>
-                <div className="p-2.5 rounded-xl bg-red-500/10">
-                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <div className="p-2.5 rounded-xl bg-orange-500/10">
+                  <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
             </CardContent>
@@ -293,10 +294,11 @@ const Deliveries = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="Scheduled">Scheduled</SelectItem>
+                      <SelectItem value="Confirmed">Confirmed</SelectItem>
                       <SelectItem value="In Transit">In Transit</SelectItem>
-                      <SelectItem value="Delivered">Delivered</SelectItem>
                       <SelectItem value="Delayed">Delayed</SelectItem>
+                      <SelectItem value="Received">Received</SelectItem>
+                      <SelectItem value="Returned">Returned</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select value={priorityFilter} onValueChange={setPriorityFilter}>

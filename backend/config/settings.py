@@ -27,7 +27,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-4h3zu(^c0ypw_t)&&jkpq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver').split(',')
 
 # Application definition
 
@@ -146,6 +146,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -185,6 +186,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -350,3 +353,46 @@ SPECTACULAR_SETTINGS = {
 # Logging Configuration - Suppress drf-spectacular warnings
 import logging
 logging.getLogger('drf_spectacular').setLevel(logging.ERROR)
+
+# Vendor Communication Settings
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='sk-proj-test-key')  # Add your real API key in .env file
+OPENAI_MODEL = config('OPENAI_MODEL', default='gpt-3.5-turbo')  # Using gpt-3.5-turbo for cost efficiency
+USE_MOCK_AI = config('USE_MOCK_AI', default=False, cast=bool)  # Use real OpenAI for production
+
+# AI Email Settings
+AI_EMAIL_CONFIDENCE_THRESHOLD = config('AI_EMAIL_CONFIDENCE_THRESHOLD', default=0.8, cast=float)
+AI_EMAIL_AUTO_APPROVE = config('AI_EMAIL_AUTO_APPROVE', default=False, cast=bool)
+AI_EMAIL_AUTO_ACTIVATE = config('AI_EMAIL_AUTO_ACTIVATE', default=True, cast=bool)
+
+# Email Service Settings
+EMAIL_SERVICE_BACKEND = config('EMAIL_SERVICE_BACKEND', default='mock')  # Options: 'django', 'sendgrid', 'mock'
+EMAIL_DOMAIN = config('EMAIL_DOMAIN', default='localhost')
+
+# SMTP Settings for Outgoing Emails
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='procurement@buy2rent.eu')
+SERVER_EMAIL = config('SERVER_EMAIL', default='procurement@buy2rent.eu')
+
+# IMAP Settings for Incoming Emails
+IMAP_HOST = config('IMAP_HOST', default='imap.gmail.com')
+IMAP_PORT = config('IMAP_PORT', default=993, cast=int)
+IMAP_USE_SSL = config('IMAP_USE_SSL', default=True, cast=bool)
+# Use EMAIL_HOST_USER and EMAIL_HOST_PASSWORD for IMAP (same credentials)
+IMAP_INBOX_FOLDER = config('IMAP_INBOX_FOLDER', default='INBOX')
+IMAP_PROCESSED_FOLDER = config('IMAP_PROCESSED_FOLDER', default='Processed')
+IMAP_CHECK_INTERVAL = config('IMAP_CHECK_INTERVAL', default=300, cast=int)  # Check every 5 minutes
+
+# SendGrid Settings (if using SendGrid)
+SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
+SENDGRID_FROM_EMAIL = config('SENDGRID_FROM_EMAIL', default='noreply@example.com')
+SENDGRID_WEBHOOK_URL = config('SENDGRID_WEBHOOK_URL', default='')
+
+# AI Configuration
+AI_AUTO_MODE = config('AI_AUTO_MODE', default=False, cast=bool)  # Auto-send without approval
+AI_CONFIDENCE_THRESHOLD = config('AI_CONFIDENCE_THRESHOLD', default=0.8, cast=float)
