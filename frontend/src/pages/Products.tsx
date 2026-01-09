@@ -194,7 +194,8 @@ const Products = () => {
         {/* Products Table */}
         <Card>
           <CardContent className="p-6">
-            <Table>
+            <div className="overflow-x-auto h-[50dvh] overflow-y-auto">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Image</TableHead>
@@ -258,6 +259,7 @@ const Products = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

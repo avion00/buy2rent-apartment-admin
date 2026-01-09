@@ -120,6 +120,27 @@ export interface OrderStatistics {
   }>;
 }
 
+export interface VendorSpending {
+  vendor: string;
+  amount: number;
+  orders: number;
+}
+
+export interface MonthlyOrderTrend {
+  month: string;
+  orders: number;
+  spending: number;
+}
+
+export interface DashboardChartData {
+  monthly_orders: Array<{
+    month: string;
+    orders: number;
+    value: number;
+  }>;
+  vendor_spending: VendorSpending[];
+}
+
 export const orderApi = {
   // Get all orders with optional filters
   getOrders: async (params?: {
@@ -193,6 +214,12 @@ export const orderApi = {
     const response = await axiosInstance.get('/orders/', {
       params: { apartment: apartmentId }
     });
+    return response.data;
+  },
+
+  // Get dashboard chart data
+  getDashboardCharts: async (): Promise<DashboardChartData> => {
+    const response = await axiosInstance.get('/dashboard/charts/');
     return response.data;
   },
 };

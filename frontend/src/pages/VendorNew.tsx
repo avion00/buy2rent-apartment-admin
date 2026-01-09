@@ -23,7 +23,9 @@ import {
   User,
   FileCheck,
   DollarSign,
-  Loader2
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useCreateVendor } from '@/hooks/useVendorApi';
 
@@ -52,10 +54,6 @@ const VendorNew = () => {
   const [yearEstablished, setYearEstablished] = useState('');
   const [employeeCount, setEmployeeCount] = useState('');
   
-  // Product/Service Info
-  const [productCategories, setProductCategories] = useState('');
-  const [certifications, setCertifications] = useState('');
-  const [specializations, setSpecializations] = useState('');
   
   // Terms & Conditions
   const [paymentTerms, setPaymentTerms] = useState('');
@@ -102,9 +100,9 @@ const VendorNew = () => {
       year_established: yearEstablished || '',
       employee_count: employeeCount || '',
       category: category || '',
-      product_categories: productCategories || '',
-      certifications: certifications || '',
-      specializations: specializations || '',
+      product_categories: '',
+      certifications: '',
+      specializations: '',
       payment_terms: paymentTerms || '',
       delivery_terms: deliveryTerms || '',
       warranty_period: warrantyPeriod || '',
@@ -123,6 +121,21 @@ const VendorNew = () => {
 
   const handleImport = (type: 'excel' | 'csv' | 'docs') => {
     toast.info(`Import from ${type.toUpperCase()} coming soon!`);
+  };
+
+  const tabs = ['basic', 'address', 'business', 'terms'];
+  const currentTabIndex = tabs.indexOf(activeTab);
+
+  const handleNext = () => {
+    if (currentTabIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentTabIndex + 1]);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentTabIndex > 0) {
+      setActiveTab(tabs[currentTabIndex - 1]);
+    }
   };
 
   return (
@@ -217,11 +230,10 @@ const VendorNew = () => {
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="basic">Basic Info</TabsTrigger>
                 <TabsTrigger value="address">Address</TabsTrigger>
                 <TabsTrigger value="business">Business</TabsTrigger>
-                <TabsTrigger value="products">Products</TabsTrigger>
                 <TabsTrigger value="terms">Terms</TabsTrigger>
               </TabsList>
 
@@ -423,44 +435,6 @@ const VendorNew = () => {
                 </div>
               </TabsContent>
 
-              {/* Products & Services */}
-              <TabsContent value="products" className="space-y-6 mt-6">
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="productCategories">Product Categories</Label>
-                    <Textarea
-                      id="productCategories"
-                      placeholder="E.g., Furniture, Lighting, Appliances (comma-separated)"
-                      value={productCategories}
-                      onChange={(e) => setProductCategories(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="specializations">Specializations</Label>
-                    <Textarea
-                      id="specializations"
-                      placeholder="What makes this vendor unique?"
-                      value={specializations}
-                      onChange={(e) => setSpecializations(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="certifications">Certifications & Compliance</Label>
-                    <Textarea
-                      id="certifications"
-                      placeholder="ISO, Quality certifications, etc."
-                      value={certifications}
-                      onChange={(e) => setCertifications(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-
               {/* Terms & Conditions */}
               <TabsContent value="terms" className="space-y-6 mt-6">
                 <div className="grid gap-6 md:grid-cols-2">
@@ -538,6 +512,52 @@ const VendorNew = () => {
                 </div>
               </TabsContent>
             </Tabs>
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between mt-6 pt-6 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={currentTabIndex === 0}
+                className="gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <div className="flex gap-2">
+                {currentTabIndex === tabs.length - 1 ? (
+                  <Button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={createVendor.isPending}
+                    className="gap-2"
+                  >
+                    {createVendor.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Save Vendor
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleNext}
+                    className="gap-2"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

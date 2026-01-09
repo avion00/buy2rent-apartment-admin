@@ -216,6 +216,33 @@ export function useProductCategories(apartmentId: string | null) {
   });
 }
 
+// Hook for creating a new category
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (data: { name: string; apartment: string; sheet_name?: string; description?: string }) =>
+      productApi.createCategory(data),
+    onSuccess: (data, variables) => {
+      // Invalidate categories list for this apartment
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories(variables.apartment) });
+      
+      toast({
+        title: 'Success',
+        description: `Category "${data.name}" created successfully`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error creating category',
+        description: error.message || 'Something went wrong',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 // Hook for importing products
 export function useImportProducts() {
   const queryClient = useQueryClient();

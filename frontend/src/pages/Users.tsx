@@ -92,7 +92,7 @@ const Users = () => {
             <CardTitle>All Users ({filteredUsers.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto h-[50dvh] overflow-y-auto">
               <Table>
                 <TableHeader>
                   <TableRow>

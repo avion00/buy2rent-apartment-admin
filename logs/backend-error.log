@@ -10146,3 +10146,362 @@
 2026-01-09 11:03:09 +01:00: Exception in ProductViewSet: The field 'issue_status_info' was declared on serializer ProductSerializer, but has not been included in the 'fields' option.
 2026-01-09 11:04:31 +01:00: Exception in ProductViewSet: The field 'issue_status_info' was declared on serializer ProductSerializer, but has not been included in the 'fields' option.
 2026-01-09 11:04:51 +01:00: Exception in ProductViewSet: The field 'issue_status_info' was declared on serializer ProductSerializer, but has not been included in the 'fields' option.
+2026-01-09 11:35:05 +01:00: [2026-01-09 11:35:05 +0100] [4111854] [INFO] Handling signal: int
+2026-01-09 11:35:05 +01:00: [2026-01-09 10:35:05 +0000] [4111872] [INFO] Worker exiting (pid: 4111872)
+2026-01-09 11:35:05 +01:00: [2026-01-09 10:35:05 +0000] [4111871] [INFO] Worker exiting (pid: 4111871)
+2026-01-09 11:35:05 +01:00: [2026-01-09 10:35:05 +0000] [4111873] [INFO] Worker exiting (pid: 4111873)
+2026-01-09 11:35:06 +01:00: [2026-01-09 11:35:06 +0100] [4111854] [INFO] Shutting down: Master
+2026-01-09 11:35:07 +01:00: [2026-01-09 11:35:07 +0100] [4115260] [INFO] Starting gunicorn 23.0.0
+2026-01-09 11:35:07 +01:00: [2026-01-09 11:35:07 +0100] [4115260] [INFO] Listening at: http://127.0.0.1:8000 (4115260)
+2026-01-09 11:35:07 +01:00: [2026-01-09 11:35:07 +0100] [4115260] [INFO] Using worker: sync
+2026-01-09 11:35:07 +01:00: [2026-01-09 11:35:07 +0100] [4115271] [INFO] Booting worker with pid: 4115271
+2026-01-09 11:35:07 +01:00: [2026-01-09 11:35:07 +0100] [4115272] [INFO] Booting worker with pid: 4115272
+2026-01-09 11:35:07 +01:00: [2026-01-09 11:35:07 +0100] [4115273] [INFO] Booting worker with pid: 4115273
+2026-01-09 11:42:22 +01:00: [2026-01-09 11:42:22 +0100] [4115260] [INFO] Handling signal: int
+2026-01-09 11:42:22 +01:00: [2026-01-09 10:42:22 +0000] [4115272] [INFO] Worker exiting (pid: 4115272)
+2026-01-09 11:42:22 +01:00: [2026-01-09 10:42:22 +0000] [4115273] [INFO] Worker exiting (pid: 4115273)
+2026-01-09 11:42:22 +01:00: [2026-01-09 10:42:22 +0000] [4115271] [INFO] Worker exiting (pid: 4115271)
+2026-01-09 11:42:24 +01:00: [2026-01-09 11:42:24 +0100] [4115260] [INFO] Shutting down: Master
+2026-01-09 11:42:24 +01:00: [2026-01-09 11:42:24 +0100] [4116587] [INFO] Starting gunicorn 23.0.0
+2026-01-09 11:42:24 +01:00: [2026-01-09 11:42:24 +0100] [4116587] [INFO] Listening at: http://127.0.0.1:8000 (4116587)
+2026-01-09 11:42:24 +01:00: [2026-01-09 11:42:24 +0100] [4116587] [INFO] Using worker: sync
+2026-01-09 11:42:24 +01:00: [2026-01-09 11:42:24 +0100] [4116598] [INFO] Booting worker with pid: 4116598
+2026-01-09 11:42:24 +01:00: [2026-01-09 11:42:24 +0100] [4116599] [INFO] Booting worker with pid: 4116599
+2026-01-09 11:42:24 +01:00: [2026-01-09 11:42:24 +0100] [4116600] [INFO] Booting worker with pid: 4116600
+2026-01-09 11:45:57 +01:00: Exception in ProductViewSet: The field 'issue_status_info' was declared on serializer ProductSerializer, but has not been included in the 'fields' option.
+2026-01-09 11:46:07 +01:00: Exception in ProductViewSet: The field 'issue_status_info' was declared on serializer ProductSerializer, but has not been included in the 'fields' option.
+2026-01-09 11:47:03 +01:00: Exception in ProductViewSet: The field 'issue_status_info' was declared on serializer ProductSerializer, but has not been included in the 'fields' option.
+2026-01-09 11:50:30 +01:00: [2026-01-09 11:50:30 +0100] [4116587] [INFO] Handling signal: int
+2026-01-09 11:50:30 +01:00: [2026-01-09 10:50:30 +0000] [4116599] [INFO] Worker exiting (pid: 4116599)
+2026-01-09 11:50:30 +01:00: [2026-01-09 10:50:30 +0000] [4116598] [INFO] Worker exiting (pid: 4116598)
+2026-01-09 11:50:30 +01:00: [2026-01-09 10:50:30 +0000] [4116600] [INFO] Worker exiting (pid: 4116600)
+2026-01-09 11:50:31 +01:00: [2026-01-09 11:50:31 +0100] [4116587] [INFO] Shutting down: Master
+2026-01-09 11:50:32 +01:00: [2026-01-09 11:50:32 +0100] [4117385] [INFO] Starting gunicorn 23.0.0
+2026-01-09 11:50:32 +01:00: [2026-01-09 11:50:32 +0100] [4117385] [INFO] Listening at: http://127.0.0.1:8000 (4117385)
+2026-01-09 11:50:32 +01:00: [2026-01-09 11:50:32 +0100] [4117385] [INFO] Using worker: sync
+2026-01-09 11:50:32 +01:00: [2026-01-09 11:50:32 +0100] [4117421] [INFO] Booting worker with pid: 4117421
+2026-01-09 11:50:32 +01:00: [2026-01-09 11:50:32 +0100] [4117423] [INFO] Booting worker with pid: 4117423
+2026-01-09 11:50:32 +01:00: [2026-01-09 11:50:32 +0100] [4117424] [INFO] Booting worker with pid: 4117424
+2026-01-09 11:52:15 +01:00: [2026-01-09 11:52:15 +0100] [4117385] [INFO] Handling signal: int
+2026-01-09 11:52:16 +01:00: [2026-01-09 10:52:16 +0000] [4117424] [INFO] Worker exiting (pid: 4117424)
+2026-01-09 11:52:16 +01:00: [2026-01-09 10:52:16 +0000] [4117421] [INFO] Worker exiting (pid: 4117421)
+2026-01-09 11:52:16 +01:00: [2026-01-09 10:52:16 +0000] [4117423] [ERROR] Error handling request /api/notifications/unread_count/
+2026-01-09 11:52:16 +01:00: Traceback (most recent call last):
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 134, in handle
+2026-01-09 11:52:16 +01:00:     self.handle_request(listener, req, client, addr)
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 177, in handle_request
+2026-01-09 11:52:16 +01:00:     respiter = self.wsgi(environ, resp.start_response)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/wsgi.py", line 124, in __call__
+2026-01-09 11:52:16 +01:00:     response = self.get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/base.py", line 141, in get_response
+2026-01-09 11:52:16 +01:00:     response = self._middleware_chain(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2026-01-09 11:52:16 +01:00:     response = get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/utils/deprecation.py", line 309, in __call__
+2026-01-09 11:52:16 +01:00:     response = response or self.get_response(request)
+2026-01-09 11:52:16 +01:00:                            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2026-01-09 11:52:16 +01:00:     response = get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/corsheaders/middleware.py", line 53, in __call__
+2026-01-09 11:52:16 +01:00:     result = self.get_response(request)
+2026-01-09 11:52:16 +01:00:              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2026-01-09 11:52:16 +01:00:     response = get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/utils/deprecation.py", line 309, in __call__
+2026-01-09 11:52:16 +01:00:     response = response or self.get_response(request)
+2026-01-09 11:52:16 +01:00:                            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2026-01-09 11:52:16 +01:00:     response = get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/utils/deprecation.py", line 309, in __call__
+2026-01-09 11:52:16 +01:00:     response = response or self.get_response(request)
+2026-01-09 11:52:16 +01:00:                            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2026-01-09 11:52:16 +01:00:     response = get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/utils/deprecation.py", line 309, in __call__
+2026-01-09 11:52:16 +01:00:     response = response or self.get_response(request)
+2026-01-09 11:52:16 +01:00:                            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2026-01-09 11:52:16 +01:00:     response = get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/utils/deprecation.py", line 309, in __call__
+2026-01-09 11:52:16 +01:00:     response = response or self.get_response(request)
+2026-01-09 11:52:16 +01:00:                            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2026-01-09 11:52:16 +01:00:     response = get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/utils/deprecation.py", line 309, in __call__
+2026-01-09 11:52:16 +01:00:     response = response or self.get_response(request)
+2026-01-09 11:52:16 +01:00:                            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2026-01-09 11:52:16 +01:00:     response = get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/utils/deprecation.py", line 309, in __call__
+2026-01-09 11:52:16 +01:00:     response = response or self.get_response(request)
+2026-01-09 11:52:16 +01:00:                            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2026-01-09 11:52:16 +01:00:     response = get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/activities/middleware.py", line 23, in __call__
+2026-01-09 11:52:16 +01:00:     response = self.get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+2026-01-09 11:52:16 +01:00:     response = get_response(request)
+2026-01-09 11:52:16 +01:00:                ^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/base.py", line 182, in _get_response
+2026-01-09 11:52:16 +01:00:     callback, callback_args, callback_kwargs = self.resolve_request(request)
+2026-01-09 11:52:16 +01:00:                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/core/handlers/base.py", line 314, in resolve_request
+2026-01-09 11:52:16 +01:00:     resolver_match = resolver.resolve(request.path_info)
+2026-01-09 11:52:16 +01:00:                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/urls/resolvers.py", line 676, in resolve
+2026-01-09 11:52:16 +01:00:     for pattern in self.url_patterns:
+2026-01-09 11:52:16 +01:00:                    ^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/utils/functional.py", line 47, in __get__
+2026-01-09 11:52:16 +01:00:     res = instance.__dict__[self.name] = self.func(instance)
+2026-01-09 11:52:16 +01:00:                                          ^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/urls/resolvers.py", line 729, in url_patterns
+2026-01-09 11:52:16 +01:00:     patterns = getattr(self.urlconf_module, "urlpatterns", self.urlconf_module)
+2026-01-09 11:52:16 +01:00:                        ^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/utils/functional.py", line 47, in __get__
+2026-01-09 11:52:16 +01:00:     res = instance.__dict__[self.name] = self.func(instance)
+2026-01-09 11:52:16 +01:00:                                          ^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/urls/resolvers.py", line 722, in urlconf_module
+2026-01-09 11:52:16 +01:00:     return import_module(self.urlconf_name)
+2026-01-09 11:52:16 +01:00:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-01-09 11:52:16 +01:00:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-01-09 11:52:16 +01:00:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/config/urls.py", line 65, in <module>
+2026-01-09 11:52:16 +01:00:     path('api/reports/', include('reports.urls')),  # Report generation endpoints
+2026-01-09 11:52:16 +01:00:                          ^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/django/urls/conf.py", line 39, in include
+2026-01-09 11:52:16 +01:00:     urlconf_module = import_module(urlconf_module)
+2026-01-09 11:52:16 +01:00:                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+2026-01-09 11:52:16 +01:00:     return _bootstrap._gcd_import(name[level:], package, level)
+2026-01-09 11:52:16 +01:00:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+2026-01-09 11:52:16 +01:00:   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/reports/urls.py", line 2, in <module>
+2026-01-09 11:52:16 +01:00:     from .views import ReportGeneratorView, ReportTemplatesView
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/reports/views.py", line 14, in <module>
+2026-01-09 11:52:16 +01:00:     from reportlab.lib import colors
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/reportlab/lib/colors.py", line 43, in <module>
+2026-01-09 11:52:16 +01:00:     from reportlab.lib.rl_accel import fp_str
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/reportlab/lib/rl_accel.py", line 34, in <module>
+2026-01-09 11:52:16 +01:00:     from reportlab.lib.utils import isUnicode, isSeq, rawBytes, asNative, asBytes
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/reportlab/lib/utils.py", line 14, in <module>
+2026-01-09 11:52:16 +01:00:     from . rl_safe_eval import rl_safe_exec, rl_safe_eval, safer_globals, rl_extended_literal_eval
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/reportlab/lib/rl_safe_eval.py", line 70, in <module>
+2026-01-09 11:52:16 +01:00:     __rl_unsafe_re__ = re.compile(r'\b(?:%s)' % '|'.join(__rl_unsafe__),re.M)
+2026-01-09 11:52:16 +01:00:                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/usr/lib/python3.12/re/__init__.py", line 228, in compile
+2026-01-09 11:52:16 +01:00:     return _compile(pattern, flags)
+2026-01-09 11:52:16 +01:00:            ^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/usr/lib/python3.12/re/__init__.py", line 307, in _compile
+2026-01-09 11:52:16 +01:00:     p = _compiler.compile(pattern, flags)
+2026-01-09 11:52:16 +01:00:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/usr/lib/python3.12/re/_compiler.py", line 745, in compile
+2026-01-09 11:52:16 +01:00:     p = _parser.parse(p, flags)
+2026-01-09 11:52:16 +01:00:         ^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/usr/lib/python3.12/re/_parser.py", line 979, in parse
+2026-01-09 11:52:16 +01:00:     p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+2026-01-09 11:52:16 +01:00:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/usr/lib/python3.12/re/_parser.py", line 460, in _parse_sub
+2026-01-09 11:52:16 +01:00:     itemsappend(_parse(source, state, verbose, nested + 1,
+2026-01-09 11:52:16 +01:00:                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/usr/lib/python3.12/re/_parser.py", line 862, in _parse
+2026-01-09 11:52:16 +01:00:     p = _parse_sub(source, state, sub_verbose, nested + 1)
+2026-01-09 11:52:16 +01:00:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/usr/lib/python3.12/re/_parser.py", line 460, in _parse_sub
+2026-01-09 11:52:16 +01:00:     itemsappend(_parse(source, state, verbose, nested + 1,
+2026-01-09 11:52:16 +01:00:                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/usr/lib/python3.12/re/_parser.py", line 548, in _parse
+2026-01-09 11:52:16 +01:00:     subpatternappend((LITERAL, _ord(this)))
+2026-01-09 11:52:16 +01:00:                                ^^^^^^^^^^
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/gunicorn/workers/base.py", line 198, in handle_quit
+2026-01-09 11:52:16 +01:00:     time.sleep(0.1)
+2026-01-09 11:52:16 +01:00:   File "/root/buy2rent/backend/myenv/lib/python3.12/site-packages/gunicorn/workers/base.py", line 199, in handle_quit
+2026-01-09 11:52:16 +01:00:     sys.exit(0)
+2026-01-09 11:52:16 +01:00: SystemExit: 0
+2026-01-09 11:52:16 +01:00: [2026-01-09 10:52:16 +0000] [4117423] [INFO] Worker exiting (pid: 4117423)
+2026-01-09 11:52:17 +01:00: [2026-01-09 11:52:17 +0100] [4117385] [INFO] Shutting down: Master
+2026-01-09 11:52:17 +01:00: [2026-01-09 11:52:17 +0100] [4118232] [INFO] Starting gunicorn 23.0.0
+2026-01-09 11:52:17 +01:00: [2026-01-09 11:52:17 +0100] [4118232] [INFO] Listening at: http://127.0.0.1:8000 (4118232)
+2026-01-09 11:52:17 +01:00: [2026-01-09 11:52:17 +0100] [4118232] [INFO] Using worker: sync
+2026-01-09 11:52:17 +01:00: [2026-01-09 11:52:17 +0100] [4118237] [INFO] Booting worker with pid: 4118237
+2026-01-09 11:52:17 +01:00: [2026-01-09 11:52:17 +0100] [4118243] [INFO] Booting worker with pid: 4118243
+2026-01-09 11:52:17 +01:00: [2026-01-09 11:52:17 +0100] [4118245] [INFO] Booting worker with pid: 4118245
+2026-01-09 12:02:28 +01:00: [2026-01-09 12:02:28 +0100] [4118232] [INFO] Handling signal: int
+2026-01-09 12:02:28 +01:00: [2026-01-09 11:02:28 +0000] [4118237] [INFO] Worker exiting (pid: 4118237)
+2026-01-09 12:02:28 +01:00: [2026-01-09 11:02:28 +0000] [4118243] [INFO] Worker exiting (pid: 4118243)
+2026-01-09 12:02:28 +01:00: [2026-01-09 11:02:28 +0000] [4118245] [INFO] Worker exiting (pid: 4118245)
+2026-01-09 12:02:29 +01:00: [2026-01-09 12:02:29 +0100] [4118232] [INFO] Shutting down: Master
+2026-01-09 12:02:29 +01:00: [2026-01-09 12:02:29 +0100] [4119379] [INFO] Starting gunicorn 23.0.0
+2026-01-09 12:02:29 +01:00: [2026-01-09 12:02:29 +0100] [4119379] [INFO] Listening at: http://127.0.0.1:8000 (4119379)
+2026-01-09 12:02:29 +01:00: [2026-01-09 12:02:29 +0100] [4119379] [INFO] Using worker: sync
+2026-01-09 12:02:29 +01:00: [2026-01-09 12:02:29 +0100] [4119421] [INFO] Booting worker with pid: 4119421
+2026-01-09 12:02:29 +01:00: [2026-01-09 12:02:29 +0100] [4119422] [INFO] Booting worker with pid: 4119422
+2026-01-09 12:02:29 +01:00: [2026-01-09 12:02:29 +0100] [4119423] [INFO] Booting worker with pid: 4119423
+2026-01-09 12:09:00 +01:00: [2026-01-09 12:09:00 +0100] [4119379] [INFO] Handling signal: int
+2026-01-09 12:09:00 +01:00: [2026-01-09 11:09:00 +0000] [4119421] [INFO] Worker exiting (pid: 4119421)
+2026-01-09 12:09:00 +01:00: [2026-01-09 11:09:00 +0000] [4119423] [INFO] Worker exiting (pid: 4119423)
+2026-01-09 12:09:00 +01:00: [2026-01-09 11:09:00 +0000] [4119422] [INFO] Worker exiting (pid: 4119422)
+2026-01-09 12:09:01 +01:00: [2026-01-09 12:09:01 +0100] [4119379] [INFO] Shutting down: Master
+2026-01-09 12:09:02 +01:00: [2026-01-09 12:09:02 +0100] [4120490] [INFO] Starting gunicorn 23.0.0
+2026-01-09 12:09:02 +01:00: [2026-01-09 12:09:02 +0100] [4120490] [INFO] Listening at: http://127.0.0.1:8000 (4120490)
+2026-01-09 12:09:02 +01:00: [2026-01-09 12:09:02 +0100] [4120490] [INFO] Using worker: sync
+2026-01-09 12:09:02 +01:00: [2026-01-09 12:09:02 +0100] [4120502] [INFO] Booting worker with pid: 4120502
+2026-01-09 12:09:02 +01:00: [2026-01-09 12:09:02 +0100] [4120505] [INFO] Booting worker with pid: 4120505
+2026-01-09 12:09:02 +01:00: [2026-01-09 12:09:02 +0100] [4120511] [INFO] Booting worker with pid: 4120511
+2026-01-09 12:09:34 +01:00: Exception in ProductViewSet: {'category': [ErrorDetail(string='“Bútor” is not a valid UUID.', code='invalid')], 'vendor': [ErrorDetail(string='“Ikea” is not a valid UUID.', code='invalid')]}
+2026-01-09 12:11:06 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 12:11:32 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 12:11:38 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 12:12:35 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 12:25:29 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 12:25:55 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 12:40:32 +01:00: Exception in UserProfileView: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 12:41:46 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 12:42:45 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 12:43:03 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 13:26:14 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 13:28:08 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 13:28:55 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 14:33:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:33:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:34:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:34:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:35:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:35:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:36:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:36:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:37:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:37:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:38:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:38:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:39:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:39:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:40:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:40:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:41:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:41:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:42:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:42:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:43:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:43:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:44:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:44:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:45:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:45:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:46:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:46:20 +01:00: Exception in NotificationViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:46:30 +01:00: Exception in DashboardQuickStatsView: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:46:31 +01:00: Exception in DashboardQuickStatsView: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:46:33 +01:00: Exception in DashboardQuickStatsView: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 14:46:34 +01:00: Exception in VendorViewSet: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 15:24:59 +01:00: Exception in UserProfileView: {'detail': ErrorDetail(string='Given token not valid for any token type', code='token_not_valid'), 'code': ErrorDetail(string='token_not_valid', code='token_not_valid'), 'messages': [{'token_class': ErrorDetail(string='AccessToken', code='token_not_valid'), 'token_type': ErrorDetail(string='access', code='token_not_valid'), 'message': ErrorDetail(string='Token is expired', code='token_not_valid')}]}
+2026-01-09 17:34:25 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 17:34:51 +01:00: Exception in VendorViewSet: {'website': [ErrorDetail(string='Enter a valid URL.', code='invalid')]}
+2026-01-09 17:42:50 +01:00: [2026-01-09 17:42:50 +0100] [4120490] [INFO] Handling signal: int
+2026-01-09 17:42:50 +01:00: [2026-01-09 16:42:50 +0000] [4120505] [INFO] Worker exiting (pid: 4120505)
+2026-01-09 17:42:50 +01:00: [2026-01-09 16:42:50 +0000] [4120511] [INFO] Worker exiting (pid: 4120511)
+2026-01-09 17:42:50 +01:00: [2026-01-09 16:42:50 +0000] [4120502] [INFO] Worker exiting (pid: 4120502)
+2026-01-09 17:42:52 +01:00: [2026-01-09 17:42:52 +0100] [4120490] [INFO] Shutting down: Master
+2026-01-09 17:42:52 +01:00: [2026-01-09 17:42:52 +0100] [4127287] [INFO] Starting gunicorn 23.0.0
+2026-01-09 17:42:52 +01:00: [2026-01-09 17:42:52 +0100] [4127287] [INFO] Listening at: http://127.0.0.1:8000 (4127287)
+2026-01-09 17:42:52 +01:00: [2026-01-09 17:42:52 +0100] [4127287] [INFO] Using worker: sync
+2026-01-09 17:42:52 +01:00: [2026-01-09 17:42:52 +0100] [4127301] [INFO] Booting worker with pid: 4127301
+2026-01-09 17:42:52 +01:00: [2026-01-09 17:42:52 +0100] [4127306] [INFO] Booting worker with pid: 4127306
+2026-01-09 17:42:52 +01:00: [2026-01-09 17:42:52 +0100] [4127307] [INFO] Booting worker with pid: 4127307
+2026-01-09 17:52:28 +01:00: [2026-01-09 17:52:28 +0100] [4127287] [INFO] Handling signal: int
+2026-01-09 17:52:28 +01:00: [2026-01-09 16:52:28 +0000] [4127307] [INFO] Worker exiting (pid: 4127307)
+2026-01-09 17:52:28 +01:00: [2026-01-09 16:52:28 +0000] [4127301] [INFO] Worker exiting (pid: 4127301)
+2026-01-09 17:52:28 +01:00: [2026-01-09 16:52:28 +0000] [4127306] [INFO] Worker exiting (pid: 4127306)
+2026-01-09 17:52:29 +01:00: [2026-01-09 17:52:29 +0100] [4127287] [INFO] Shutting down: Master
+2026-01-09 17:52:30 +01:00: [2026-01-09 17:52:30 +0100] [4128481] [INFO] Starting gunicorn 23.0.0
+2026-01-09 17:52:30 +01:00: [2026-01-09 17:52:30 +0100] [4128481] [INFO] Listening at: http://127.0.0.1:8000 (4128481)
+2026-01-09 17:52:30 +01:00: [2026-01-09 17:52:30 +0100] [4128481] [INFO] Using worker: sync
+2026-01-09 17:52:30 +01:00: [2026-01-09 17:52:30 +0100] [4128495] [INFO] Booting worker with pid: 4128495
+2026-01-09 17:52:30 +01:00: [2026-01-09 17:52:30 +0100] [4128504] [INFO] Booting worker with pid: 4128504
+2026-01-09 17:52:30 +01:00: [2026-01-09 17:52:30 +0100] [4128505] [INFO] Booting worker with pid: 4128505
+2026-01-09 18:01:57 +01:00: [2026-01-09 18:01:57 +0100] [4128481] [INFO] Handling signal: int
+2026-01-09 18:01:58 +01:00: [2026-01-09 17:01:58 +0000] [4128505] [INFO] Worker exiting (pid: 4128505)
+2026-01-09 18:01:58 +01:00: [2026-01-09 17:01:58 +0000] [4128495] [INFO] Worker exiting (pid: 4128495)
+2026-01-09 18:01:58 +01:00: [2026-01-09 17:01:58 +0000] [4128504] [INFO] Worker exiting (pid: 4128504)
+2026-01-09 18:01:59 +01:00: [2026-01-09 18:01:59 +0100] [4128481] [INFO] Shutting down: Master
+2026-01-09 18:01:59 +01:00: [2026-01-09 18:01:59 +0100] [4129618] [INFO] Starting gunicorn 23.0.0
+2026-01-09 18:01:59 +01:00: [2026-01-09 18:01:59 +0100] [4129618] [INFO] Listening at: http://127.0.0.1:8000 (4129618)
+2026-01-09 18:01:59 +01:00: [2026-01-09 18:01:59 +0100] [4129618] [INFO] Using worker: sync
+2026-01-09 18:01:59 +01:00: [2026-01-09 18:01:59 +0100] [4129629] [INFO] Booting worker with pid: 4129629
+2026-01-09 18:01:59 +01:00: [2026-01-09 18:01:59 +0100] [4129631] [INFO] Booting worker with pid: 4129631
+2026-01-09 18:01:59 +01:00: [2026-01-09 18:01:59 +0100] [4129632] [INFO] Booting worker with pid: 4129632
+2026-01-09 18:18:21 +01:00: [2026-01-09 18:18:21 +0100] [4129618] [INFO] Handling signal: int
+2026-01-09 18:18:21 +01:00: [2026-01-09 17:18:21 +0000] [4129631] [INFO] Worker exiting (pid: 4129631)
+2026-01-09 18:18:21 +01:00: [2026-01-09 17:18:21 +0000] [4129629] [INFO] Worker exiting (pid: 4129629)
+2026-01-09 18:18:21 +01:00: [2026-01-09 17:18:21 +0000] [4129632] [INFO] Worker exiting (pid: 4129632)
+2026-01-09 18:18:23 +01:00: [2026-01-09 18:18:23 +0100] [4131380] [INFO] Starting gunicorn 23.0.0
+2026-01-09 18:18:23 +01:00: [2026-01-09 18:18:23 +0100] [4131380] [INFO] Listening at: http://127.0.0.1:8000 (4131380)
+2026-01-09 18:18:23 +01:00: [2026-01-09 18:18:23 +0100] [4131380] [INFO] Using worker: sync
+2026-01-09 18:18:23 +01:00: [2026-01-09 18:18:23 +0100] [4131391] [INFO] Booting worker with pid: 4131391
+2026-01-09 18:18:23 +01:00: [2026-01-09 18:18:23 +0100] [4131392] [INFO] Booting worker with pid: 4131392
+2026-01-09 18:18:23 +01:00: [2026-01-09 18:18:23 +0100] [4131393] [INFO] Booting worker with pid: 4131393
+2026-01-09 18:22:04 +01:00: [2026-01-09 18:22:04 +0100] [4131380] [INFO] Handling signal: int
+2026-01-09 18:22:04 +01:00: [2026-01-09 17:22:04 +0000] [4131392] [INFO] Worker exiting (pid: 4131392)
+2026-01-09 18:22:04 +01:00: [2026-01-09 17:22:04 +0000] [4131391] [INFO] Worker exiting (pid: 4131391)
+2026-01-09 18:22:04 +01:00: [2026-01-09 17:22:04 +0000] [4131393] [INFO] Worker exiting (pid: 4131393)
+2026-01-09 18:22:05 +01:00: [2026-01-09 18:22:05 +0100] [4131380] [INFO] Shutting down: Master
+2026-01-09 18:22:05 +01:00: [2026-01-09 18:22:05 +0100] [4132371] [INFO] Starting gunicorn 23.0.0
+2026-01-09 18:22:05 +01:00: [2026-01-09 18:22:05 +0100] [4132371] [INFO] Listening at: http://127.0.0.1:8000 (4132371)
+2026-01-09 18:22:05 +01:00: [2026-01-09 18:22:05 +0100] [4132371] [INFO] Using worker: sync
+2026-01-09 18:22:05 +01:00: [2026-01-09 18:22:05 +0100] [4132383] [INFO] Booting worker with pid: 4132383
+2026-01-09 18:22:06 +01:00: [2026-01-09 18:22:05 +0100] [4132384] [INFO] Booting worker with pid: 4132384
+2026-01-09 18:22:06 +01:00: [2026-01-09 18:22:06 +0100] [4132385] [INFO] Booting worker with pid: 4132385
+2026-01-09 18:27:11 +01:00: [2026-01-09 18:27:11 +0100] [4132371] [INFO] Handling signal: int
+2026-01-09 18:27:11 +01:00: [2026-01-09 17:27:11 +0000] [4132385] [INFO] Worker exiting (pid: 4132385)
+2026-01-09 18:27:12 +01:00: [2026-01-09 18:27:12 +0100] [4132371] [INFO] Shutting down: Master
+2026-01-09 18:27:12 +01:00: [2026-01-09 18:27:12 +0100] [4133361] [INFO] Starting gunicorn 23.0.0
+2026-01-09 18:27:12 +01:00: [2026-01-09 18:27:12 +0100] [4133361] [INFO] Listening at: http://127.0.0.1:8000 (4133361)
+2026-01-09 18:27:12 +01:00: [2026-01-09 18:27:12 +0100] [4133361] [INFO] Using worker: sync
+2026-01-09 18:27:13 +01:00: [2026-01-09 18:27:12 +0100] [4133372] [INFO] Booting worker with pid: 4133372
+2026-01-09 18:27:13 +01:00: [2026-01-09 18:27:13 +0100] [4133373] [INFO] Booting worker with pid: 4133373
+2026-01-09 18:27:13 +01:00: [2026-01-09 18:27:13 +0100] [4133374] [INFO] Booting worker with pid: 4133374
+2026-01-09 18:37:45 +01:00: [2026-01-09 18:37:45 +0100] [4133361] [INFO] Handling signal: int
+2026-01-09 18:37:46 +01:00: [2026-01-09 17:37:46 +0000] [4133372] [INFO] Worker exiting (pid: 4133372)
+2026-01-09 18:37:46 +01:00: [2026-01-09 17:37:46 +0000] [4133373] [INFO] Worker exiting (pid: 4133373)
+2026-01-09 18:37:46 +01:00: [2026-01-09 17:37:46 +0000] [4133374] [INFO] Worker exiting (pid: 4133374)
+2026-01-09 18:37:47 +01:00: [2026-01-09 18:37:47 +0100] [4133361] [INFO] Shutting down: Master
+2026-01-09 18:37:47 +01:00: [2026-01-09 18:37:47 +0100] [4134822] [INFO] Starting gunicorn 23.0.0
+2026-01-09 18:37:47 +01:00: [2026-01-09 18:37:47 +0100] [4134822] [INFO] Listening at: http://127.0.0.1:8000 (4134822)
+2026-01-09 18:37:47 +01:00: [2026-01-09 18:37:47 +0100] [4134822] [INFO] Using worker: sync
+2026-01-09 18:37:47 +01:00: [2026-01-09 18:37:47 +0100] [4134835] [INFO] Booting worker with pid: 4134835
+2026-01-09 18:37:47 +01:00: [2026-01-09 18:37:47 +0100] [4134836] [INFO] Booting worker with pid: 4134836
+2026-01-09 18:37:47 +01:00: [2026-01-09 18:37:47 +0100] [4134837] [INFO] Booting worker with pid: 4134837
+2026-01-09 18:39:54 +01:00: ⚠️  No vendor_id provided for import
+2026-01-09 18:39:56 +01:00: ⚠️  Created new product: boiler (SKU: ) WITHOUT vendor
+2026-01-09 18:39:56 +01:00: ⚠️  Created new product: heating radiator (SKU: ) WITHOUT vendor
+2026-01-09 18:39:56 +01:00: ⚠️  Created new product: radiator (SKU: ) WITHOUT vendor
+2026-01-09 18:39:56 +01:00: ⚠️  Created new product: EGGER HOME LAMINÁLT PADLÓ LIVINGSTONE TÖLGY (SKU: ) WITHOUT vendor
+2026-01-09 18:39:56 +01:00: ⚠️  Created new product: Szegélyléc Modern 60 fehér (SKU: ) WITHOUT vendor
+2026-01-09 18:39:56 +01:00: ⚠️  Created new product: heater (SKU: ) WITHOUT vendor
+2026-01-09 18:39:56 +01:00: ⚠️  Created new product: fridge (SKU: ) WITHOUT vendor
+2026-01-09 18:39:56 +01:00: ⚠️  Created new product: bedsheet (SKU: ) WITHOUT vendor
+2026-01-09 18:39:56 +01:00: ⚠️  Created new product: ace panel (SKU: ) WITHOUT vendor

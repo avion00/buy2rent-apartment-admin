@@ -7,6 +7,18 @@ class VendorSerializer(serializers.ModelSerializer):
     orders_count = serializers.SerializerMethodField()
     active_issues = serializers.SerializerMethodField()
     
+    def validate_website(self, value):
+        """
+        Normalize website URL by adding https:// if protocol is missing.
+        Accepts formats like: www.example.com, example.com, https://example.com
+        """
+        if value and value.strip():
+            value = value.strip()
+            # Check if protocol is missing
+            if not value.startswith(('http://', 'https://')):
+                value = f'https://{value}'
+        return value
+    
     class Meta:
         model = Vendor
         fields = [

@@ -1035,7 +1035,7 @@ const Issues = () => {
         {viewMode === "table" && (
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto h-[50dvh] overflow-y-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">

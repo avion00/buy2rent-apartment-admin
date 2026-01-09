@@ -815,7 +815,7 @@ const Payments = () => {
             <CardTitle className="text-lg font-semibold">Payment Records</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto h-[50dvh] overflow-y-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">

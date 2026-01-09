@@ -37,25 +37,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useOrders, useOrderStatistics } from '@/hooks/useOrderApi';
+import { useOrders, useOrderStatistics, useOrderCharts } from '@/hooks/useOrderApi';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
-const vendorSpending = [
-  { vendor: 'IKEA', amount: 28500 },
-  { vendor: 'Royalty Line', amount: 15200 },
-  { vendor: 'Philips', amount: 12800 },
-  { vendor: 'Home Depot', amount: 18900 },
-];
-
-const monthlyOrders = [
-  { month: 'Jun', orders: 12, spending: 8200 },
-  { month: 'Jul', orders: 18, spending: 12400 },
-  { month: 'Aug', orders: 15, spending: 9800 },
-  { month: 'Sep', orders: 22, spending: 15600 },
-  { month: 'Oct', orders: 28, spending: 18900 },
-  { month: 'Nov', orders: 25, spending: 21500 },
-];
 
 const Orders = () => {
   const navigate = useNavigate();
@@ -86,6 +71,7 @@ const Orders = () => {
   });
 
   const { statistics, loading: statsLoading } = useOrderStatistics();
+  const { chartData, loading: chartsLoading } = useOrderCharts();
 
   // Get unique vendors from orders
   const uniqueVendors = useMemo(() => {
@@ -137,99 +123,125 @@ const Orders = () => {
   const avgOrderValue = statistics?.average_order_value || 
     (orders.length > 0 ? totalSpending / orders.length : 0);
 
+  // Get chart data with fallbacks
+  const vendorSpending = chartData?.vendor_spending || [];
+  const monthlyOrders = chartData?.monthly_orders?.map(item => ({
+    month: item.month,
+    orders: item.orders,
+    spending: item.value
+  })) || [];
+
   return (
     <PageLayout title="Orders Management">
       <div className="space-y-6">
-        {/* Enhanced Summary Cards */}
+        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Package className="h-4 w-4" />
-                    Total Orders
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Total Orders</p>
+                  <p className="text-2xl font-bold">{loading ? '-' : totalCount || orders.length}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {statsLoading ? 'Loading...' : 'All time'}
                   </p>
-                  <p className="text-3xl font-bold">{loading ? '-' : totalCount || orders.length}</p>
-                  <p className="text-xs text-muted-foreground">+12% from last month</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-muted-foreground opacity-50" />
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Package className="h-6 w-6 text-primary" />
+                </div>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" />
-                    Total Spending
-                  </p>
-                  <p className="text-3xl font-bold">€{totalSpending.toLocaleString()}</p>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Total Spending</p>
+                  <p className="text-2xl font-bold">€{totalSpending.toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">Avg: €{avgOrderValue.toFixed(0)}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-muted-foreground opacity-50" />
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <DollarSign className="h-6 w-6 text-primary" />
+                </div>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Pending
-                  </p>
-                  <p className="text-3xl font-bold">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-2xl font-bold">
                     {loading ? '-' : statistics?.pending_orders || orders.filter(o => o.status.toLowerCase() === 'sent').length}
                   </p>
                   <p className="text-xs text-muted-foreground">Sent to vendor</p>
                 </div>
-                <Clock className="h-8 w-8 text-yellow-500 opacity-50" />
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-primary" />
+                </div>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Package className="h-4 w-4" />
-                    Received
-                  </p>
-                  <p className="text-3xl font-bold">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Received</p>
+                  <p className="text-2xl font-bold">
                     {loading ? '-' : statistics?.delivered_orders || 0}
                   </p>
-                  <p className="text-xs text-muted-foreground">Check Deliveries page</p>
+                  <p className="text-xs text-muted-foreground">Delivered orders</p>
                 </div>
-                <Package className="h-8 w-8 text-green-500 opacity-50" />
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Truck className="h-6 w-6 text-primary" />
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Spending by Vendor Chart */}
           <Card>
             <CardHeader>
               <CardTitle>Spending by Vendor</CardTitle>
             </CardHeader>
             <CardContent>
-              <ChartContainer
-                config={{
-                  amount: { label: "Amount (€)", color: "hsl(var(--primary))" }
-                }}
-                className="h-[280px]"
-              >
-                <BarChart data={vendorSpending}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="vendor" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ChartContainer>
+              {chartsLoading ? (
+                <div className="h-[280px] flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : vendorSpending.length === 0 ? (
+                <div className="h-[280px] flex flex-col items-center justify-center text-center space-y-3">
+                  <DollarSign className="h-10 w-10 text-muted-foreground/50" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">No vendor data available</p>
+                    <p className="text-xs text-muted-foreground">
+                      Create orders to see analytics
+                    </p>
+                  </div>
+                  <Button onClick={() => navigate('/orders/new')} size="sm" variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Order
+                  </Button>
+                </div>
+              ) : (
+                <ChartContainer
+                  config={{
+                    amount: { label: "Amount (€)", color: "hsl(var(--primary))" }
+                  }}
+                  className="h-[280px]"
+                >
+                  <BarChart data={vendorSpending}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="vendor" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              )}
             </CardContent>
           </Card>
 
@@ -239,23 +251,43 @@ const Orders = () => {
               <CardTitle>Monthly Order Trends</CardTitle>
             </CardHeader>
             <CardContent>
-              <ChartContainer
-                config={{
-                  orders: { label: "Orders", color: "hsl(var(--primary))" },
-                  spending: { label: "Spending (€)", color: "hsl(var(--chart-2))" }
-                }}
-                className="h-[280px]"
-              >
-                <LineChart data={monthlyOrders}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip content={<ChartTooltipContent />} />
-                  <Legend />
-                  <Line type="monotone" dataKey="orders" stroke="hsl(var(--primary))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="spending" stroke="hsl(var(--chart-2))" strokeWidth={2} />
-                </LineChart>
-              </ChartContainer>
+              {chartsLoading ? (
+                <div className="h-[280px] flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : monthlyOrders.length === 0 ? (
+                <div className="h-[280px] flex flex-col items-center justify-center text-center space-y-3">
+                  <TrendingUp className="h-10 w-10 text-muted-foreground/50" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">No trend data available</p>
+                    <p className="text-xs text-muted-foreground">
+                      Create orders to see trends
+                    </p>
+                  </div>
+                  <Button onClick={() => navigate('/orders/new')} size="sm" variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Order
+                  </Button>
+                </div>
+              ) : (
+                <ChartContainer
+                  config={{
+                    orders: { label: "Orders", color: "hsl(var(--primary))" },
+                    spending: { label: "Spending (€)", color: "hsl(var(--chart-2))" }
+                  }}
+                  className="h-[280px]"
+                >
+                  <LineChart data={monthlyOrders}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip content={<ChartTooltipContent />} />
+                    <Legend />
+                    <Line type="monotone" dataKey="orders" stroke="hsl(var(--primary))" strokeWidth={2} />
+                    <Line type="monotone" dataKey="spending" stroke="hsl(var(--chart-2))" strokeWidth={2} />
+                  </LineChart>
+                </ChartContainer>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -313,7 +345,7 @@ const Orders = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto h-[50dvh] overflow-y-auto">
               <Table>
                 <TableHeader>
                   <TableRow>

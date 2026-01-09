@@ -286,10 +286,11 @@ class ProductSerializer(serializers.ModelSerializer):
             'import_row_number', 'import_data', 'notes', 'manual_notes', 'ai_summary_notes',
             'created_by', 'created_at', 'updated_at',
             # Order and delivery tracking
-            'order_status_info', 'has_active_order', 'is_ordered', 'delivery_status_info', 'combined_status_info', 'payment_status_from_orders'
+            'order_status_info', 'has_active_order', 'is_ordered', 'delivery_status_info', 'combined_status_info', 'payment_status_from_orders', 'issue_status_info'
         ]
         read_only_fields = ['created_at', 'updated_at', 'total_amount', 'outstanding_balance', 
-                           'order_status_info', 'has_active_order', 'is_ordered', 'delivery_status_info', 'combined_status_info', 'payment_status_from_orders']
+                           'order_status_info', 'has_active_order', 'is_ordered', 'delivery_status_info', 'combined_status_info', 'payment_status_from_orders', 'issue_status_info',
+                           'expected_delivery_date', 'actual_delivery_date']
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):

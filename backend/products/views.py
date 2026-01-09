@@ -575,6 +575,25 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         tags=['Products'],
+        operation_id='create_product_category',
+        summary='Create a new product category',
+        description='Create a new product category for an apartment',
+        request=ProductCategorySerializer,
+        responses={201: ProductCategorySerializer}
+    )
+    @action(detail=False, methods=['post'])
+    def create_category(self, request):
+        """
+        Create a new product category
+        """
+        serializer = ProductCategorySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        tags=['Products'],
         operation_id='get_products_by_category',
         summary='Get products by category',
         description='Get all products for a specific category',

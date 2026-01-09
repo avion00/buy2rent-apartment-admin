@@ -356,6 +356,15 @@ export const productApi = {
     return response.data;
   },
 
+  // Create a new product category
+  createCategory: async (data: { name: string; apartment: string; sheet_name?: string; description?: string }): Promise<Category> => {
+    const response = await axiosInstance.post('/products/create_category/', {
+      ...data,
+      sheet_name: data.sheet_name || data.name,
+    });
+    return response.data;
+  },
+
   // Import products from Excel/CSV
   importProducts: async (file: File, apartmentId: string, vendorId: string): Promise<any> => {
     console.log("🔍 DEBUG productApi: Received parameters:", { file: file.name, apartmentId, vendorId });

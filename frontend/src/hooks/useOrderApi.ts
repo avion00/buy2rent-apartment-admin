@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { orderApi, Order, OrderListResponse, CreateOrderData, UpdateOrderData, OrderStatistics } from '@/services/orderApi';
+import { orderApi, Order, OrderListResponse, CreateOrderData, UpdateOrderData, OrderStatistics, DashboardChartData } from '@/services/orderApi';
 import { toast } from 'sonner';
 
 export const useOrders = (params?: {
@@ -190,6 +190,36 @@ export const useOrderStatistics = () => {
 
   return {
     statistics,
+    loading,
+    error,
+  };
+};
+
+export const useOrderCharts = () => {
+  const [chartData, setChartData] = useState<DashboardChartData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchChartData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await orderApi.getDashboardCharts();
+        setChartData(data);
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch chart data');
+        console.error('Failed to fetch order chart data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChartData();
+  }, []);
+
+  return {
+    chartData,
     loading,
     error,
   };

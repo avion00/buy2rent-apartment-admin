@@ -80,10 +80,10 @@ export interface VendorListResponse {
 
 export interface CreateVendorData {
   name: string;
-  company_name: string;
-  contact_person: string;
-  email: string;
-  phone: string;
+  company_name?: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
   website?: string;
   logo?: string;
   lead_time?: string;

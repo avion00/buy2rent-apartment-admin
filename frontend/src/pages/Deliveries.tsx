@@ -348,7 +348,7 @@ const Deliveries = () => {
                     </Button>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto h-[50dvh] overflow-y-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>

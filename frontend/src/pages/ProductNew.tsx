@@ -23,9 +23,10 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateProduct, useProductCategories } from "@/hooks/useProductApi";
+import { useCreateProduct, useProductCategories, useCreateCategory } from "@/hooks/useProductApi";
 import { useApartment } from "@/hooks/useApartmentApi";
 import { useVendors } from "@/hooks/useVendorApi";
+import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 const ProductNew = () => {
@@ -83,8 +84,6 @@ const ProductNew = () => {
     // Dates
     eta: "",
     ordered_on: "",
-    expected_delivery_date: "",
-    actual_delivery_date: "",
     
     // Payment
     payment_status: "Unpaid",
@@ -172,8 +171,9 @@ const ProductNew = () => {
   } = useVendors();
   const vendors = vendorsData?.results || [];
 
-  // Create product mutation
+  // Create mutations
   const createProductMutation = useCreateProduct();
+  const createCategoryMutation = useCreateCategory();
 
   useEffect(() => {
     if (!apartmentId) {
@@ -338,16 +338,6 @@ const ProductNew = () => {
         if (formData.eta) formDataToSend.append("eta", formData.eta);
         if (formData.ordered_on)
           formDataToSend.append("ordered_on", formData.ordered_on);
-        if (formData.expected_delivery_date)
-          formDataToSend.append(
-            "expected_delivery_date",
-            formData.expected_delivery_date
-          );
-        if (formData.actual_delivery_date)
-          formDataToSend.append(
-            "actual_delivery_date",
-            formData.actual_delivery_date
-          );
         if (formData.payment_due_date)
           formDataToSend.append("payment_due_date", formData.payment_due_date);
         if (formData.payment_amount)
@@ -454,8 +444,6 @@ const ProductNew = () => {
           // Dates
           eta: formData.eta || null,
           ordered_on: formData.ordered_on || null,
-          expected_delivery_date: formData.expected_delivery_date || null,
-          actual_delivery_date: formData.actual_delivery_date || null,
           
           // Payment
           payment_status: formData.payment_status,
@@ -623,44 +611,29 @@ const ProductNew = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="category">Category *</Label>
-                      {isLoadingCategories ? (
-                        <div className="flex items-center gap-2 h-10 px-3 py-2 rounded-md border border-input bg-muted">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm text-muted-foreground">
-                            Loading categories...
-                          </span>
-                        </div>
-                      ) : categories.length > 0 ? (
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, category: value })
-                          }
-                        >
-                          <SelectTrigger id="category">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((cat: any) => (
-                              <SelectItem key={cat.id} value={cat.id}>
-                                {cat.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          id="category"
-                          value={formData.category}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              category: e.target.value,
-                            })
-                          }
-                          placeholder="Enter category UUID"
-                        />
-                      )}
+                      <CreatableCombobox
+                        options={categories.map((cat: any) => ({
+                          value: cat.id,
+                          label: cat.name,
+                        }))}
+                        value={formData.category}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, category: value })
+                        }
+                        onCreate={async (name) => {
+                          const newCategory = await createCategoryMutation.mutateAsync({
+                            name,
+                            apartment: apartmentId!,
+                            sheet_name: name,
+                          });
+                          return { id: newCategory.id, name: newCategory.name };
+                        }}
+                        placeholder="Select category"
+                        searchPlaceholder="Search categories..."
+                        emptyText="No categories found."
+                        createText="Create new category"
+                        isLoading={isLoadingCategories}
+                      />
                       {errors.category && (
                         <p className="text-sm text-destructive">
                           {errors.category}
@@ -673,41 +646,24 @@ const ProductNew = () => {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="vendor">Vendor *</Label>
-                      {isLoadingVendors ? (
-                        <div className="flex items-center gap-2 h-10 px-3 py-2 rounded-md border border-input bg-muted">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm text-muted-foreground">
-                            Loading vendors...
-                          </span>
-                        </div>
-                      ) : vendors.length > 0 ? (
-                        <Select
-                          value={formData.vendor}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, vendor: value })
-                          }
-                        >
-                          <SelectTrigger id="vendor">
-                            <SelectValue placeholder="Select vendor" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {vendors.map((vendor: any) => (
-                              <SelectItem key={vendor.id} value={vendor.id}>
-                                {vendor.company_name || vendor.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          id="vendor"
-                          value={formData.vendor}
-                          onChange={(e) =>
-                            setFormData({ ...formData, vendor: e.target.value })
-                          }
-                          placeholder="Enter vendor UUID"
-                        />
-                      )}
+                      <CreatableCombobox
+                        options={vendors.map((vendor: any) => ({
+                          value: vendor.id,
+                          label: vendor.company_name || vendor.name,
+                        }))}
+                        value={formData.vendor}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, vendor: value })
+                        }
+                        onNavigateToCreate={() => {
+                          navigate('/vendors/new');
+                        }}
+                        placeholder="Select vendor"
+                        searchPlaceholder="Search vendors..."
+                        emptyText="No vendors found."
+                        createText="Create new vendor"
+                        isLoading={isLoadingVendors}
+                      />
                       {errors.vendor && (
                         <p className="text-sm text-destructive">
                           {errors.vendor}
