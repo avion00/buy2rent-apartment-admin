@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { useOrder } from '@/hooks/useOrderApi';
 import { format } from 'date-fns';
+import OrderViewSkeleton from '@/components/skeletons/OrderViewSkeleton';
 import {
   ArrowLeft,
   ShoppingCart,
@@ -40,6 +41,7 @@ import {
   Edit,
   MapPin,
   ClipboardList,
+  Image,
 } from 'lucide-react';
 
 const OrderView = () => {
@@ -63,16 +65,7 @@ const OrderView = () => {
 
   // Loading state
   if (loading) {
-    return (
-      <PageLayout title="Loading...">
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">Loading order details...</p>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    return <OrderViewSkeleton />;
   }
 
   // Error state
@@ -310,6 +303,7 @@ const OrderView = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="w-12"></TableHead>
                           <TableHead>Product Name</TableHead>
                           <TableHead>SKU</TableHead>
                           <TableHead className="text-center">Quantity</TableHead>
@@ -320,6 +314,24 @@ const OrderView = () => {
                       <TableBody>
                         {order.items.map((item, index) => (
                           <TableRow key={item.id || index}>
+                            <TableCell className="w-12">
+                              <div className="w-10 h-10 bg-muted/30 rounded flex items-center justify-center">
+                                {item.product_image ? (
+                                  <img 
+                                    src={item.product_image} 
+                                    alt={item.product_name}
+                                    className="w-full h-full object-cover rounded"
+                                    onError={(e) => {
+                                      e.currentTarget.src = '';
+                                      e.currentTarget.style.display = 'none';
+                                      e.currentTarget.parentElement?.classList.add('bg-muted/30');
+                                    }}
+                                  />
+                                ) : (
+                                  <Image className="h-5 w-5 text-muted-foreground" />
+                                )}
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <div>
                                 <p className="font-medium">{item.product_name}</p>

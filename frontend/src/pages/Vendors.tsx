@@ -33,6 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import VendorsPageSkeleton from "@/components/skeletons/VendorsPageSkeleton";
 
 const Vendors = () => {
   const navigate = useNavigate();
@@ -103,6 +104,15 @@ const Vendors = () => {
       });
     }
   };
+
+  // Show skeleton while loading
+  if (isLoading) {
+    return (
+      <PageLayout title="Vendors">
+        <VendorsPageSkeleton />
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout title="Vendors">
@@ -382,14 +392,6 @@ const Vendors = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2 text-muted-foreground">Loading vendors...</span>
-          </div>
-        )}
 
         {/* Error State */}
         {error && (

@@ -21,6 +21,7 @@ import { useApartment, useUpdateApartment } from "@/hooks/useApartmentApi";
 import { useClients } from "@/hooks/useClientApi";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
+import ApartmentEditSkeleton from "@/components/skeletons/ApartmentEditSkeleton";
 
 const ApartmentEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -71,23 +72,7 @@ const ApartmentEdit = () => {
 
   // Loading state
   if (isLoading) {
-    return (
-      <PageLayout title="Loading...">
-        <div className="space-y-6">
-          <Skeleton className="h-8 w-64" />
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-48" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
-        </div>
-      </PageLayout>
-    );
+    return <ApartmentEditSkeleton />;
   }
 
   // Error or not found state

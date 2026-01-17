@@ -86,6 +86,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { IssuesPageSkeleton } from "@/components/skeletons/IssuesPageSkeleton";
 
 const Issues = () => {
   const navigate = useNavigate();
@@ -449,6 +450,15 @@ const Issues = () => {
       toast.error('Failed to update issue status', { id: 'drag-status' });
     }
   }, [filteredIssues]);
+
+  // Show skeleton while loading
+  if (issuesLoading) {
+    return (
+      <PageLayout title="Issues Management">
+        <IssuesPageSkeleton viewMode={viewMode} />
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout title="Issues Management">

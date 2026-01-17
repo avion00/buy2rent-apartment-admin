@@ -53,6 +53,7 @@ import { useApartments } from "@/hooks/useApartmentApi";
 import { useVendors } from "@/hooks/useVendorApi";
 import { useProducts } from "@/hooks/useProductApi";
 import { usePayment, useUpdatePayment } from "@/hooks/usePaymentApi";
+import PaymentEditSkeleton from "@/components/skeletons/PaymentEditSkeleton";
 
 const PaymentEdit = () => {
   const navigate = useNavigate();
@@ -128,8 +129,8 @@ const PaymentEdit = () => {
         vendor: paymentData.vendor,
         order_reference: paymentData.order_reference,
         due_date: paymentData.due_date,
-        total_amount: paymentData.total_amount,
-        amount_paid: paymentData.amount_paid,
+        total_amount: String(paymentData.total_amount),
+        amount_paid: String(paymentData.amount_paid),
         status: paymentData.status,
         last_payment_date: paymentData.last_payment_date || "",
         payment_method: "Bank Transfer",
@@ -235,18 +236,7 @@ const PaymentEdit = () => {
 
   // Show loading state
   if (isLoading || isLoadingApartments || isLoadingVendors) {
-    return (
-      <PageLayout title="Loading...">
-        <div className="container px-0 py-6">
-          <div className="text-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-2xl font-semibold text-muted-foreground">
-              Loading payment details...
-            </h2>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    return <PaymentEditSkeleton />;
   }
 
   return (

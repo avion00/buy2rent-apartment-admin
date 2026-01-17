@@ -30,6 +30,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useDeliveries, useDeliveryStatistics } from '@/hooks/useDeliveryApi';
 import { DeliveryListItem } from '@/services/deliveryApi';
+import DeliveriesPageSkeleton from '@/components/skeletons/DeliveriesPageSkeleton';
 
 const Deliveries = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -121,6 +122,15 @@ const Deliveries = () => {
     { day: 'Sat', deliveries: 5 },
     { day: 'Sun', deliveries: 3 },
   ];
+
+  // Show skeleton while loading
+  if (loading) {
+    return (
+      <PageLayout title="Deliveries">
+        <DeliveriesPageSkeleton />
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout title="Deliveries">
@@ -336,11 +346,7 @@ const Deliveries = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : error ? (
+                {error ? (
                   <div className="text-center py-12">
                     <p className="text-destructive">{error}</p>
                     <Button variant="outline" className="mt-4" onClick={refetch}>

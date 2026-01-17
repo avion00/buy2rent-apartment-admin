@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import VendorEditSkeleton from '@/components/skeletons/VendorEditSkeleton';
 
 const VendorEdit = () => {
   const { id } = useParams();
@@ -111,16 +112,7 @@ const VendorEdit = () => {
 
   // Loading state
   if (isLoading) {
-    return (
-      <PageLayout title="Loading...">
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading vendor details...</p>
-          </CardContent>
-        </Card>
-      </PageLayout>
-    );
+    return <VendorEditSkeleton />;
   }
 
   // Error or not found state

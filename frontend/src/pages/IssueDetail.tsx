@@ -14,6 +14,7 @@ import { IssueTimeline } from '@/components/issues/IssueTimeline';
 import { IssueResolutionPanel } from '@/components/issues/IssueResolutionPanel';
 import { toast } from 'sonner';
 import { issueApi, Issue } from '@/services/issueApi';
+import { IssueDetailSkeleton } from '@/components/skeletons/IssueDetailSkeleton';
 
 export default function IssueDetail() {
   const { issueId } = useParams();
@@ -56,11 +57,8 @@ export default function IssueDetail() {
 
   if (loading) {
     return (
-      <PageLayout title="Loading...">
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
-          <p className="text-muted-foreground">Loading issue details...</p>
-        </div>
+      <PageLayout title="Issue Details">
+        <IssueDetailSkeleton />
       </PageLayout>
     );
   }

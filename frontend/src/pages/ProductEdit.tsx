@@ -27,6 +27,7 @@ import { useProduct, useUpdateProduct, useProductCategories, useCreateCategory }
 import { useVendors } from "@/hooks/useVendorApi";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import ProductEditSkeleton from "@/components/skeletons/ProductEditSkeleton";
 
 const ProductEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -307,18 +308,7 @@ const ProductEdit = () => {
 
   // Show loading state
   if (isLoadingProduct) {
-    return (
-      <PageLayout title="Loading...">
-        <div className="container mx-auto py-8">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-2xl font-semibold text-muted-foreground">
-              Loading product details...
-            </h2>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    return <ProductEditSkeleton />;
   }
 
   if (!product) {

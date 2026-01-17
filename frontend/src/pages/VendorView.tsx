@@ -47,6 +47,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash2, User as UserIcon, Image as ImageIcon } from 'lucide-react';
+import VendorViewSkeleton, { ProductsTableSkeleton } from '@/components/skeletons/VendorViewSkeleton';
 
 const VendorView = () => {
   const { id } = useParams();
@@ -64,16 +65,7 @@ const VendorView = () => {
 
   // Loading state
   if (isLoading) {
-    return (
-      <PageLayout title="Loading...">
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading vendor details...</p>
-          </CardContent>
-        </Card>
-      </PageLayout>
-    );
+    return <VendorViewSkeleton />;
   }
 
   // Error or not found state
@@ -254,7 +246,7 @@ const VendorView = () => {
                   <p className="text-sm text-muted-foreground">Products</p>
                   <p className="text-3xl font-bold mt-1">
                     {productsLoading ? (
-                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="inline-block h-9 w-12 bg-muted animate-pulse rounded" />
                     ) : (
                       products.length
                     )}
@@ -376,10 +368,7 @@ const VendorView = () => {
               {/* Products Tab */}
               <TabsContent value="products" className="mt-6">
                 {productsLoading ? (
-                  <div className="text-center py-12">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-                    <p className="text-muted-foreground">Loading products...</p>
-                  </div>
+                  <ProductsTableSkeleton />
                 ) : products.length === 0 ? (
                   <div className="text-center py-12">
                     <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

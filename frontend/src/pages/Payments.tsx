@@ -83,6 +83,7 @@ import { PaymentHistoryModal } from '@/components/modals/PaymentHistoryModal';
 import { PaymentCreateModal } from '@/components/modals/PaymentCreateModal';
 import { usePayments, useDeletePayment, useUpdatePayment, useCreatePaymentHistory } from '@/hooks/usePaymentApi';
 import { Payment } from '@/services/paymentApi';
+import PaymentsPageSkeleton from '@/components/skeletons/PaymentsPageSkeleton';
 
 const Payments = () => {
   const navigate = useNavigate();
@@ -339,6 +340,15 @@ const Payments = () => {
       .sort((a, b) => b.total - a.total)
       .slice(0, 5);
   }, [apiPayments]);
+
+  // Show skeleton while loading
+  if (isLoading) {
+    return (
+      <PageLayout title="Payments">
+        <PaymentsPageSkeleton />
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout title="Payments">
@@ -831,16 +841,7 @@ const Payments = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center py-12">
-                        <div className="flex flex-col items-center gap-2">
-                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                          <p className="text-muted-foreground">Loading payments...</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredPayments.length === 0 ? (
+                  {filteredPayments.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">

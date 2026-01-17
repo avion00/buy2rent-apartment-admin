@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useApartment } from "@/hooks/useApartmentApi";
+import { useApartment, useApartmentStatistics, useApartmentActivities } from "@/hooks/useApartmentApi";
 import { useProductsByApartment, useDeleteProduct, useUpdateProduct } from "@/hooks/useProductApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,6 +70,7 @@ import { DeliveryLocationModal } from "@/components/modals/DeliveryLocationModal
 import { SkuEditModal } from "@/components/modals/SkuEditModal";
 import { UnitPriceEditModal } from "@/components/modals/UnitPriceEditModal";
 import { QuantityEditModal } from "@/components/modals/QuantityEditModal";
+import ApartmentViewSkeleton, { ApartmentViewProductsSkeleton, StatisticsCardsSkeleton, RecentActivitySkeleton } from "@/components/skeletons/ApartmentViewSkeleton";
 
 const ApartmentView = () => {
   const { id } = useParams<{ id: string }>();
@@ -83,6 +84,12 @@ const ApartmentView = () => {
   const { data: productsData, isLoading: isLoadingProducts, error: productsError, refetch } = useProductsByApartment(id || null);
   // API returns array directly, not paginated response
   const products = productsData || [];
+  
+  // Fetch apartment statistics
+  const { data: statistics, isLoading: isLoadingStats } = useApartmentStatistics(id || null);
+  
+  // Fetch apartment activities
+  const { data: activities = [], isLoading: isLoadingActivities } = useApartmentActivities(id || null);
   
   // Delete product mutation
   const deleteProductMutation = useDeleteProduct();
@@ -102,9 +109,8 @@ const ApartmentView = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // TODO: Add API hooks for deliveries, activities when ready
+  // TODO: Add API hooks for deliveries when ready
   const deliveries: any[] = [];
-  const activities: any[] = [];
   const aiNotes: any[] = [];
   const manualNote = "";
 
@@ -148,16 +154,7 @@ const ApartmentView = () => {
 
   // Loading state
   if (isLoading) {
-    return (
-      <PageLayout title="Loading...">
-        <div className="container mx-auto py-8">
-          <div className="text-center">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-2xl font-semibold text-muted-foreground">Loading apartment details...</h2>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    return <ApartmentViewSkeleton />;
   }
 
   // Error state
@@ -246,21 +243,15 @@ const ApartmentView = () => {
     // TODO: Implement activity logging API call
   };
 
-  // Calculate overview stats from consolidated product data
-  const totalItems = products.length;
-  const orderedItems = products.filter((p) => Array.isArray(p.status) && p.status.some(s => ["Ordered", "Shipped", "Delivered"].includes(s))).length;
-  const deliveredItems = products.filter((p) => Array.isArray(p.status) && p.status.includes("Delivered")).length;
-  const openIssues = products.filter((p) => p.issue_state && !["No Issue", "Resolved"].includes(p.issue_state)).length;
-  const totalValue = products.reduce((sum, p) => sum + parseFloat(p.unit_price) * p.qty, 0);
-  const totalPayable = products.reduce((sum, p) => sum + parseFloat(p.payment_amount || '0'), 0);
-  const totalPaid = products.reduce((sum, p) => sum + parseFloat(p.paid_amount || '0'), 0);
-  const outstandingBalance = totalPayable - totalPaid;
-  const overduePayments = products.filter((p) => {
-    if (!p.payment_due_date || !p.payment_amount) return false;
-    const outstanding = parseFloat(p.payment_amount || '0') - parseFloat(p.paid_amount || '0');
-    const isOverdue = new Date(p.payment_due_date) < new Date() && outstanding > 0;
-    return isOverdue;
-  }).length;
+  // Use statistics from API or fallback to 0
+  const totalItems = statistics?.total_items || 0;
+  const orderedItems = statistics?.ordered_items || 0;
+  const deliveredItems = statistics?.delivered_items || 0;
+  const openIssues = statistics?.open_issues || 0;
+  const totalValue = statistics?.total_value || 0;
+  const totalPaid = statistics?.total_paid || 0;
+  const outstandingBalance = statistics?.outstanding_balance || 0;
+  const overduePayments = statistics?.overdue_payments || 0;
 
   const getStatusColor = (status: string) => {
     const lowerStatus = status.toLowerCase();
@@ -366,10 +357,19 @@ const ApartmentView = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totalItems}</div>
-                <p className="text-xs text-muted-foreground">
-                  {orderedItems} ordered, {deliveredItems} delivered
-                </p>
+                {isLoadingStats ? (
+                  <>
+                    <div className="h-8 w-20 bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-32 bg-muted animate-pulse rounded mt-2" />
+                  </>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{totalItems}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {orderedItems} ordered, {deliveredItems} delivered
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -381,7 +381,11 @@ const ApartmentView = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totalValue.toLocaleString()} HUF</div>
+                {isLoadingStats ? (
+                  <div className="h-8 w-32 bg-muted animate-pulse rounded" />
+                ) : (
+                  <div className="text-2xl font-bold">{totalValue.toLocaleString()} HUF</div>
+                )}
               </CardContent>
             </Card>
 
@@ -393,8 +397,17 @@ const ApartmentView = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{outstandingBalance.toLocaleString()} HUF</div>
-                <p className="text-xs text-muted-foreground">Paid: {totalPaid.toLocaleString()} HUF</p>
+                {isLoadingStats ? (
+                  <>
+                    <div className="h-8 w-32 bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-28 bg-muted animate-pulse rounded mt-2" />
+                  </>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{outstandingBalance.toLocaleString()} HUF</div>
+                    <p className="text-xs text-muted-foreground">Paid: {totalPaid.toLocaleString()} HUF</p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -406,8 +419,17 @@ const ApartmentView = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{openIssues}</div>
-                <p className="text-xs text-muted-foreground">{overduePayments} overdue payments</p>
+                {isLoadingStats ? (
+                  <>
+                    <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-32 bg-muted animate-pulse rounded mt-2" />
+                  </>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{openIssues}</div>
+                    <p className="text-xs text-muted-foreground">{overduePayments} overdue payments</p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -452,22 +474,36 @@ const ApartmentView = () => {
                 <CardTitle>Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {activities.slice(0, 5).map((activity) => (
-                    <div key={activity.id} className="flex gap-3 text-sm">
-                      <div className="flex-shrink-0 mt-0.5">
-                        <CheckCircle className="h-4 w-4 text-primary" />
+                {isLoadingActivities ? (
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="flex gap-3">
+                        <div className="h-4 w-4 rounded-full bg-muted animate-pulse flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3 w-32 bg-muted animate-pulse rounded" />
+                          <div className="h-4 w-full bg-muted animate-pulse rounded" />
+                        </div>
                       </div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-xs text-muted-foreground">{new Date(activity.timestamp).toLocaleString()}</p>
-                        <p className="leading-tight">{activity.summary}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {activities.slice(0, 5).map((activity) => (
+                      <div key={activity.id} className="flex gap-3 text-sm">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <CheckCircle className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-xs text-muted-foreground">{new Date(activity.timestamp).toLocaleString()}</p>
+                          <p className="leading-tight">{activity.summary}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {activities.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">No activity yet</p>
-                  )}
-                </div>
+                    ))}
+                    {activities.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">No activity yet</p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -500,12 +536,7 @@ const ApartmentView = () => {
           </div>
 
           {isLoadingProducts ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <RefreshCw className="mx-auto h-12 w-12 text-muted-foreground mb-4 animate-spin" />
-                <h3 className="text-lg font-semibold mb-2">Loading products...</h3>
-              </CardContent>
-            </Card>
+            <ApartmentViewProductsSkeleton />
           ) : products.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">

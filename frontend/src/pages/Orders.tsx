@@ -14,7 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, FileText, Truck, ArrowUpDown, TrendingUp, Package, DollarSign, Clock, Loader2, Edit, Trash2, MoreHorizontal, Eye, CheckCircle, Copy, XCircle } from 'lucide-react';
+import { Plus, Search, FileText, Truck, ArrowUpDown, TrendingUp, Package, DollarSign, Clock, Edit, Trash2, MoreHorizontal, Eye, CheckCircle, Copy, XCircle, Upload,Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +41,7 @@ import {
 import { useOrders, useOrderStatistics, useOrderCharts } from '@/hooks/useOrderApi';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import OrdersPageSkeleton from '@/components/skeletons/OrdersPageSkeleton';
 
 
 const Orders = () => {
@@ -131,6 +133,15 @@ const Orders = () => {
     spending: item.value
   })) || [];
 
+  // Show skeleton while loading
+  if (loading) {
+    return (
+      <PageLayout title="Orders Management">
+        <OrdersPageSkeleton />
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout title="Orders Management">
       <div className="space-y-6">
@@ -141,10 +152,8 @@ const Orders = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Total Orders</p>
-                  <p className="text-2xl font-bold">{loading ? '-' : totalCount || orders.length}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {statsLoading ? 'Loading...' : 'All time'}
-                  </p>
+                  <p className="text-2xl font-bold">{totalCount || orders.length}</p>
+                  <p className="text-xs text-muted-foreground">All time</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <Package className="h-6 w-6 text-primary" />
@@ -172,7 +181,7 @@ const Orders = () => {
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Pending</p>
                   <p className="text-2xl font-bold">
-                    {loading ? '-' : statistics?.pending_orders || orders.filter(o => o.status.toLowerCase() === 'sent').length}
+                    {statistics?.pending_orders || orders.filter(o => o.status.toLowerCase() === 'sent').length}
                   </p>
                   <p className="text-xs text-muted-foreground">Sent to vendor</p>
                 </div>
@@ -188,7 +197,7 @@ const Orders = () => {
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Received</p>
                   <p className="text-2xl font-bold">
-                    {loading ? '-' : statistics?.delivered_orders || 0}
+                    {statistics?.delivered_orders || 0}
                   </p>
                   <p className="text-xs text-muted-foreground">Delivered orders</p>
                 </div>
@@ -209,8 +218,18 @@ const Orders = () => {
             </CardHeader>
             <CardContent>
               {chartsLoading ? (
-                <div className="h-[280px] flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="h-[280px] p-4 space-y-4">
+                  <div className="flex items-end justify-between h-full gap-2">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="flex-1 flex flex-col justify-end items-center gap-2">
+                        <Skeleton 
+                          className="w-full rounded-t-lg" 
+                          style={{ height: `${Math.random() * 60 + 40}%` }}
+                        />
+                        <Skeleton className="h-3 w-12" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : vendorSpending.length === 0 ? (
                 <div className="h-[280px] flex flex-col items-center justify-center text-center space-y-3">
@@ -252,8 +271,18 @@ const Orders = () => {
             </CardHeader>
             <CardContent>
               {chartsLoading ? (
-                <div className="h-[280px] flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="h-[280px] p-4">
+                  <div className="h-full flex flex-col justify-between">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-4">
+                        <Skeleton className="h-2 w-12" />
+                        <Skeleton 
+                          className="h-2 rounded-full" 
+                          style={{ width: `${Math.random() * 60 + 20}%` }}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : monthlyOrders.length === 0 ? (
                 <div className="h-[280px] flex flex-col items-center justify-center text-center space-y-3">
@@ -327,6 +356,11 @@ const Orders = () => {
             </SelectContent>
           </Select>
 
+          <Button onClick={() => navigate('/orders/import')} variant="outline">
+            <Upload className="h-4 w-4 mr-2" />
+            Import Orders
+          </Button>
+          
           <Button onClick={() => navigate('/orders/new')}>
             <Plus className="h-4 w-4 mr-2" />
             Create Order
@@ -337,7 +371,7 @@ const Orders = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>All Orders ({loading ? '...' : orders.length})</CardTitle>
+              <CardTitle>All Orders ({orders.length})</CardTitle>
               <Button variant="outline" size="sm">
                 <ArrowUpDown className="h-4 w-4 mr-2" />
                 Sort
@@ -362,14 +396,7 @@ const Orders = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={10} className="text-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                        Loading orders...
-                      </TableCell>
-                    </TableRow>
-                  ) : orders.length === 0 ? (
+                  {orders.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                         No orders found

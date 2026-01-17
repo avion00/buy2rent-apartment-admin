@@ -32,6 +32,7 @@ import { paymentApi, Payment } from '@/services/paymentApi';
 import { usePayment, useCreatePaymentHistory, useDeletePaymentHistory } from '@/hooks/usePaymentApi';
 import { format } from 'date-fns';
 import { RecordPaymentModal } from '@/components/modals/RecordPaymentModal';
+import PaymentDetailSkeleton from '@/components/skeletons/PaymentDetailSkeleton';
 import {
   Table,
   TableBody,
@@ -55,14 +56,7 @@ export default function PaymentDetail() {
   const error = queryError ? 'Payment not found' : (!id ? 'No payment ID provided' : null);
 
   if (loading) {
-    return (
-      <PageLayout title="Loading...">
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
-          <p className="text-muted-foreground">Loading payment details...</p>
-        </div>
-      </PageLayout>
-    );
+    return <PaymentDetailSkeleton />;
   }
 
   if (error || !payment) {

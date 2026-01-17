@@ -16,12 +16,13 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Package, Building2, Store, ShoppingCart, DollarSign, Loader2, ArrowLeft, Save, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Package, Building2, Store, ShoppingCart, DollarSign, Loader2, ArrowLeft, Save, RefreshCw, AlertCircle, Minus, X, Image } from 'lucide-react';
 import { apartmentApi, Apartment } from '@/services/apartmentApi';
 import { vendorApi, Vendor } from '@/services/vendorApi';
 import { useProducts } from '@/hooks/useProductApi';
 import { orderApi } from '@/services/orderApi';
 import { useOrder } from '@/hooks/useOrderApi';
+import OrderEditSkeleton from '@/components/skeletons/OrderEditSkeleton';
 
 interface OrderItem {
   id?: string;
@@ -62,17 +63,19 @@ const OrderEdit = () => {
   const {
     data: productsData,
     isLoading: loadingProducts,
-  } = useProducts();
+  } = useProducts({
+    apartment: apartmentId,
+    page_size: 1000,
+  });
   const allProducts = productsData?.results || [];
 
   const products = useMemo(
     () =>
       allProducts.filter((product: any) => {
-        const matchesApartment = !apartmentId || product.apartment === apartmentId;
         const matchesVendor = !vendorId || product.vendor === vendorId;
-        return matchesApartment && matchesVendor;
+        return matchesVendor;
       }),
-    [allProducts, apartmentId, vendorId]
+    [allProducts, vendorId]
   );
 
   // Load apartments & vendors on mount
@@ -322,16 +325,7 @@ const OrderEdit = () => {
   // Loading state - wait for both order and lookups
   const isLoading = loadingOrder || loadingLookups || (order && !initialized);
   if (isLoading) {
-    return (
-      <PageLayout title="Loading...">
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">Loading order details...</p>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    return <OrderEditSkeleton />;
   }
 
   // Error state
@@ -558,163 +552,207 @@ const OrderEdit = () => {
               </CardContent>
             </Card>
 
-            {/* Order Items Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-primary" />
-                    Order Items ({items.length})
+            {/* Products and Order Items - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {/* Available Products - 50% width */}
+              <Card className="lg:col-span-1">
+                <CardHeader className="py-3 px-4 border-b">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                    <Package className="h-4 w-4 text-primary" />
+                    Available Products ({products.length})
                   </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={addItem}
-                      className="gap-1.5"
-                      disabled={!canAddItems}
-                    >
-                      <Plus className="h-4 w-4" />
-                      {canAddItems ? 'Add Item' : 'Select apartment & vendor first'}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={addAllProducts}
-                      className="gap-1.5"
-                      disabled={!canAddItems}
-                    >
-                      Add All
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {items.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No items added yet</p>
-                    <p className="text-sm">Select an apartment and vendor, then add items to your order</p>
-                  </div>
-                ) : (
-                  items.map((item, index) => (
-                    <Card key={index} className="border hover:border-primary/30 transition-all">
-                      <CardContent className="p-4">
-                        <div className="grid grid-cols-12 gap-4 items-end">
-                          <div className="col-span-12 md:col-span-5">
-                            <Label className="text-sm font-medium mb-2 block">
-                              Product Name *
-                            </Label>
-                            <Select
-                              value={item.productId || undefined}
-                              onValueChange={(value) => {
-                                const product = products.find((p) => p.id === value);
-                                if (!product) return;
+                </CardHeader>
+                <CardContent className="p-2">
+                  {loadingProducts ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Loader2 className="h-8 w-8 mx-auto mb-3 opacity-50 animate-spin" />
+                      <p className="text-sm">Loading products...</p>
+                    </div>
+                  ) : !apartmentId || !vendorId ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Building2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>Please select apartment and vendor</p>
+                      <p className="text-sm">Products will appear here</p>
+                    </div>
+                  ) : products.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No products found</p>
+                      <p className="text-sm">This apartment/vendor has no products</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-[450px] overflow-y-auto">
+                      <div>
+                        {products.map((product, idx) => {
+                          const isInOrder = items.some((item) => item.productId === product.id);
 
-                                const rawPrice = Number(product.unit_price);
-                                const roundedPrice = Number.isNaN(rawPrice)
-                                  ? 0
-                                  : Math.round(rawPrice);
-
-                                setItems((prev) => {
-                                  const next = [...prev];
-                                  const current = next[index];
-                                  next[index] = {
-                                    ...current,
-                                    productId: product.id,
-                                    productName: product.product,
-                                    sku: product.sku || '',
-                                    unitPrice: roundedPrice,
-                                  };
-                                  return next;
-                                });
-                              }}
+                          return (
+                            <div
+                              key={product.id}
+                              onClick={() => !isInOrder && addItem()}
+                              className={`group flex items-center gap-2 px-2 py-1.5 transition-all cursor-pointer ${
+                                isInOrder 
+                                  ? 'opacity-50 cursor-not-allowed bg-muted/30' 
+                                  : 'hover:bg-accent hover:shadow-sm'
+                              } ${
+                                idx < products.length - 1 ? 'border-b border-border/50' : ''
+                              }`}
                             >
-                              <SelectTrigger disabled={loadingProducts}>
-                                <SelectValue
-                                  placeholder={
-                                    loadingProducts
-                                      ? 'Loading products...'
-                                      : item.productName || (products.length ? 'Select product' : 'No products available')
-                                  }
-                                />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-64">
-                                {products.map((product) => (
-                                  <SelectItem key={product.id} value={product.id}>
-                                    <div className="flex flex-col">
-                                      <span className="font-medium">{product.product}</span>
-                                      <span className="text-xs text-muted-foreground">
-                                        {product.sku ? `${product.sku} · ` : ''}{Number(product.unit_price).toFixed(0)} HUF
-                                      </span>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {/* Show current product name if not in products list */}
-                            {item.productName && !products.find(p => p.id === item.productId) && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Current: {item.productName}
-                              </p>
-                            )}
-                          </div>
-                          <div className="col-span-4 md:col-span-2">
-                            <Label className="text-sm font-medium mb-2 block">
-                              Qty *
-                            </Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              placeholder="0"
-                              value={item.quantity}
-                              onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                            />
-                          </div>
-                          <div className="col-span-4 md:col-span-3">
-                            <Label className="text-sm font-medium mb-2 block">
-                              Price (HUF) *
-                            </Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              step="1"
-                              placeholder="0"
-                              value={item.unitPrice}
-                              onChange={(e) =>
-                                updateItem(
-                                  index,
-                                  'unitPrice',
-                                  Number.isNaN(parseInt(e.target.value))
-                                    ? 0
-                                    : parseInt(e.target.value, 10)
-                                )
-                              }
-                            />
-                          </div>
-                          <div className="col-span-4 md:col-span-2 flex items-center gap-2">
-                            <div className="flex-1 text-right">
-                              <p className="text-xs text-muted-foreground">Total</p>
-                              <p className="font-bold">{item.quantity * item.unitPrice} HUF</p>
+                              {/* Product Image */}
+                              <div className="w-8 h-8 bg-muted/30 rounded flex items-center justify-center flex-shrink-0">
+                                {product.product_image ? (
+                                  <img 
+                                    src={product.product_image} 
+                                    alt={product.product}
+                                    className="w-full h-full object-cover rounded"
+                                    onError={(e) => {
+                                      e.currentTarget.src = '';
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <Image className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </div>
+                              
+                              {/* Product Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-baseline gap-1">
+                                  <p className="font-medium text-xs truncate flex-1">{product.product}</p>
+                                  {product.sku && (
+                                    <span className="text-[10px] text-muted-foreground">{product.sku}</span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {product.vendor_name || 'No vendor'}
+                                </p>
+                              </div>
+                              
+                              {/* Price and Status */}
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-semibold text-xs">{Number(product.unit_price).toLocaleString()}</p>
+                                {isInOrder ? (
+                                  <span className="text-[10px] text-green-600 dark:text-green-500 font-medium">Added</span>
+                                ) : (
+                                  <span className="text-[10px] text-muted-foreground">HUF</span>
+                                )}
+                              </div>
                             </div>
-                            <Button 
-                              type="button" 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={() => removeItem(index)}
-                              className="h-9 w-9 hover:bg-destructive/10 hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </CardContent>
-            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Order Items - 50% width */}
+              <Card className="lg:col-span-1">
+                <CardHeader className="py-3 px-4 border-b">
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      <ShoppingCart className="h-4 w-4 text-primary" />
+                      Order Items ({items.length})
+                    </span>
+                    {items.length > 0 && (
+                      <span className="text-xs font-normal text-muted-foreground">
+                        Total: {items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0).toLocaleString()} HUF
+                      </span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-2">
+                  {items.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <ShoppingCart className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                      <p className="text-xs font-medium">No items in order</p>
+                      <p className="text-[10px] mt-1">Click products to add them</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-[450px] overflow-y-auto">
+                      <div>
+                        {items.map((item, index) => {
+                          const product = products.find(p => p.id === item.productId);
+                          return (
+                            <div key={index} className={`group flex items-center gap-2 px-2 py-1.5 hover:bg-accent transition-all ${
+                              index < items.length - 1 ? 'border-b border-border/50' : ''
+                            }`}>
+                              {/* Product Image */}
+                              <div className="w-8 h-8 bg-muted/30 rounded flex items-center justify-center flex-shrink-0">
+                                {product?.product_image ? (
+                                  <img 
+                                    src={product.product_image} 
+                                    alt={item.productName}
+                                    className="w-full h-full object-cover rounded"
+                                    onError={(e) => {
+                                      e.currentTarget.src = '';
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <Image className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </div>
+                              
+                              {/* Item Details */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-baseline gap-1">
+                                  <p className="text-xs font-medium truncate flex-1">{item.productName}</p>
+                                  {item.sku && (
+                                    <span className="text-[10px] text-muted-foreground">{item.sku}</span>
+                                  )}
+                                </div>
+                                
+                                {/* Quantity and Price Controls */}
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateItem(index, 'quantity', Math.max(1, item.quantity - 1))}
+                                    className="w-5 h-5 rounded bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors"
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={item.quantity}
+                                    onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                                    className="w-10 h-5 text-[11px] text-center border border-input bg-background rounded px-1"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => updateItem(index, 'quantity', item.quantity + 1)}
+                                    className="w-5 h-5 rounded bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </button>
+                                  <span className="text-[10px] text-muted-foreground ml-1">× {item.unitPrice.toLocaleString()}</span>
+                                </div>
+                              </div>
+                              
+                              {/* Total and Remove */}
+                              <div className="flex items-center gap-2">
+                                <div className="text-right">
+                                  <p className="text-xs font-semibold">{(item.quantity * item.unitPrice).toLocaleString()}</p>
+                                  <p className="text-[10px] text-muted-foreground">HUF</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeItem(index)}
+                                  className="opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full bg-destructive/10 hover:bg-destructive/20 flex items-center justify-center transition-all"
+                                >
+                                  <X className="h-3 w-3 text-destructive" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Order Summary */}
             <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">

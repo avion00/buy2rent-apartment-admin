@@ -30,6 +30,7 @@ import {
 import { toast } from 'sonner';
 import { issueApi, Issue } from '@/services/issueApi';
 import { cn } from '@/lib/utils';
+import IssueEditSkeleton from '@/components/skeletons/IssueEditSkeleton';
 
 const IssueEdit = () => {
   const navigate = useNavigate();
@@ -154,13 +155,7 @@ const IssueEdit = () => {
   };
 
   if (loading) {
-    return (
-      <PageLayout title="Edit Issue">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </PageLayout>
-    );
+    return <IssueEditSkeleton />;
   }
 
   if (!issue) {
