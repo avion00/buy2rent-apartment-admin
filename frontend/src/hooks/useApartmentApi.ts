@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apartmentApi, type Apartment, type ApartmentFormData } from '@/services/apartmentApi';
+import { apartmentApi, type Apartment, type ApartmentFormData, type ApartmentStatistics, type ApartmentActivity } from '@/services/apartmentApi';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 
@@ -10,6 +10,8 @@ const QUERY_KEYS = {
   list: (params?: any) => [...QUERY_KEYS.lists(), params] as const,
   details: () => [...QUERY_KEYS.all, 'detail'] as const,
   detail: (id: string) => [...QUERY_KEYS.details(), id] as const,
+  statistics: (id: string) => [...QUERY_KEYS.all, 'statistics', id] as const,
+  activities: (id: string) => [...QUERY_KEYS.all, 'activities', id] as const,
 };
 
 // Debounce hook
@@ -145,5 +147,27 @@ export function useDeleteApartment() {
         variant: 'destructive',
       });
     },
+  });
+}
+
+// Hook for fetching apartment statistics
+export function useApartmentStatistics(id: string | null) {
+  return useQuery({
+    queryKey: QUERY_KEYS.statistics(id!),
+    queryFn: () => apartmentApi.getApartmentStatistics(id!),
+    enabled: !!id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false,
+  });
+}
+
+// Hook for fetching apartment activities
+export function useApartmentActivities(id: string | null) {
+  return useQuery({
+    queryKey: QUERY_KEYS.activities(id!),
+    queryFn: () => apartmentApi.getApartmentActivities(id!),
+    enabled: !!id,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    refetchOnWindowFocus: false,
   });
 }

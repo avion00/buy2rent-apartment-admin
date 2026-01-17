@@ -154,11 +154,6 @@ const Settings = () => {
         animationsEnabled: settings.animations_enabled
       });
       
-      // Apply theme from settings
-      if (settings.theme && settings.theme !== theme) {
-        setTheme(settings.theme);
-      }
-      
       // Regional settings
       setRegionalSettings({
         language: settings.language,

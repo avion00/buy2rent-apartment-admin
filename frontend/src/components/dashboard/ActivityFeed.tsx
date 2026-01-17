@@ -244,73 +244,84 @@ export function ActivityFeed() {
                   <div 
                     key={activity.id} 
                     className={cn(
-                      "group relative flex items-start gap-3 p-3 rounded-xl transition-all duration-200",
-                      "hover:shadow-md cursor-pointer",
-                      style.bg,
-                      `border ${style.border}`,
-                      `hover:${style.glow}`
+                      "group relative flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-300",
+                      "hover:shadow-sm cursor-pointer border border-transparent",
+                      "hover:border-border/50 hover:bg-muted/30"
                     )}
                   >
                     {/* Timeline connector */}
                     {index < activities.slice(0, 15).length - 1 && (
-                      <div className="absolute left-[26px] top-[52px] w-[2px] h-[calc(100%-20px)] bg-gradient-to-b from-border to-transparent" />
+                      <div className="absolute left-[26px] top-[42px] w-[1px] h-[calc(100%-14px)] bg-border/30" />
                     )}
                     
-                    {/* Icon */}
-                    <div className={cn(
-                      "relative flex-shrink-0 p-2.5 rounded-xl shadow-sm transition-transform group-hover:scale-105",
-                      "bg-background border",
-                      style.border
-                    )}>
-                      <IconComponent className={cn("h-4 w-4", style.icon)} />
-                      {/* Action indicator */}
+                    {/* Icon with action indicator */}
+                    <div className="relative flex-shrink-0">
                       <div className={cn(
-                        "absolute -bottom-1 -right-1 p-0.5 rounded-full bg-background border",
+                        "p-2 rounded-lg transition-all duration-300",
+                        "group-hover:shadow-sm",
+                        style.bg,
+                        `border ${style.border}`
+                      )}>
+                        <IconComponent className={cn("h-4 w-4", style.icon)} />
+                      </div>
+                      <div className={cn(
+                        "absolute -bottom-1 -right-1 p-0.5 rounded-full bg-background border shadow-sm",
                         style.border
                       )}>
                         <ActionIcon className={cn("h-2.5 w-2.5", style.icon)} />
                       </div>
                     </div>
                     
-                    {/* Content */}
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-sm text-foreground leading-tight">
+                    {/* Main Content */}
+                    <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
+                      {/* Left: Title and Description */}
+                      <div className="flex-1 min-w-0 space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-sm text-foreground truncate">
                             {activity.title}
-                          </span>
+                          </h4>
                           <Badge 
                             variant="outline" 
                             className={cn(
-                              "text-[10px] px-1.5 py-0 h-4 font-medium border",
+                              "text-[9px] px-2 py-0.5 h-4 font-semibold uppercase tracking-wide border flex-shrink-0",
                               style.badge
                             )}
                           >
                             {activity.action}
                           </Badge>
                         </div>
-                        <Badge 
-                          variant="secondary" 
-                          className="text-[10px] px-1.5 py-0 h-4 font-normal bg-muted/50 text-muted-foreground flex-shrink-0"
-                        >
-                          {getTypeLabel(activity.type)}
-                        </Badge>
+                        <p className="text-xs text-muted-foreground/80 truncate leading-relaxed">
+                          {activity.description}
+                        </p>
                       </div>
                       
-                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                        {activity.description}
-                      </p>
-                      
-                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
-                        <Clock className="h-3 w-3" />
-                        <span>{formatTimeAgo(activity.created_at)}</span>
+                      {/* Right: Metadata Grid */}
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                        {/* Type */}
+                        <div className="flex items-center gap-1.5 min-w-[70px]">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                          <span className="text-xs font-medium text-foreground/70">
+                            {getTypeLabel(activity.type)}
+                          </span>
+                        </div>
+                        
+                        {/* Apartment */}
                         {activity.apartment && (
-                          <>
-                            <span className="text-muted-foreground/30">•</span>
-                            <Building2 className="h-3 w-3" />
-                            <span className="truncate max-w-[100px]">{activity.apartment}</span>
-                          </>
+                          <div className="flex items-center gap-1.5 min-w-[100px] max-w-[140px]">
+                            <Building2 className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0" />
+                            <span className="text-xs text-muted-foreground/70 truncate">
+                              {activity.apartment}
+                            </span>
+                          </div>
                         )}
+                        
+                        {/* Time */}
+                        <div className="flex items-center gap-1.5 min-w-[90px]">
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0" />
+                          <span className="text-xs text-muted-foreground/70 whitespace-nowrap">
+                            {formatTimeAgo(activity.created_at)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

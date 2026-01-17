@@ -13,6 +13,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Overview from "./pages/Overview";
 import NotFound from "./pages/NotFound";
 import Clients from "./pages/Clients";
+import ClientView from "./pages/ClientView";
 import Apartments from "./pages/Apartments";
 import ApartmentNew from "./pages/ApartmentNew";
 import ApartmentView from "./pages/ApartmentView";
@@ -24,6 +25,7 @@ import ProductEdit from "./pages/ProductEdit";
 import ProductImport from "./pages/ProductImport";
 import Orders from "./pages/Orders";
 import OrderNew from "./pages/OrderNew";
+import OrderImport from "./pages/OrderImport";
 import OrderView from "./pages/OrderView";
 import OrderEdit from "./pages/OrderEdit";
 import Deliveries from "./pages/Deliveries";
@@ -64,6 +66,7 @@ const App = () => (
             {/* Protected routes */}
             <Route path="/" element={<Navigate to="/overview" replace />} />
             <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+            <Route path="/clients/:id" element={<ProtectedRoute><ClientView /></ProtectedRoute>} />
           <Route path="/apartments" element={<ProtectedRoute><Apartments /></ProtectedRoute>} />
           <Route path="/apartments/new" element={<ProtectedRoute><ApartmentNew /></ProtectedRoute>} />
           <Route path="/apartments/:id" element={<ProtectedRoute><ApartmentView /></ProtectedRoute>} />
@@ -75,6 +78,7 @@ const App = () => (
           <Route path="/products/:id/edit" element={<ProtectedRoute><ProductEdit /></ProtectedRoute>} />
           <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
           <Route path="/orders/new" element={<ProtectedRoute><OrderNew /></ProtectedRoute>} />
+          <Route path="/orders/import" element={<ProtectedRoute><OrderImport /></ProtectedRoute>} />
           <Route path="/orders/:id" element={<ProtectedRoute><OrderView /></ProtectedRoute>} />
           <Route path="/orders/:id/edit" element={<ProtectedRoute><OrderEdit /></ProtectedRoute>} />
           <Route path="/deliveries" element={<ProtectedRoute><Deliveries /></ProtectedRoute>} />

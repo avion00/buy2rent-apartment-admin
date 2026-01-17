@@ -18,7 +18,8 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Package, Building2, Store, ShoppingCart, DollarSign, Loader2, ArrowLeft, CheckSquare, Square } from 'lucide-react';
+import { Plus, Trash2, Package, Building2, Store, ShoppingCart, DollarSign, ArrowLeft, CheckSquare, Square, Minus, X, Image ,Loader2} from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { apartmentApi, Apartment } from '@/services/apartmentApi';
 import { vendorApi, Vendor } from '@/services/vendorApi';
 import { productApi, Product } from '@/services/productApi';
@@ -57,7 +58,7 @@ const OrderNew = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
-  const [loadingLookups, setLoadingLookups] = useState(false);
+  const [loadingLookups, setLoadingLookups] = useState(true);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -143,6 +144,38 @@ const OrderNew = () => {
       cancelled = true;
     };
   }, [apartmentId, toast]);
+
+  const addProductToOrder = (productId: string) => {
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
+
+    // Check if product already exists in order
+    const existingItem = items.find((item) => item.productId === productId);
+    if (existingItem) {
+      toast({
+        title: 'Product already in order',
+        description: `${product.product} is already in your order.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Add product directly to order items
+    const newItem: OrderItem = {
+      productId: product.id,
+      productName: product.product,
+      sku: product.sku || '',
+      quantity: 1,
+      unitPrice: Math.round(Number(product.unit_price) || 0),
+    };
+
+    setItems((prev) => [...prev, newItem]);
+    
+    toast({
+      title: 'Product added',
+      description: `${product.product} has been added to the order.`,
+    });
+  };
 
   const toggleProductSelection = (productId: string) => {
     setSelectedProducts((prev) => {
@@ -402,7 +435,7 @@ const OrderNew = () => {
                       </Label>
                       <Select value={apartmentId} onValueChange={setApartmentId} disabled={loadingLookups}>
                         <SelectTrigger className="h-10">
-                          <SelectValue placeholder={loadingLookups ? 'Loading...' : 'Select apartment'} />
+                          <SelectValue placeholder={loadingLookups ? 'Loading apartments...' : 'Select apartment'} />
                         </SelectTrigger>
                         <SelectContent>
                           {apartments.map((apt) => (
@@ -429,7 +462,7 @@ const OrderNew = () => {
                       </Label>
                       <Select value={vendorId} onValueChange={setVendorId} disabled={loadingLookups || !apartmentId}>
                         <SelectTrigger className="h-10">
-                          <SelectValue placeholder={!apartmentId ? 'Select apartment first' : loadingLookups ? 'Loading...' : 'All vendors'} />
+                          <SelectValue placeholder={!apartmentId ? 'Select apartment first' : loadingLookups ? 'Loading vendors...' : 'All vendors'} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All Vendors</SelectItem>
@@ -535,31 +568,49 @@ const OrderNew = () => {
               </CardContent>
             </Card>
 
-            {/* Product Selection Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Store className="h-5 w-5 text-primary" />
+            {/* Products and Order Items - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {/* Available Products - 50% width */}
+              <Card className="lg:col-span-1">
+                <CardHeader className="py-3 px-4 border-b">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                    <Package className="h-4 w-4 text-primary" />
                     Available Products ({filteredProducts.length})
                   </CardTitle>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={addSelectedToOrder}
-                    className="gap-1.5"
-                    disabled={!hasSelectedProducts}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Selected to Order ({selectedProducts.length})
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
+                </CardHeader>
+                <CardContent className="p-2">
                 {loadingProducts ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Loader2 className="h-12 w-12 mx-auto mb-3 opacity-50 animate-spin" />
-                    <p>Loading products...</p>
+                  <div className="max-h-[450px]">
+                    <div>
+                      {[...Array(8)].map((_, i) => (
+                        <div 
+                          key={i} 
+                          className={`flex items-center gap-2 px-2 py-1.5 ${
+                            i < 7 ? 'border-b border-border/50' : ''
+                          }`}
+                        >
+                          {/* Image skeleton */}
+                          <div className="w-8 h-8 rounded overflow-hidden">
+                            <Skeleton className="w-full h-full" />
+                          </div>
+                          
+                          {/* Product info skeleton */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-1 mb-0.5">
+                              <Skeleton className="h-3 w-32" />
+                              <Skeleton className="h-2 w-12 opacity-60" />
+                            </div>
+                            <Skeleton className="h-2 w-20 opacity-40" />
+                          </div>
+                          
+                          {/* Price skeleton */}
+                          <div className="text-right flex-shrink-0">
+                            <Skeleton className="h-3 w-14 mb-0.5" />
+                            <Skeleton className="h-2 w-8 ml-auto opacity-40" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : !apartmentId ? (
                   <div className="text-center py-8 text-muted-foreground">
@@ -578,154 +629,221 @@ const OrderNew = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="max-h-96 overflow-y-auto space-y-2">
-                    {filteredProducts.map((product) => {
-                      const isSelected = selectedProducts.some((p) => p.id === product.id);
-                      const selectedProduct = selectedProducts.find((p) => p.id === product.id);
+                  <div className="max-h-[450px] overflow-y-auto">
+                    <div>
+                      {filteredProducts.map((product, idx) => {
+                        const isInOrder = items.some((item) => item.productId === product.id);
 
-                      return (
-                        <Card
-                          key={product.id}
-                          className={`border transition-all cursor-pointer ${
-                            isSelected ? 'border-primary bg-primary/5' : 'hover:border-primary/30'
-                          }`}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-center gap-4">
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => toggleProductSelection(product.id)}
-                                className="h-5 w-5"
-                              />
-                              <div className="flex-1 grid grid-cols-12 gap-4 items-center">
-                                <div className="col-span-12 md:col-span-5">
-                                  <p className="font-medium">{product.product}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {product.sku && `SKU: ${product.sku} · `}
-                                    {product.vendor_name || 'No vendor'}
-                                  </p>
-                                </div>
-                                <div className="col-span-6 md:col-span-3">
-                                  <p className="text-sm text-muted-foreground">Unit Price</p>
-                                  <p className="font-semibold">{Number(product.unit_price).toFixed(0)} HUF</p>
-                                </div>
-                                <div className="col-span-6 md:col-span-2">
-                                  <Label className="text-xs text-muted-foreground mb-1 block">Quantity</Label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    value={selectedProduct?.quantity || 1}
-                                    onChange={(e) => {
-                                      const qty = parseInt(e.target.value) || 1;
-                                      if (isSelected) {
-                                        updateProductQuantity(product.id, qty);
-                                      } else {
-                                        setSelectedProducts((prev) => [
-                                          ...prev,
-                                          { id: product.id, quantity: qty },
-                                        ]);
-                                      }
-                                    }}
-                                    className="h-8"
-                                    disabled={!isSelected}
-                                  />
-                                </div>
-                                <div className="col-span-12 md:col-span-2 text-right">
-                                  <p className="text-xs text-muted-foreground">Total</p>
-                                  <p className="font-bold text-primary">
-                                    {(Number(product.unit_price) * (selectedProduct?.quantity || 1)).toFixed(0)} HUF
-                                  </p>
-                                </div>
+                        return (
+                          <div
+                            key={product.id}
+                            onClick={() => !isInOrder && addProductToOrder(product.id)}
+                            className={`group flex items-center gap-2 px-2 py-1.5 transition-all cursor-pointer ${
+                              isInOrder 
+                                ? 'opacity-50 cursor-not-allowed bg-muted/30' 
+                                : 'hover:bg-accent hover:shadow-sm'
+                            } ${
+                              idx < filteredProducts.length - 1 ? 'border-b border-border/50' : ''
+                            }`}
+                          >
+                            {/* Product Image */}
+                            <div className="w-8 h-8 bg-muted/30 rounded flex items-center justify-center flex-shrink-0">
+                              {product.product_image ? (
+                                <img 
+                                  src={product.product_image} 
+                                  alt={product.product}
+                                  className="w-full h-full object-cover rounded"
+                                  onError={(e) => {
+                                    e.currentTarget.src = '';
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <Image className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
+                            
+                            {/* Product Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-1">
+                                <p className="font-medium text-xs truncate flex-1">{product.product}</p>
+                                {product.sku && (
+                                  <span className="text-[10px] text-muted-foreground">{product.sku}</span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">
+                                {product.vendor_name || 'No vendor'}
+                              </p>
+                            </div>
+                            
+                            {/* Price and Status */}
+                            <div className="text-right flex-shrink-0">
+                              <p className="font-semibold text-xs">{Number(product.unit_price).toLocaleString()}</p>
+                              {isInOrder ? (
+                                <span className="text-[10px] text-green-600 dark:text-green-500 font-medium">Added</span>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground">HUF</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                </CardContent>
+              </Card>
+
+              {/* Order Items - 50% width */}
+              <Card className="lg:col-span-1">
+                <CardHeader className="py-3 px-4 border-b">
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      <ShoppingCart className="h-4 w-4 text-primary" />
+                      Order Items ({items.length})
+                    </span>
+                    {items.length > 0 && (
+                      <span className="text-xs font-normal text-muted-foreground">
+                        Total: {items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0).toLocaleString()} HUF
+                      </span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-2">
+                  {loadingProducts && items.length === 0 ? (
+                    <div className="max-h-[450px]">
+                      <div>
+                        {[...Array(3)].map((_, i) => (
+                          <div 
+                            key={i} 
+                            className={`flex items-center gap-2 px-2 py-1.5 ${
+                              i < 2 ? 'border-b border-border/50' : ''
+                            }`}
+                          >
+                            {/* Image skeleton */}
+                            <div className="w-8 h-8 rounded overflow-hidden">
+                              <Skeleton className="w-full h-full" />
+                            </div>
+                            
+                            {/* Item details skeleton */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-1 mb-0.5">
+                                <Skeleton className="h-3 w-28" />
+                                <Skeleton className="h-2 w-10 opacity-60" />
+                              </div>
+                              
+                              {/* Quantity controls skeleton */}
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <Skeleton className="w-5 h-5 rounded" />
+                                <Skeleton className="w-10 h-5 rounded" />
+                                <Skeleton className="w-5 h-5 rounded" />
+                                <Skeleton className="h-2 w-16 ml-1 opacity-40" />
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Order Items Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-primary" />
-                  Order Items ({items.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {items.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No items in order yet</p>
-                    <p className="text-sm">Select products above and click "Add Selected to Order"</p>
-                  </div>
-                ) : (
-                  items.map((item, index) => (
-                    <Card key={index} className="border hover:border-primary/30 transition-all">
-                      <CardContent className="p-4">
-                        <div className="grid grid-cols-12 gap-4 items-center">
-                          <div className="col-span-12 md:col-span-5">
-                            <p className="font-medium">{item.productName}</p>
-                            {item.sku && (
-                              <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
-                            )}
-                          </div>
-                          <div className="col-span-4 md:col-span-2">
-                            <Label className="text-xs text-muted-foreground mb-1 block">Qty</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              placeholder="0"
-                              value={item.quantity}
-                              onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                              className="h-9"
-                            />
-                          </div>
-                          <div className="col-span-4 md:col-span-3">
-                            <Label className="text-xs text-muted-foreground mb-1 block">Price (HUF)</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              step="1"
-                              placeholder="0"
-                              value={item.unitPrice}
-                              onChange={(e) =>
-                                updateItem(
-                                  index,
-                                  'unitPrice',
-                                  Number.isNaN(parseInt(e.target.value))
-                                    ? 0
-                                    : parseInt(e.target.value, 10)
-                                )
-                              }
-                              className="h-9"
-                            />
-                          </div>
-                          <div className="col-span-4 md:col-span-2 flex items-center gap-2">
-                            <div className="flex-1 text-right">
-                              <p className="text-xs text-muted-foreground">Total</p>
-                              <p className="font-bold">{item.quantity * item.unitPrice} HUF</p>
+                            
+                            {/* Total and remove skeleton */}
+                            <div className="flex items-center gap-2">
+                              <div className="text-right">
+                                <Skeleton className="h-3 w-16 mb-0.5" />
+                                <Skeleton className="h-2 w-8 ml-auto opacity-40" />
+                              </div>
+                              <Skeleton className="w-5 h-5 rounded-full opacity-30" />
                             </div>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => removeItem(index)}
-                              className="h-9 w-9 hover:bg-destructive/10 hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
+                        ))}
+                      </div>
+                    </div>
+                  ) : items.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <ShoppingCart className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                      <p className="text-xs font-medium">No items in order</p>
+                      <p className="text-[10px] mt-1">Click products to add them</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-[450px] overflow-y-auto">
+                      <div>
+                        {items.map((item, index) => {
+                          const product = products.find(p => p.id === item.productId);
+                          return (
+                            <div key={index} className={`group flex items-center gap-2 px-2 py-1.5 hover:bg-accent transition-all ${
+                              index < items.length - 1 ? 'border-b border-border/50' : ''
+                            }`}>
+                              {/* Product Image */}
+                              <div className="w-8 h-8 bg-muted/30 rounded flex items-center justify-center flex-shrink-0">
+                                {product?.product_image ? (
+                                  <img 
+                                    src={product.product_image} 
+                                    alt={item.productName}
+                                    className="w-full h-full object-cover rounded"
+                                    onError={(e) => {
+                                      e.currentTarget.src = '';
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <Image className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </div>
+                              
+                              {/* Item Details */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-baseline gap-1">
+                                  <p className="text-xs font-medium truncate flex-1">{item.productName}</p>
+                                  {item.sku && (
+                                    <span className="text-[10px] text-muted-foreground">{item.sku}</span>
+                                  )}
+                                </div>
+                                
+                                {/* Quantity and Price Controls */}
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateItem(index, 'quantity', Math.max(1, item.quantity - 1))}
+                                    className="w-5 h-5 rounded bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors"
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={item.quantity}
+                                    onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                                    className="w-10 h-5 text-[11px] text-center border border-input bg-background rounded px-1"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => updateItem(index, 'quantity', item.quantity + 1)}
+                                    className="w-5 h-5 rounded bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </button>
+                                  <span className="text-[10px] text-muted-foreground ml-1">× {item.unitPrice.toLocaleString()}</span>
+                                </div>
+                              </div>
+                              
+                              {/* Total and Remove */}
+                              <div className="flex items-center gap-2">
+                                <div className="text-right">
+                                  <p className="text-xs font-semibold">{(item.quantity * item.unitPrice).toLocaleString()}</p>
+                                  <p className="text-[10px] text-muted-foreground">HUF</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeItem(index)}
+                                  className="opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full bg-destructive/10 hover:bg-destructive/20 flex items-center justify-center transition-all"
+                                >
+                                  <X className="h-3 w-3 text-destructive" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
               </CardContent>
             </Card>
+            </div>
 
             {/* Order Summary */}
             <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">

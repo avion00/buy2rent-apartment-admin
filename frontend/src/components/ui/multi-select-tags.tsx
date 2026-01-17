@@ -17,6 +17,8 @@ interface MultiSelectTagsProps {
   onChange: (value: string[]) => void;
   placeholder?: string;
   className?: string;
+  allowCustom?: boolean;
+  customPlaceholder?: string;
 }
 
 export function MultiSelectTags({ 
@@ -24,15 +26,32 @@ export function MultiSelectTags({
   value = [], 
   onChange, 
   placeholder = "Add status...",
-  className 
+  className,
+  allowCustom = false,
+  customPlaceholder = "Enter custom value..."
 }: MultiSelectTagsProps) {
   const [open, setOpen] = useState(false);
+  const [customInput, setCustomInput] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   const handleToggle = (option: string) => {
+    if (option === 'Other (Custom)' && allowCustom) {
+      setShowCustomInput(true);
+      return;
+    }
     if (value.includes(option)) {
       onChange(value.filter(v => v !== option));
     } else {
       onChange([...value, option]);
+    }
+  };
+
+  const handleAddCustom = () => {
+    if (customInput.trim()) {
+      onChange([...value, customInput.trim()]);
+      setCustomInput('');
+      setShowCustomInput(false);
+      setOpen(false);
     }
   };
 
@@ -79,24 +98,66 @@ export function MultiSelectTags({
           align="start"
           side="bottom"
         >
-          <ScrollArea className="h-full max-h-[300px]">
-            <div className="p-1">
-              {options.map((option) => (
-                <DropdownMenuCheckboxItem
-                  key={option}
-                  checked={value.includes(option)}
-                  onCheckedChange={() => handleToggle(option)}
-                  onSelect={(e) => e.preventDefault()}
-                  className="cursor-pointer"
+          {showCustomInput ? (
+            <div className="p-3 space-y-2">
+              <input
+                type="text"
+                value={customInput}
+                onChange={(e) => setCustomInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddCustom();
+                  } else if (e.key === 'Escape') {
+                    setShowCustomInput(false);
+                    setCustomInput('');
+                  }
+                }}
+                placeholder={customPlaceholder}
+                className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAddCustom}
+                  className="flex-1"
                 >
-                  <span className="flex-1">{option}</span>
-                  {value.includes(option) && (
-                    <Check className="h-4 w-4 ml-2" />
-                  )}
-                </DropdownMenuCheckboxItem>
-              ))}
+                  Add
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setShowCustomInput(false);
+                    setCustomInput('');
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
-          </ScrollArea>
+          ) : (
+            <ScrollArea className="h-full max-h-[300px]">
+              <div className="p-1">
+                {options.map((option) => (
+                  <DropdownMenuCheckboxItem
+                    key={option}
+                    checked={value.includes(option)}
+                    onCheckedChange={() => handleToggle(option)}
+                    onSelect={(e) => e.preventDefault()}
+                    className="cursor-pointer"
+                  >
+                    <span className="flex-1">{option}</span>
+                    {value.includes(option) && (
+                      <Check className="h-4 w-4 ml-2" />
+                    )}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

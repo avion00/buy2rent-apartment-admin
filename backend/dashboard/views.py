@@ -404,9 +404,26 @@ class DashboardRecentActivitiesView(APIView):
             try:
                 recent_orders = Order.objects.select_related(
                     'apartment', 'vendor'
-                ).order_by('-created_at')[:10]
+                ).prefetch_related('items__product').order_by('-created_at')[:10]
+                
+                print(f"Found {recent_orders.count()} recent orders")
                 
                 for order in recent_orders:
+                    # Get order items with product details
+                    items = []
+                    try:
+                        for item in order.items.all()[:5]:  # Limit to 5 items for preview
+                            product = item.product
+                            items.append({
+                                'id': str(item.id),
+                                'product_name': product.product if product else item.product_name,
+                                'product_image': product.product_image if product and product.product_image else None,
+                                'quantity': item.quantity,
+                                'unit_price': float(item.unit_price) if item.unit_price else 0,
+                            })
+                    except Exception as item_error:
+                        print(f"Error processing items for order {order.po_number}: {item_error}")
+                    
                     orders.append({
                         'id': str(order.id),
                         'po_number': order.po_number,
@@ -415,9 +432,14 @@ class DashboardRecentActivitiesView(APIView):
                         'total': float(order.total) if order.total else 0,
                         'status': order.status,
                         'placed_on': order.placed_on.isoformat() if order.placed_on else None,
+                        'items': items,
                     })
-            except Exception:
-                pass
+                
+                print(f"Successfully processed {len(orders)} orders")
+            except Exception as e:
+                print(f"Error fetching recent orders: {e}")
+                import traceback
+                traceback.print_exc()
             
             # Get recent issues
             issues = []
@@ -467,6 +489,9 @@ class DashboardRecentActivitiesView(APIView):
                 'recent_payments': payments,
             })
         except Exception as e:
+            print(f"CRITICAL ERROR in DashboardRecentActivitiesView: {e}")
+            import traceback
+            traceback.print_exc()
             return Response({
                 'activities': [],
                 'recent_orders': [],

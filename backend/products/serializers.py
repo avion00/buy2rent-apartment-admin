@@ -6,6 +6,7 @@ from vendors.serializers import VendorSerializer
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    apartment_id = serializers.UUIDField(source='apartment.id', read_only=True)
     apartment_details = ApartmentSerializer(source='apartment', read_only=True)
     vendor_details = VendorSerializer(source='vendor', read_only=True)
     vendor_name = serializers.SerializerMethodField()
@@ -255,7 +256,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'apartment', 'apartment_details', 'category', 'category_details', 'category_name',
+            'id', 'apartment', 'apartment_id', 'apartment_details', 'category', 'category_details', 'category_name',
             'import_session', 'product', 'description', 'vendor', 'vendor_details', 
             'vendor_name', 'vendor_link', 'sku', 'unit_price', 'qty', 'availability', 
             'status', 'dimensions', 'weight', 'material', 'color', 'model_number',

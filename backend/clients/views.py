@@ -277,4 +277,48 @@ class ClientViewSet(viewsets.ModelViewSet):
         """
         client = self.get_object()
         serializer = self.get_serializer(client)
-        return Response(serializer.data)
+        
+        # Get additional data for the client
+        from orders.models import Order
+        from deliveries.models import Delivery
+        from issues.models import Issue
+        from vendors.models import Vendor
+        from products.models import Product
+        
+        # Get apartments for this client
+        apartments = client.apartments.all()
+        apartment_ids = apartments.values_list('id', flat=True)
+        
+        # Get orders count
+        orders_count = Order.objects.filter(apartment_id__in=apartment_ids).count()
+        
+        # Get deliveries count
+        deliveries_count = Delivery.objects.filter(apartment_id__in=apartment_ids).count()
+        
+        # Get issues count (open and total)
+        issues = Issue.objects.filter(apartment_id__in=apartment_ids)
+        open_issues_count = issues.filter(status__in=['Open', 'In Progress']).count()
+        total_issues_count = issues.count()
+        
+        # Get unique vendors count
+        products = Product.objects.filter(apartment_id__in=apartment_ids)
+        vendor_ids = products.values_list('vendor_id', flat=True).distinct()
+        vendors_count = vendor_ids.count()
+        
+        # Add extra data to response
+        response_data = serializer.data
+        response_data['orders'] = {
+            'count': orders_count
+        }
+        response_data['deliveries'] = {
+            'count': deliveries_count
+        }
+        response_data['issues'] = {
+            'open_count': open_issues_count,
+            'total_count': total_issues_count
+        }
+        response_data['vendors'] = {
+            'count': vendors_count
+        }
+        
+        return Response(response_data)

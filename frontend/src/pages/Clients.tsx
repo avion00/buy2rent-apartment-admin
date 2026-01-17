@@ -43,7 +43,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, Search, Edit, Trash2, Building2, Eye, Loader2, RefreshCw, AlertTriangle, Users, UserCheck, UserX, Briefcase, TrendingUp, Home } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { ClientDetailsModal } from '@/components/modals/ClientDetailsModal';
 import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from '@/hooks/useClientApi';
 import type { ClientFormData } from '@/services/clientApi';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -57,8 +56,6 @@ const Clients = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<string | null>(null);
-  const [viewingClientId, setViewingClientId] = useState<string | null>(null);
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<{ id: string; name: string } | null>(null);
   
@@ -232,8 +229,7 @@ const Clients = () => {
   };
 
   const handleViewClient = (clientId: string) => {
-    setViewingClientId(clientId);
-    setDetailsModalOpen(true);
+    navigate(`/clients/${clientId}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -421,88 +417,157 @@ const Clients = () => {
                     Add Client
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                   <form onSubmit={handleSubmit}>
-                    <DialogHeader>
-                      <DialogTitle>{editingClient ? 'Edit Client' : 'Add New Client'}</DialogTitle>
-                      <DialogDescription>
-                        {editingClient ? 'Update client information' : 'Create a new client profile'}
-                      </DialogDescription>
+                    <DialogHeader className="pb-4 border-b border-border/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <DialogTitle className="text-xl">{editingClient ? 'Edit Client' : 'Add New Client'}</DialogTitle>
+                          <DialogDescription className="text-sm">
+                            {editingClient ? 'Update client information' : 'Create a new client profile'}
+                          </DialogDescription>
+                        </div>
+                      </div>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Name *</Label>
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="John Doe"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email *</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            placeholder="john@example.com"
-                          />
+                    <div className="grid gap-6 py-6">
+                      {/* Basic Information Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 pb-2">
+                          <div className="w-1 h-5 bg-primary rounded-full" />
+                          <h3 className="text-sm font-semibold text-foreground">Basic Information</h3>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="phone">Phone</Label>
+                          <Label htmlFor="name" className="text-sm font-medium">Full Name *</Label>
                           <Input
-                            id="phone"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            placeholder="+36 20 123 4567"
+                            id="name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            placeholder="John Doe"
+                            className="h-11"
                           />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="type">Type</Label>
-                          <Select value={formData.type} onValueChange={(value: any) => setFormData({ ...formData, type: value })}>
-                            <SelectTrigger id="type">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Investor">Investor</SelectItem>
-                              <SelectItem value="Buy2Rent Internal">Buy2Rent Internal</SelectItem>
-                            </SelectContent>
-                          </Select>
+                      {/* Contact Information Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 pb-2">
+                          <div className="w-1 h-5 bg-primary rounded-full" />
+                          <h3 className="text-sm font-semibold text-foreground">Contact Information</h3>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="status">Account Status</Label>
-                          <Select value={formData.account_status} onValueChange={(value: any) => setFormData({ ...formData, account_status: value })}>
-                            <SelectTrigger id="status">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Active">Active</SelectItem>
-                              <SelectItem value="Inactive">Inactive</SelectItem>
-                              <SelectItem value="Suspended">Suspended</SelectItem>
-                            </SelectContent>
-                          </Select>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="email" className="text-sm font-medium flex items-center gap-1">
+                              <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              Email *
+                            </Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              value={formData.email}
+                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                              placeholder="john@example.com"
+                              className="h-11"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-1">
+                              <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                              </svg>
+                              Phone
+                            </Label>
+                            <Input
+                              id="phone"
+                              value={formData.phone}
+                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              placeholder="+36 20 123 4567"
+                              className="h-11"
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="notes">Notes</Label>
-                        <EnhancedTextarea
-                          id="notes"
-                          value={formData.notes}
-                          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                          placeholder="Additional notes..."
-                          rows={3}
-                        />
+                      {/* Account Settings Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 pb-2">
+                          <div className="w-1 h-5 bg-primary rounded-full" />
+                          <h3 className="text-sm font-semibold text-foreground">Account Settings</h3>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="type" className="text-sm font-medium flex items-center gap-1">
+                              <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              Client Type
+                            </Label>
+                            <Select value={formData.type} onValueChange={(value: any) => setFormData({ ...formData, type: value })}>
+                              <SelectTrigger id="type" className="h-11">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Investor">Investor</SelectItem>
+                                <SelectItem value="Buy2Rent Internal">Buy2Rent Internal</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="status" className="text-sm font-medium flex items-center gap-1">
+                              <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Account Status
+                            </Label>
+                            <Select value={formData.account_status} onValueChange={(value: any) => setFormData({ ...formData, account_status: value })}>
+                              <SelectTrigger id="status" className="h-11">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Active">Active</SelectItem>
+                                <SelectItem value="Inactive">Inactive</SelectItem>
+                                <SelectItem value="Suspended">Suspended</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Additional Information Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 pb-2">
+                          <div className="w-1 h-5 bg-primary rounded-full" />
+                          <h3 className="text-sm font-semibold text-foreground">Additional Information</h3>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="notes" className="text-sm font-medium flex items-center gap-1">
+                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Notes
+                          </Label>
+                          <EnhancedTextarea
+                            id="notes"
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            placeholder="Add any additional notes or comments about this client..."
+                            rows={4}
+                            className="resize-none"
+                          />
+                        </div>
                       </div>
                     </div>
-                    <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                    <DialogFooter className="pt-6 border-t border-border/50 gap-3">
+                      <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="flex-1 h-11">
                         Cancel
                       </Button>
-                      <Button type="submit">
+                      <Button type="submit" className="flex-1 h-11 bg-primary hover:bg-primary/90">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
                         {editingClient ? 'Save Changes' : 'Create Client'}
                       </Button>
                     </DialogFooter>
@@ -615,13 +680,6 @@ const Clients = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Client Details Modal */}
-        <ClientDetailsModal
-          open={detailsModalOpen}
-          onOpenChange={setDetailsModalOpen}
-          clientId={viewingClientId}
-        />
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

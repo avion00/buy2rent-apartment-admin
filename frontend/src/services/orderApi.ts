@@ -222,4 +222,48 @@ export const orderApi = {
     const response = await axiosInstance.get('/dashboard/charts/');
     return response.data;
   },
+
+  // Import order from Excel/CSV file
+  importOrder: async (data: {
+    file: File;
+    apartment_id: string;
+    vendor_id: string;
+    po_number: string;
+    status?: string;
+    confirmation_code?: string;
+    tracking_number?: string;
+    expected_delivery?: string;
+    shipping_address?: string;
+    notes?: string;
+  }): Promise<{
+    message: string;
+    order_created: boolean;
+    order_id: string;
+    po_number: string;
+    total_items: number;
+    successful_imports: number;
+    failed_imports: number;
+    total_amount: number;
+    errors: string[];
+  }> => {
+    const formData = new FormData();
+    formData.append('file', data.file);
+    formData.append('apartment_id', data.apartment_id);
+    formData.append('vendor_id', data.vendor_id);
+    formData.append('po_number', data.po_number);
+    
+    if (data.status) formData.append('status', data.status);
+    if (data.confirmation_code) formData.append('confirmation_code', data.confirmation_code);
+    if (data.tracking_number) formData.append('tracking_number', data.tracking_number);
+    if (data.expected_delivery) formData.append('expected_delivery', data.expected_delivery);
+    if (data.shipping_address) formData.append('shipping_address', data.shipping_address);
+    if (data.notes) formData.append('notes', data.notes);
+    
+    const response = await axiosInstance.post('/orders/import_order/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };

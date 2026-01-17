@@ -84,6 +84,27 @@ export interface ApartmentFormData {
   notes?: string;
 }
 
+export interface ApartmentStatistics {
+  total_items: number;
+  ordered_items: number;
+  delivered_items: number;
+  total_value: number;
+  total_payable: number;
+  total_paid: number;
+  outstanding_balance: number;
+  open_issues: number;
+  overdue_payments: number;
+}
+
+export interface ApartmentActivity {
+  id: string;
+  type: 'order' | 'issue' | 'payment';
+  summary: string;
+  timestamp: string;
+  icon: string;
+  actor: string;
+}
+
 // API response types
 interface PaginatedResponse<T> {
   count: number;
@@ -135,5 +156,17 @@ export const apartmentApi = {
   // Delete apartment
   deleteApartment: async (id: string): Promise<void> => {
     await axiosInstance.delete(`/apartments/${id}/`);
+  },
+
+  // Get apartment statistics
+  getApartmentStatistics: async (id: string): Promise<ApartmentStatistics> => {
+    const response = await axiosInstance.get(`/apartments/${id}/statistics/`);
+    return response.data;
+  },
+
+  // Get apartment activities
+  getApartmentActivities: async (id: string): Promise<ApartmentActivity[]> => {
+    const response = await axiosInstance.get(`/apartments/${id}/activities/`);
+    return response.data;
   },
 };

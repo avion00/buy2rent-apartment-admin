@@ -50,3 +50,130 @@
 2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Received vendor_id: None
 2026-01-06 19:55:42 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['78c333b0-d71e-4b5f-bb3b-ecd2e57a4c4c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: aaa.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
 2026-01-06 19:55:42 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: None
+2026-01-09 19:13:40 +01:00: 🔍 DEBUG: Received vendor_id: None
+2026-01-09 19:13:40 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['a282c8e4-7d12-41aa-a43c-049283ae853c'], 'vendor_id': [''], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-09 19:13:40 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: None
+2026-01-15 10:19:56 +01:00: Found 6 recent orders
+2026-01-15 10:19:56 +01:00: Error processing items for order po-fffff: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order po-2055-6868323423: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order vviii: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order 5500iiiiiiii: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order po-2: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order po-5500: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Successfully processed 6 orders
+2026-01-15 10:19:56 +01:00: Found 6 recent orders
+2026-01-15 10:19:56 +01:00: Error processing items for order po-fffff: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order po-2055-6868323423: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order vviii: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order 5500iiiiiiii: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order po-2: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order po-5500: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Successfully processed 6 orders
+2026-01-15 10:19:56 +01:00: Found 6 recent orders
+2026-01-15 10:19:56 +01:00: Error processing items for order po-fffff: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order po-2055-6868323423: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order vviii: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order 5500iiiiiiii: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order po-2: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Error processing items for order po-5500: 'Product' object has no attribute 'name'
+2026-01-15 10:19:56 +01:00: Successfully processed 6 orders
+2026-01-15 10:35:16 +01:00: Found 6 recent orders
+2026-01-15 10:35:16 +01:00: Error processing items for order po-fffff: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order po-2055-6868323423: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order vviii: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order 5500iiiiiiii: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order po-2: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order po-5500: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Successfully processed 6 orders
+2026-01-15 10:35:16 +01:00: Found 6 recent orders
+2026-01-15 10:35:16 +01:00: Error processing items for order po-fffff: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order po-2055-6868323423: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order vviii: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order 5500iiiiiiii: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order po-2: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order po-5500: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Successfully processed 6 orders
+2026-01-15 10:35:16 +01:00: Found 6 recent orders
+2026-01-15 10:35:16 +01:00: Error processing items for order po-fffff: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order po-2055-6868323423: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order vviii: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order 5500iiiiiiii: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order po-2: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Error processing items for order po-5500: 'Product' object has no attribute 'image'
+2026-01-15 10:35:16 +01:00: Successfully processed 6 orders
+2026-01-15 18:00:31 +01:00: Found 6 recent orders
+2026-01-15 18:00:31 +01:00: Successfully processed 6 orders
+2026-01-15 18:00:31 +01:00: Found 6 recent orders
+2026-01-15 18:00:31 +01:00: Successfully processed 6 orders
+2026-01-15 18:06:44 +01:00: Found 6 recent orders
+2026-01-15 18:06:44 +01:00: Successfully processed 6 orders
+2026-01-15 18:06:44 +01:00: Found 6 recent orders
+2026-01-15 18:06:44 +01:00: Successfully processed 6 orders
+2026-01-15 18:06:44 +01:00: Found 6 recent orders
+2026-01-15 18:06:44 +01:00: Successfully processed 6 orders
+2026-01-15 18:14:24 +01:00: Found 6 recent orders
+2026-01-15 18:14:24 +01:00: Successfully processed 6 orders
+2026-01-15 18:14:24 +01:00: Found 6 recent orders
+2026-01-15 18:14:24 +01:00: Successfully processed 6 orders
+2026-01-15 18:14:24 +01:00: Found 6 recent orders
+2026-01-15 18:14:24 +01:00: Successfully processed 6 orders
+2026-01-15 18:14:24 +01:00: Found 6 recent orders
+2026-01-15 18:14:24 +01:00: Successfully processed 6 orders
+2026-01-15 18:20:20 +01:00: Found 6 recent orders
+2026-01-15 18:20:20 +01:00: Successfully processed 6 orders
+2026-01-15 18:20:20 +01:00: Found 6 recent orders
+2026-01-15 18:20:20 +01:00: Successfully processed 6 orders
+2026-01-15 18:20:20 +01:00: Found 6 recent orders
+2026-01-15 18:20:20 +01:00: Successfully processed 6 orders
+2026-01-15 18:20:20 +01:00: Found 6 recent orders
+2026-01-15 18:20:20 +01:00: Successfully processed 6 orders
+2026-01-15 18:25:07 +01:00: Found 6 recent orders
+2026-01-15 18:25:07 +01:00: Successfully processed 6 orders
+2026-01-15 18:25:07 +01:00: Found 6 recent orders
+2026-01-15 18:25:07 +01:00: Successfully processed 6 orders
+2026-01-15 18:28:54 +01:00: Found 6 recent orders
+2026-01-15 18:28:54 +01:00: Successfully processed 6 orders
+2026-01-15 18:28:54 +01:00: Found 6 recent orders
+2026-01-15 18:28:54 +01:00: Successfully processed 6 orders
+2026-01-15 18:35:04 +01:00: Found 6 recent orders
+2026-01-15 18:35:04 +01:00: Successfully processed 6 orders
+2026-01-15 18:35:04 +01:00: Found 6 recent orders
+2026-01-15 18:35:04 +01:00: Successfully processed 6 orders
+2026-01-15 18:40:25 +01:00: Found 6 recent orders
+2026-01-15 18:40:25 +01:00: Successfully processed 6 orders
+2026-01-15 18:40:25 +01:00: Found 6 recent orders
+2026-01-15 18:40:25 +01:00: Successfully processed 6 orders
+2026-01-15 18:44:43 +01:00: Found 6 recent orders
+2026-01-15 18:44:43 +01:00: Successfully processed 6 orders
+2026-01-15 18:44:43 +01:00: Found 6 recent orders
+2026-01-15 18:44:43 +01:00: Successfully processed 6 orders
+2026-01-15 19:32:12 +01:00: Found 6 recent orders
+2026-01-15 19:32:12 +01:00: Successfully processed 6 orders
+2026-01-15 19:32:12 +01:00: Found 6 recent orders
+2026-01-15 19:32:12 +01:00: Successfully processed 6 orders
+2026-01-15 19:32:12 +01:00: Found 6 recent orders
+2026-01-15 19:32:12 +01:00: Successfully processed 6 orders
+2026-01-15 19:32:12 +01:00: Found 6 recent orders
+2026-01-15 19:32:12 +01:00: Successfully processed 6 orders
+2026-01-15 19:32:12 +01:00: Found 6 recent orders
+2026-01-15 19:32:12 +01:00: Successfully processed 6 orders
+2026-01-16 11:13:51 +01:00: Found 6 recent orders
+2026-01-16 11:13:51 +01:00: Successfully processed 6 orders
+2026-01-16 18:50:48 +01:00: Found 6 recent orders
+2026-01-16 18:50:48 +01:00: Successfully processed 6 orders
+2026-01-16 18:50:48 +01:00: Found 6 recent orders
+2026-01-16 18:50:48 +01:00: Successfully processed 6 orders
+2026-01-16 18:57:18 +01:00: Found 6 recent orders
+2026-01-16 18:57:18 +01:00: Successfully processed 6 orders
+2026-01-17 17:54:09 +01:00: Found 6 recent orders
+2026-01-17 17:54:09 +01:00: Successfully processed 6 orders
+2026-01-17 18:17:45 +01:00: Found 6 recent orders
+2026-01-17 18:17:45 +01:00: Successfully processed 6 orders
+2026-01-17 19:30:40 +01:00: Found 6 recent orders
+2026-01-17 19:30:40 +01:00: Successfully processed 6 orders
+2026-01-17 19:30:40 +01:00: Found 6 recent orders
+2026-01-17 19:30:40 +01:00: Successfully processed 6 orders
+2026-01-17 19:30:40 +01:00: Found 6 recent orders
+2026-01-17 19:30:40 +01:00: Successfully processed 6 orders
+2026-01-17 19:30:40 +01:00: Found 6 recent orders
+2026-01-17 19:30:40 +01:00: Successfully processed 6 orders

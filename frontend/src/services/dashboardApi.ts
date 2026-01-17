@@ -51,6 +51,14 @@ export interface DashboardOverview {
   spending_chart: SpendingChartData[];
 }
 
+export interface OrderItem {
+  id: string;
+  product_name: string;
+  product_image: string | null;
+  quantity: number;
+  unit_price: number;
+}
+
 export interface RecentOrder {
   id: string;
   po_number: string;
@@ -59,6 +67,7 @@ export interface RecentOrder {
   total: number;
   status: string;
   placed_on: string;
+  items: OrderItem[];
 }
 
 export interface RecentIssue {
@@ -112,6 +121,13 @@ export const dashboardApi = {
   // Get recent activities
   getRecentActivities: async (): Promise<RecentActivities> => {
     const response = await axiosInstance.get('/dashboard/recent-activities/');
+    console.log('=== API Response ===');
+    console.log('Full response:', response.data);
+    console.log('Recent Orders count:', response.data.recent_orders?.length);
+    if (response.data.recent_orders?.length > 0) {
+      console.log('First order:', response.data.recent_orders[0]);
+      console.log('First order items:', response.data.recent_orders[0].items);
+    }
     return response.data;
   },
 
