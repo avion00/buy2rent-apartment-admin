@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { clientApi } from '@/services/clientApi';
+import { clientApi, ClientFormData } from '@/services/clientApi';
+import { useUpdateClient } from '@/hooks/useClientApi';
+import { useToast } from '@/hooks/use-toast';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +12,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -66,11 +86,21 @@ import ClientViewSkeleton from '@/components/skeletons/ClientViewSkeleton';
 const ClientView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('portfolio');
   const [analyticsTab, setAnalyticsTab] = useState('overview');
   const [overviewGraphType, setOverviewGraphType] = useState('financial');
   const [apartmentGraphType, setApartmentGraphType] = useState('status');
   const [productGraphType, setProductGraphType] = useState('status');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<ClientFormData>({
+    name: '',
+    email: '',
+    phone: '',
+    account_status: 'Active',
+    type: 'Investor',
+    notes: '',
+  });
 
   // Fetch client details from API
   const { data: clientDetails, isLoading, error, refetch } = useQuery({
@@ -78,6 +108,8 @@ const ClientView = () => {
     queryFn: () => clientApi.getClientDetails(id!),
     enabled: !!id,
   });
+
+  const updateClientMutation = useUpdateClient();
 
   const client = clientDetails;
   
@@ -109,6 +141,48 @@ const ClientView = () => {
       'Completed': 'bg-success/10 text-success border-success/20',
     };
     return colors[status] || 'bg-muted text-muted-foreground border-border/50';
+  };
+
+  const handleOpenEditDialog = () => {
+    if (client) {
+      setFormData({
+        name: client.name,
+        email: client.email,
+        phone: client.phone || '',
+        account_status: client.account_status,
+        type: client.type,
+        notes: client.notes || '',
+      });
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim() || !formData.email.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Name and email are required.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await updateClientMutation.mutateAsync({
+        id: id!,
+        data: formData,
+      });
+      toast({
+        title: 'Success',
+        description: 'Client updated successfully',
+      });
+      setEditDialogOpen(false);
+      refetch();
+    } catch (error) {
+      console.error('Error updating client:', error);
+    }
   };
 
   // Prepare chart data
@@ -177,7 +251,7 @@ const ClientView = () => {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate(`/clients/${id}/edit`)}>
+          <Button variant="outline" size="sm" onClick={handleOpenEditDialog}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>
@@ -1037,6 +1111,171 @@ const ClientView = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Client Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader className="pb-4 border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <DialogTitle className="text-xl">Edit Client</DialogTitle>
+                  <DialogDescription className="text-sm">
+                    Update client information
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+            <div className="grid gap-6 py-6">
+              {/* Basic Information Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/30">
+                  <User className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Basic Information</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium">
+                    Full Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="John Doe"
+                    className="h-11"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Contact Information Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/30">
+                  <Mail className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Contact Information</h3>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">
+                      Email <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="john@example.com"
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium">
+                      Phone
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="+36 20 123 4567"
+                      className="h-11"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Settings Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/30">
+                  <Briefcase className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Account Settings</h3>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="type" className="text-sm font-medium">
+                      Client Type
+                    </Label>
+                    <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                      <SelectTrigger id="type" className="h-11">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Investor">Investor</SelectItem>
+                        <SelectItem value="Buy2Rent Internal">Buy2Rent Internal</SelectItem>
+                        <SelectItem value="Company">Company</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="status" className="text-sm font-medium">
+                      Account Status
+                    </Label>
+                    <Select value={formData.account_status} onValueChange={(value) => setFormData({ ...formData, account_status: value })}>
+                      <SelectTrigger id="status" className="h-11">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/30">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Additional Information</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="notes" className="text-sm font-medium">
+                    Notes
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Add any additional notes or comments about this client..."
+                    className="min-h-[100px] resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="pt-6 border-t border-border/50 gap-3">
+              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)} className="flex-1 h-11">
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1 h-11 bg-primary hover:bg-primary/90" disabled={updateClientMutation.isPending}>
+                {updateClientMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 };

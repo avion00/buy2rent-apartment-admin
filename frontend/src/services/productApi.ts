@@ -96,10 +96,12 @@ export interface OrderStatusInfo {
 export interface DeliveryStatusInfo {
   status: string;
   order_reference: string;
+  delivery_id: string;
   tracking_number: string | null;
   expected_date: string | null;
   actual_date: string | null;
   location: string | null;
+  priority: string | null;
 }
 
 // Issue status info type
@@ -195,6 +197,7 @@ export interface Product {
   delivery_notes: string;
   tracking_number: string;
   condition_on_arrival: string;
+  special_instructions: string;
   issue_state: string;
   issue_type: string;
   issue_description: string;

@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProduct } from "@/hooks/useProductApi";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -30,6 +30,25 @@ import {
   MessageSquare,
   Bot,
   User,
+  Truck,
+  MapPin,
+  Phone,
+  Mail,
+  FileText,
+  Ruler,
+  Weight,
+  Palette,
+  Tag,
+  Globe,
+  ShoppingCart,
+  CreditCard,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Info,
+  Building2,
+  Box,
+  Barcode,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -37,6 +56,9 @@ const ProductView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [imageZoom, setImageZoom] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [fullscreenImage, setFullscreenImage] = useState(false);
 
   // Fetch product data from API
   const { data: product, isLoading, error } = useProduct(id || null);
@@ -85,15 +107,159 @@ const ProductView = () => {
     }
   }
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setMousePosition({ x, y });
+  };
+
+  // Handle escape key to close fullscreen
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && fullscreenImage) {
+        setFullscreenImage(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [fullscreenImage]);
+
   // Loading state
   if (isLoading) {
     return (
       <PageLayout title="Loading...">
         <div className="container mx-auto py-8">
-          <div className="space-y-4">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-64 w-full" />
-            <Skeleton className="h-32 w-full" />
+          <Breadcrumb className="mb-6">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <Skeleton className="h-4 w-20" />
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <Skeleton className="h-4 w-24" />
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <Skeleton className="h-4 w-32" />
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+
+          <div className="flex items-center justify-between mb-6">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-6 w-20" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-24" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="xl:col-span-2 space-y-6">
+              {/* Product Information Skeleton */}
+              <Card className="border-2">
+                <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+                  <Skeleton className="h-6 w-48" />
+                </CardHeader>
+                <CardContent className="space-y-4 pt-6">
+                  <Skeleton className="h-20 w-full" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="p-3 bg-background rounded-lg border">
+                        <Skeleton className="h-4 w-16 mb-2" />
+                        <Skeleton className="h-5 w-24" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Specifications Skeleton */}
+              <Card className="border-2">
+                <CardHeader className="bg-gradient-to-r from-blue-500/5 to-transparent">
+                  <Skeleton className="h-6 w-40" />
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="p-3 bg-background rounded-lg border">
+                        <Skeleton className="h-4 w-20 mb-2" />
+                        <Skeleton className="h-5 w-28" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Pricing Skeleton */}
+              <Card className="border-2">
+                <CardHeader className="bg-gradient-to-r from-green-500/5 to-transparent">
+                  <Skeleton className="h-6 w-44" />
+                </CardHeader>
+                <CardContent className="space-y-6 pt-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2">
+                        <Skeleton className="h-4 w-16 mb-2" />
+                        <Skeleton className="h-8 w-32" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Delivery Skeleton */}
+              <Card className="border-2">
+                <CardHeader className="bg-gradient-to-r from-orange-500/5 to-transparent">
+                  <Skeleton className="h-6 w-48" />
+                </CardHeader>
+                <CardContent className="space-y-4 pt-6">
+                  <Skeleton className="h-32 w-full" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="p-3 bg-background rounded-lg border">
+                        <Skeleton className="h-4 w-24 mb-2" />
+                        <Skeleton className="h-5 w-32" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-6">
+              {/* Image Skeleton */}
+              <Card className="border-2">
+                <CardHeader className="bg-gradient-to-r from-slate-500/5 to-transparent">
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Skeleton className="w-full aspect-square" />
+                </CardContent>
+              </Card>
+
+              {/* Quick Stats Skeleton */}
+              <Card className="border-2">
+                <CardHeader className="bg-gradient-to-r from-cyan-500/5 to-transparent">
+                  <Skeleton className="h-6 w-28" />
+                </CardHeader>
+                <CardContent className="space-y-3 pt-6">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-5 w-20" />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </PageLayout>
@@ -258,216 +424,718 @@ const ProductView = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
+          {/* Basic Product Information */}
+          <Card className="border-2">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
+                <Package className="h-5 w-5 text-primary" />
                 Product Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Vendor</p>
-                  <p className="font-medium">{product.vendor}</p>
+            <CardContent className="space-y-6 pt-6">
+              {/* Description */}
+              {product.description && (
+                <div className="p-4 bg-muted/30 rounded-lg border">
+                  <p className="text-sm text-muted-foreground mb-1">Description</p>
+                  <p className="text-sm leading-relaxed">{product.description}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">SKU</p>
-                  <p className="font-mono text-sm">{product.sku}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Category</p>
-                  <p className="font-medium">{product.category || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Room</p>
-                  <p className="font-medium">{product.room || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Availability</p>
-                  <Badge variant={product.availability === "In Stock" ? "default" : "secondary"}>
-                    {product.availability}
-                  </Badge>
-                </div>
-                {product.vendor_link && (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Vendor Link</p>
+              )}
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-3 bg-background rounded-lg border">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Vendor</p>
+                  </div>
+                  <p className="font-semibold">{product.vendor_name || "-"}</p>
+                  {product.vendor_link && (
                     <a
                       href={product.vendor_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:underline flex items-center gap-1 text-sm"
+                      className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
                     >
-                      View on Vendor Site
+                      Visit Website
                       <ExternalLink className="h-3 w-3" />
                     </a>
+                  )}
+                </div>
+                
+                <div className="p-3 bg-background rounded-lg border">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Barcode className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">SKU</p>
+                  </div>
+                  <p className="font-mono text-sm font-semibold">{product.sku || "-"}</p>
+                </div>
+                
+                <div className="p-3 bg-background rounded-lg border">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Tag className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Category</p>
+                  </div>
+                  <p className="font-semibold">{product.category_name || "-"}</p>
+                </div>
+                
+                <div className="p-3 bg-background rounded-lg border">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Box className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Room</p>
+                  </div>
+                  <p className="font-semibold">{product.room || "-"}</p>
+                </div>
+                
+                <div className="p-3 bg-background rounded-lg border">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Availability</p>
+                  </div>
+                  <Badge variant={product.availability === "In Stock" ? "default" : "secondary"}>
+                    {product.availability}
+                  </Badge>
+                </div>
+                
+                {product.brand && (
+                  <div className="p-3 bg-background rounded-lg border">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Tag className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Brand</p>
+                    </div>
+                    <p className="font-semibold">{product.brand}</p>
+                  </div>
+                )}
+                
+                {product.model_number && (
+                  <div className="p-3 bg-background rounded-lg border">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Model Number</p>
+                    </div>
+                    <p className="font-mono text-sm font-semibold">{product.model_number}</p>
+                  </div>
+                )}
+                
+                {product.sn && (
+                  <div className="p-3 bg-background rounded-lg border">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Barcode className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Serial Number</p>
+                    </div>
+                    <p className="font-mono text-sm font-semibold">{product.sn}</p>
+                  </div>
+                )}
+                
+                {product.country_of_origin && (
+                  <div className="p-3 bg-background rounded-lg border">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Country of Origin</p>
+                    </div>
+                    <p className="font-semibold">{product.country_of_origin}</p>
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
+          
+          {/* Product Specifications */}
+          {(product.dimensions || product.weight || product.material || product.color || product.size) && (
+            <Card className="border-2">
+              <CardHeader className="bg-gradient-to-r from-blue-500/5 to-transparent">
                 <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Pricing & Payment
+                  <Ruler className="h-5 w-5 text-blue-600" />
+                  Specifications
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Unit Price</p>
-                    <p className="text-2xl font-bold">{parseFloat(product.unit_price).toLocaleString()} HUF</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Quantity</p>
-                    <p className="text-xl font-bold">{product.qty}</p>
-                  </div>
-                  <div className="pt-2 border-t">
-                    <p className="text-sm text-muted-foreground">Total</p>
-                    <p className="text-2xl font-bold text-primary">
-                      {(parseFloat(product.unit_price) * product.qty).toLocaleString()} HUF
-                    </p>
-                  </div>
-                  {product.payment_status && (
-                    <div className="pt-2">
-                      <p className="text-sm text-muted-foreground mb-1">Payment Status</p>
-                      <Badge className={getStatusColor(product.payment_status)}>{product.payment_status}</Badge>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {product.dimensions && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Ruler className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Dimensions</p>
+                      </div>
+                      <p className="font-semibold">{product.dimensions}</p>
+                    </div>
+                  )}
+                  
+                  {product.weight && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Weight className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Weight</p>
+                      </div>
+                      <p className="font-semibold">{product.weight}</p>
+                    </div>
+                  )}
+                  
+                  {product.material && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Box className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Material</p>
+                      </div>
+                      <p className="font-semibold">{product.material}</p>
+                    </div>
+                  )}
+                  
+                  {product.color && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Palette className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Color</p>
+                      </div>
+                      <p className="font-semibold">{product.color}</p>
+                    </div>
+                  )}
+                  
+                  {product.size && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Ruler className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Size</p>
+                      </div>
+                      <p className="font-semibold">{product.size}</p>
                     </div>
                   )}
                 </div>
-                {product.payment_amount && (
-                  <div className="pt-4 border-t space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Payment Amount:</span>
-                      <span className="font-medium">{parseFloat(product.payment_amount).toLocaleString()} HUF</span>
-                    </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Pricing & Payment */}
+          <Card className="border-2">
+            <CardHeader className="bg-gradient-to-r from-green-500/5 to-transparent">
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                Pricing & Payment
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2 border-primary/20">
+                  <p className="text-xs text-muted-foreground mb-1">Unit Price</p>
+                  <p className="text-2xl font-bold text-primary">{parseFloat(product.unit_price).toLocaleString()} {product.currency}</p>
+                </div>
+                <div className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-500/5 rounded-lg border-2 border-blue-500/20">
+                  <p className="text-xs text-muted-foreground mb-1">Quantity</p>
+                  <p className="text-2xl font-bold text-blue-600">{product.qty}</p>
+                </div>
+                <div className="p-4 bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-lg border-2 border-green-500/20">
+                  <p className="text-xs text-muted-foreground mb-1">Total Amount</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {parseFloat(product.total_amount).toLocaleString()} {product.currency}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {product.shipping_cost && parseFloat(product.shipping_cost) > 0 && (
+                  <div className="p-3 bg-background rounded-lg border">
+                    <p className="text-xs text-muted-foreground mb-1">Shipping Cost</p>
+                    <p className="font-semibold">{parseFloat(product.shipping_cost).toLocaleString()} {product.currency}</p>
+                  </div>
+                )}
+                
+                {product.discount && parseFloat(product.discount) > 0 && (
+                  <div className="p-3 bg-background rounded-lg border">
+                    <p className="text-xs text-muted-foreground mb-1">Discount</p>
+                    <p className="font-semibold text-green-600">-{parseFloat(product.discount).toLocaleString()} {product.currency}</p>
+                  </div>
+                )}
+                
+                <div className="p-3 bg-background rounded-lg border">
+                  <p className="text-xs text-muted-foreground mb-1">Payment Status</p>
+                  <Badge className={getStatusColor(product.payment_status)}>{product.payment_status}</Badge>
+                </div>
+                
+                {product.payment_status_from_orders && (
+                  <div className="p-3 bg-background rounded-lg border">
+                    <p className="text-xs text-muted-foreground mb-1">Order Payment Status</p>
+                    <Badge className={getStatusColor(product.payment_status_from_orders)}>{product.payment_status_from_orders}</Badge>
+                  </div>
+                )}
+              </div>
+              
+              {(product.payment_amount || product.paid_amount) && (
+                <div className="p-4 bg-muted/30 rounded-lg border space-y-3">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Payment Details
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {product.payment_amount && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Payment Amount</p>
+                        <p className="font-semibold">{parseFloat(product.payment_amount).toLocaleString()} {product.currency}</p>
+                      </div>
+                    )}
                     {product.paid_amount !== undefined && (
-                      <>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Paid Amount:</span>
-                          <span className="font-medium">{parseFloat(product.paid_amount).toLocaleString()} HUF</span>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Paid Amount</p>
+                        <p className="font-semibold text-green-600">{parseFloat(product.paid_amount).toLocaleString()} {product.currency}</p>
+                      </div>
+                    )}
+                    {product.outstanding_balance !== undefined && (
+                      <div className="col-span-2">
+                        <p className="text-xs text-muted-foreground mb-1">Outstanding Balance</p>
+                        <p className={`text-lg font-bold ${parseFloat(product.outstanding_balance) > 0 ? 'text-danger' : 'text-success'}`}>
+                          {parseFloat(product.outstanding_balance).toLocaleString()} {product.currency}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Order Tracking */}
+          {product.order_status_info && product.order_status_info.length > 0 && (
+            <Card className="border-2">
+              <CardHeader className="bg-gradient-to-r from-purple-500/5 to-transparent">
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5 text-purple-600" />
+                  Order Tracking
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  {product.order_status_info.map((order, index) => (
+                    <div key={index} className="p-4 bg-muted/30 rounded-lg border space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                          {order.po_number && (
+                            <span className="text-sm font-mono text-muted-foreground">PO: {order.po_number}</span>
+                          )}
                         </div>
-                        <div className="flex justify-between text-sm font-semibold">
-                          <span>Outstanding Balance:</span>
-                          <span
-                            className={parseFloat(product.payment_amount) - parseFloat(product.paid_amount) > 0 ? "text-danger" : "text-success"}
-                          >
-                            {(parseFloat(product.payment_amount) - parseFloat(product.paid_amount)).toLocaleString()} HUF
-                          </span>
+                        {order.quantity && (
+                          <span className="text-sm font-semibold">Qty: {order.quantity}</span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        {order.placed_on && (
+                          <div>
+                            <p className="text-xs text-muted-foreground">Placed On</p>
+                            <p className="font-medium">{new Date(order.placed_on).toLocaleDateString()}</p>
+                          </div>
+                        )}
+                        {order.expected_delivery && (
+                          <div>
+                            <p className="text-xs text-muted-foreground">Expected Delivery</p>
+                            <p className="font-medium">{new Date(order.expected_delivery).toLocaleDateString()}</p>
+                          </div>
+                        )}
+                      </div>
+                      {order.shipping_address && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Shipping Address</p>
+                          <p className="text-sm">{order.shipping_address}</p>
                         </div>
-                      </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Delivery Information */}
+          {(product.delivery_status_info && product.delivery_status_info.length > 0) || product.delivery_address || product.tracking_number ? (
+            <Card className="border-2">
+              <CardHeader className="bg-gradient-to-r from-orange-500/5 to-transparent">
+                <CardTitle className="flex items-center gap-2">
+                  <Truck className="h-5 w-5 text-orange-600" />
+                  Delivery Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6 pt-6">
+                {/* Delivery Status Tracking */}
+                {product.delivery_status_info && product.delivery_status_info.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-sm">Delivery Tracking</h4>
+                    {product.delivery_status_info.map((delivery, index) => (
+                      <div key={index} className="p-4 bg-muted/30 rounded-lg border space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Badge className={getStatusColor(delivery.status)}>{delivery.status}</Badge>
+                          {delivery.priority && (
+                            <Badge variant="outline">{delivery.priority}</Badge>
+                          )}
+                        </div>
+                        {delivery.tracking_number && (
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Tracking Number</p>
+                            <p className="font-mono text-sm font-semibold">{delivery.tracking_number}</p>
+                          </div>
+                        )}
+                        {delivery.location && (
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Current Location</p>
+                              <p className="text-sm font-medium">{delivery.location}</p>
+                            </div>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          {delivery.expected_date && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">Expected Date</p>
+                              <p className="font-medium">{new Date(delivery.expected_date).toLocaleDateString()}</p>
+                            </div>
+                          )}
+                          {delivery.actual_date && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">Actual Date</p>
+                              <p className="font-medium">{new Date(delivery.actual_date).toLocaleDateString()}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Delivery Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {product.delivery_type && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <p className="text-xs text-muted-foreground mb-1">Delivery Type</p>
+                      <p className="font-semibold capitalize">{product.delivery_type.replace('_', ' ')}</p>
+                    </div>
+                  )}
+                  
+                  {product.tracking_number && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <p className="text-xs text-muted-foreground mb-1">Tracking Number</p>
+                      <p className="font-mono text-sm font-semibold">{product.tracking_number}</p>
+                    </div>
+                  )}
+                  
+                  {product.ordered_on && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Ordered On</p>
+                      </div>
+                      <p className="font-semibold">{new Date(product.ordered_on).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  
+                  {product.expected_delivery_date && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Expected Delivery</p>
+                      </div>
+                      <p className="font-semibold">{new Date(product.expected_delivery_date).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  
+                  {product.actual_delivery_date && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <p className="text-xs text-muted-foreground">Actual Delivery</p>
+                      </div>
+                      <p className="font-semibold text-green-600">{new Date(product.actual_delivery_date).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  
+                  {product.eta && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">ETA</p>
+                      </div>
+                      <p className="font-semibold">{new Date(product.eta).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  
+                  {product.condition_on_arrival && (
+                    <div className="p-3 bg-background rounded-lg border">
+                      <p className="text-xs text-muted-foreground mb-1">Condition on Arrival</p>
+                      <p className="font-semibold">{product.condition_on_arrival}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Delivery Address */}
+                {product.delivery_address && (
+                  <div className="p-4 bg-muted/30 rounded-lg border">
+                    <div className="flex items-start gap-2 mb-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <h4 className="font-semibold text-sm">Delivery Address</h4>
+                    </div>
+                    <p className="text-sm mb-1">{product.delivery_address}</p>
+                    {(product.delivery_city || product.delivery_postal_code || product.delivery_country) && (
+                      <p className="text-sm text-muted-foreground">
+                        {[product.delivery_city, product.delivery_postal_code, product.delivery_country].filter(Boolean).join(', ')}
+                      </p>
+                    )}
+                  </div>
+                )}
+                
+                {/* Contact Information */}
+                {(product.delivery_contact_person || product.delivery_contact_phone || product.delivery_contact_email) && (
+                  <div className="p-4 bg-muted/30 rounded-lg border space-y-2">
+                    <h4 className="font-semibold text-sm mb-3">Delivery Contact</h4>
+                    {product.delivery_contact_person && (
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{product.delivery_contact_person}</span>
+                      </div>
+                    )}
+                    {product.delivery_contact_phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <a href={`tel:${product.delivery_contact_phone}`} className="text-sm text-primary hover:underline">
+                          {product.delivery_contact_phone}
+                        </a>
+                      </div>
+                    )}
+                    {product.delivery_contact_email && (
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <a href={`mailto:${product.delivery_contact_email}`} className="text-sm text-primary hover:underline">
+                          {product.delivery_contact_email}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Delivery Instructions */}
+                {(product.delivery_instructions || product.delivery_notes || product.special_instructions) && (
+                  <div className="p-4 bg-muted/30 rounded-lg border">
+                    <h4 className="font-semibold text-sm mb-2">Instructions & Notes</h4>
+                    {product.delivery_instructions && (
+                      <div className="mb-2">
+                        <p className="text-xs text-muted-foreground">Delivery Instructions</p>
+                        <p className="text-sm">{product.delivery_instructions}</p>
+                      </div>
+                    )}
+                    {product.delivery_notes && (
+                      <div className="mb-2">
+                        <p className="text-xs text-muted-foreground">Delivery Notes</p>
+                        <p className="text-sm">{product.delivery_notes}</p>
+                      </div>
+                    )}
+                    {product.special_instructions && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Special Instructions</p>
+                        <p className="text-sm">{product.special_instructions}</p>
+                      </div>
                     )}
                   </div>
                 )}
               </CardContent>
             </Card>
+          ) : null}
 
-            <Card>
-              <CardHeader>
+          {/* Notes & Additional Information */}
+          {(product.notes || product.manual_notes || product.ai_summary_notes) && (
+            <Card className="border-2">
+              <CardHeader className="bg-gradient-to-r from-indigo-500/5 to-transparent">
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Dates & Delivery
+                  <FileText className="h-5 w-5 text-indigo-600" />
+                  Notes & Additional Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-3">
-                  {product.ordered_on && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Ordered On</p>
-                      <p className="font-medium">{new Date(product.ordered_on).toLocaleDateString()}</p>
+              <CardContent className="space-y-4 pt-6">
+                {product.notes && (
+                  <div className="p-4 bg-muted/30 rounded-lg border">
+                    <p className="text-xs text-muted-foreground mb-2 font-semibold">General Notes</p>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{product.notes}</p>
+                  </div>
+                )}
+                {product.manual_notes && (
+                  <div className="p-4 bg-muted/30 rounded-lg border">
+                    <p className="text-xs text-muted-foreground mb-2 font-semibold">Manual Notes</p>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{product.manual_notes}</p>
+                  </div>
+                )}
+                {product.ai_summary_notes && (
+                  <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Bot className="h-4 w-4 text-primary" />
+                      <p className="text-xs text-muted-foreground font-semibold">AI Summary</p>
                     </div>
-                  )}
-                  {product.expected_delivery_date && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Expected Delivery</p>
-                      <p className="font-medium">{new Date(product.expected_delivery_date).toLocaleDateString()}</p>
-                    </div>
-                  )}
-                  {product.actual_delivery_date && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Actual Delivery</p>
-                      <p className="font-medium">{new Date(product.actual_delivery_date).toLocaleDateString()}</p>
-                    </div>
-                  )}
-                  {product.payment_due_date && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Payment Due</p>
-                      <p className="font-medium">{new Date(product.payment_due_date).toLocaleDateString()}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {product.notes && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm whitespace-pre-wrap">{product.notes}</p>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{product.ai_summary_notes}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
         </div>
 
         <div className="space-y-6">
+          {/* Product Image with Zoom */}
           {product.product_image ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Image</CardTitle>
+            <Card className="border-2 overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-slate-500/5 to-transparent">
+                <CardTitle className="flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5" />
+                  Product Image
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <img
-                  src={product.product_image}
-                  alt={product.product}
-                  className="w-full rounded-lg object-cover aspect-square"
-                />
+              <CardContent className="p-0">
+                <div 
+                  className="relative group cursor-pointer overflow-hidden"
+                  onMouseEnter={() => setImageZoom(true)}
+                  onMouseLeave={() => setImageZoom(false)}
+                  onMouseMove={handleMouseMove}
+                  onClick={() => setFullscreenImage(true)}
+                >
+                  <img
+                    src={product.product_image}
+                    alt={product.product}
+                    className="w-full object-cover aspect-square transition-transform duration-200"
+                    style={{
+                      transform: imageZoom ? 'scale(1.5)' : 'scale(1)',
+                      transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`,
+                    }}
+                  />
+                  
+                  {/* Zoom indicator overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-200 pointer-events-none" />
+                  
+                  {/* Zoom hint */}
+                  <div className="absolute bottom-4 right-4 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                    </svg>
+                    Hover to zoom • Click for fullscreen
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardContent className="py-16 text-center">
-                <ImageIcon className="mx-auto h-16 w-16 text-muted-foreground mb-3" />
-                <p className="text-sm text-muted-foreground">No image available</p>
+            <Card className="border-2">
+              <CardContent className="py-24 text-center">
+                <div className="mx-auto h-24 w-24 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground font-medium">No image available</p>
               </CardContent>
             </Card>
           )}
+          
+          {/* Quick Stats */}
+          <Card className="border-2">
+            <CardHeader className="bg-gradient-to-r from-cyan-500/5 to-transparent">
+              <CardTitle className="flex items-center gap-2">
+                <Info className="h-5 w-5 text-cyan-600" />
+                Quick Stats
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-6">
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <span className="text-sm text-muted-foreground">Ordered</span>
+                {product.is_ordered ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <span className="text-sm text-muted-foreground">Active Order</span>
+                {product.has_active_order ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <span className="text-sm text-muted-foreground">Created</span>
+                <span className="text-sm font-medium">{new Date(product.created_at).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <span className="text-sm text-muted-foreground">Last Updated</span>
+                <span className="text-sm font-medium">{new Date(product.updated_at).toLocaleDateString()}</span>
+              </div>
+              {product.created_by && (
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <span className="text-sm text-muted-foreground">Created By</span>
+                  <span className="text-sm font-medium">{product.created_by}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
+          {/* Issue Status */}
           {product.issue_state && product.issue_state !== "No Issue" && (
-            <Card className="border-danger/50 bg-danger/5">
-              <CardHeader>
+            <Card className="border-2 border-danger/50 bg-danger/5">
+              <CardHeader className="bg-gradient-to-r from-danger/10 to-transparent">
                 <CardTitle className="flex items-center gap-2 text-danger">
                   <AlertCircle className="h-5 w-5" />
                   Issue Status
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Badge className={getStatusColor(product.issue_state)}>{product.issue_state}</Badge>
-                {issue && (
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Type:</span>
-                      <span className="ml-2 font-medium">{issue.type}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Reported:</span>
-                      <span className="ml-2 font-medium">{new Date(issue.reportedOn).toLocaleDateString()}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Description:</span>
-                      <p className="mt-1 text-foreground">{issue.description}</p>
-                    </div>
-                    {issue.aiActivated && (
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 mt-2">
-                        <Bot className="h-3 w-3 mr-1" />
-                        AI Active - See conversation above
-                      </Badge>
+              <CardContent className="space-y-4 pt-6">
+                <div className="p-3 bg-background rounded-lg border border-danger/20">
+                  <p className="text-xs text-muted-foreground mb-1">Current Status</p>
+                  <Badge className={getStatusColor(product.issue_state)}>{product.issue_state}</Badge>
+                </div>
+                
+                {product.issue_status_info && product.issue_status_info.status !== 'No Issue' && (
+                  <div className="space-y-3">
+                    {product.issue_status_info.type && (
+                      <div className="p-3 bg-background rounded-lg border">
+                        <p className="text-xs text-muted-foreground mb-1">Issue Type</p>
+                        <p className="font-semibold">{product.issue_status_info.type}</p>
+                      </div>
                     )}
+                    {product.issue_status_info.priority && (
+                      <div className="p-3 bg-background rounded-lg border">
+                        <p className="text-xs text-muted-foreground mb-1">Priority</p>
+                        <Badge variant="outline">{product.issue_status_info.priority}</Badge>
+                      </div>
+                    )}
+                    {product.issue_status_info.created_at && (
+                      <div className="p-3 bg-background rounded-lg border">
+                        <p className="text-xs text-muted-foreground mb-1">Reported On</p>
+                        <p className="font-medium">{new Date(product.issue_status_info.created_at).toLocaleDateString()}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {product.issue_description && (
+                  <div className="p-4 bg-background rounded-lg border border-danger/20">
+                    <p className="text-xs text-muted-foreground mb-2">Description</p>
+                    <p className="text-sm leading-relaxed">{product.issue_description}</p>
+                  </div>
+                )}
+                
+                {(product.replacement_requested || product.replacement_approved) && (
+                  <div className="p-4 bg-warning/10 rounded-lg border border-warning/20">
+                    <p className="text-xs text-muted-foreground mb-2 font-semibold">Replacement Status</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        {product.replacement_requested ? (
+                          <CheckCircle2 className="h-4 w-4 text-warning" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <span className="text-sm">Replacement Requested</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {product.replacement_approved ? (
+                          <CheckCircle2 className="h-4 w-4 text-success" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <span className="text-sm">Replacement Approved</span>
+                      </div>
+                      {product.replacement_eta && (
+                        <div className="mt-2 pt-2 border-t">
+                          <p className="text-xs text-muted-foreground">Replacement ETA</p>
+                          <p className="text-sm font-medium">{new Date(product.replacement_eta).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -475,6 +1143,34 @@ const ProductView = () => {
           )}
         </div>
       </div>
+
+      {/* Fullscreen Image Modal */}
+      {fullscreenImage && product.product_image && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setFullscreenImage(false)}
+        >
+          <button
+            onClick={() => setFullscreenImage(false)}
+            className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-colors duration-200 group"
+            aria-label="Close fullscreen"
+          >
+            <XCircle className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+          </button>
+          
+          <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-lg">
+            <p className="text-sm font-medium">{product.product}</p>
+            <p className="text-xs text-white/70 mt-0.5">Press ESC or click outside to close</p>
+          </div>
+          
+          <img
+            src={product.product_image}
+            alt={product.product}
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 mt-6 gap-6">
         <div className="xl:col-span-2 space-y-6">

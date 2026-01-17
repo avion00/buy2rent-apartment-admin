@@ -269,7 +269,10 @@ export function Sidebar({ isCollapsed, onToggle, className, isMobileOpen = false
                 {/* Section items */}
                 <div className="">
                   {section.items.map((item, index) => {
-                    const isActive = location.pathname === item.href;
+                    // Check if current path matches or starts with the nav item path
+                    // This keeps parent items active on child routes (e.g., /clients/view/123)
+                    const isActive = location.pathname === item.href || 
+                                    (item.href !== '/overview' && location.pathname.startsWith(item.href + '/'));
                     return (
                       <NavItemComponent key={index} item={item} isActive={isActive} />
                     );
