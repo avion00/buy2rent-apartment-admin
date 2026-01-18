@@ -4,8 +4,10 @@ Handles outbound email sending with proper tracking and Issue UUID embedding
 """
 from typing import Dict, Any
 from django.conf import settings
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import strip_tags
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,14 +19,16 @@ class EmailService:
     def __init__(self):
         self.from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'procurement@buy2rent.eu')
     
-    def send_issue_email(self, issue, subject: str, body: str) -> str:
+    def send_issue_email(self, issue, subject: str, body: str, is_initial_report: bool = True, ai_data: Dict[str, Any] = None) -> str:
         """
-        Send email to vendor about issue
+        Send email to vendor about issue with HTML template
         
         Args:
             issue: Issue model instance
             subject: Email subject (should already contain Issue ID)
-            body: Email body (should already contain Issue ID reference)
+            body: Email body (plain text or AI-generated message)
+            is_initial_report: Whether this is the initial issue report (uses detailed template)
+            ai_data: Optional dictionary with AI-generated structured data
         
         Returns:
             email_message_id: The Message-ID header from sent email
@@ -38,14 +42,114 @@ class EmailService:
             raise ValueError("Vendor email not found")
         
         try:
-            # Create email message with custom headers
-            email = EmailMessage(
+            # Prepare context for HTML template
+            if is_initial_report:
+                # Get priority class for styling
+                priority_class = issue.priority.lower() if issue.priority else 'medium'
+                
+                # Parse AI-generated content or use defaults
+                if ai_data and isinstance(ai_data, dict):
+                    opening_message = ai_data.get('opening_message', 'We are writing to report an issue with our recent order.')
+                    closing_message = ai_data.get('closing_message', 'We kindly request your urgent attention to resolve this matter. Please provide us with a resolution timeline at your earliest convenience.')
+                else:
+                    # Extract opening and closing from body if available
+                    body_lines = body.split('\n\n')
+                    opening_message = body_lines[0] if len(body_lines) > 0 else 'We are writing to report an issue with our recent order.'
+                    closing_message = body_lines[-1] if len(body_lines) > 1 else 'We kindly request your urgent attention to resolve this matter.'
+                
+                # Get affected products with images
+                affected_products = []
+                if hasattr(issue, 'items') and issue.items.exists():
+                    for item in issue.items.all():
+                        # Process issue types - split by comma if it's a string
+                        issue_types_display = item.issue_types
+                        if item.issue_types and isinstance(item.issue_types, str):
+                            # Split and create HTML badges
+                            types_list = [t.strip() for t in item.issue_types.split(',') if t.strip()]
+                            issue_types_display = ', '.join(types_list)
+                        
+                        # Get image URL and convert to absolute URL
+                        image_url = item.get_product_image()
+                        if image_url and not image_url.startswith('http'):
+                            # Convert relative path to absolute URL
+                            from django.conf import settings
+                            domain = getattr(settings, 'SITE_DOMAIN', 'https://procurement.buy2rent.eu')
+                            image_url = f"{domain}{image_url}"
+                        
+                        product_data = {
+                            'name': item.product_name or 'Unknown Product',
+                            'quantity': item.quantity_affected,
+                            'issue_types': issue_types_display,
+                            'description': item.description,
+                            'image_url': image_url,
+                        }
+                        affected_products.append(product_data)
+                else:
+                    # Fallback to single product
+                    product_image = None
+                    if issue.product:
+                        product_image = issue.product.product_image or issue.product.image_url or (issue.product.image_file.url if issue.product.image_file else None)
+                    elif issue.order_item:
+                        product_image = issue.order_item.product_image_url
+                    
+                    # Convert to absolute URL if needed
+                    if product_image and not product_image.startswith('http'):
+                        from django.conf import settings
+                        domain = getattr(settings, 'SITE_DOMAIN', 'https://procurement.buy2rent.eu')
+                        product_image = f"{domain}{product_image}"
+                    
+                    affected_products.append({
+                        'name': issue.get_product_name(),
+                        'quantity': 1,
+                        'issue_types': issue.type,
+                        'description': issue.description,
+                        'image_url': product_image,
+                    })
+                
+                context = {
+                    'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
+                    'issue_id': str(issue.id),
+                    'issue_slug': issue.get_issue_slug(),
+                    'issue_type': issue.type,
+                    'priority': issue.priority or 'Medium',
+                    'priority_class': priority_class,
+                    'product_name': issue.get_product_name(),
+                    'order_reference': f"Order #{issue.order.po_number}" if issue.order else None,
+                    'reported_date': issue.reported_on.strftime('%B %d, %Y') if issue.reported_on else timezone.now().strftime('%B %d, %Y'),
+                    'description': issue.description,
+                    'impact': issue.impact if hasattr(issue, 'impact') and issue.impact else None,
+                    'opening_message': opening_message,
+                    'closing_message': closing_message,
+                    'reply_email': self.from_email,
+                    'affected_products': affected_products,
+                }
+                
+                # Render HTML template
+                html_content = render_to_string('emails/issue_report.html', context)
+            else:
+                # Reply template
+                context = {
+                    'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
+                    'issue_id': str(issue.id),
+                    'issue_slug': issue.get_issue_slug(),
+                    'message_body': body,
+                }
+                html_content = render_to_string('emails/issue_reply.html', context)
+            
+            # Create plain text version
+            plain_text = strip_tags(html_content)
+            
+            # Create email message with HTML
+            email = EmailMultiAlternatives(
                 subject=subject,
-                body=body,
+                body=plain_text,
                 from_email=self.from_email,
                 to=[vendor_email],
                 reply_to=[self.from_email],
             )
+            
+            # Attach HTML version
+            email.attach_alternative(html_content, "text/html")
             
             # Add custom headers for tracking
             email.extra_headers = {
@@ -59,11 +163,12 @@ class EmailService:
             # Get Message-ID (Django doesn't expose this easily, so we generate one)
             email_message_id = f"<issue-{issue.id}-{timezone.now().timestamp()}@buy2rent.eu>"
             
-            # Create communication log
+            # Create communication log (store both plain text and HTML version)
             log_entry = AICommunicationLog.objects.create(
                 issue=issue,
                 sender='AI',
-                message=body,
+                message=plain_text,
+                html_content=html_content,
                 message_type='email',
                 subject=subject,
                 email_from=self.from_email,
@@ -93,7 +198,7 @@ class EmailService:
             AICommunicationLog.objects.create(
                 issue=issue,
                 sender='AI',
-                message=body,
+                message=body if isinstance(body, str) else str(body),
                 message_type='email',
                 subject=subject,
                 email_from=self.from_email,
@@ -108,7 +213,7 @@ class EmailService:
     
     def send_manual_message(self, issue, subject: str, body: str, user) -> str:
         """
-        Send manual message from admin to vendor
+        Send manual message from admin to vendor with HTML template
         
         Args:
             issue: Issue model instance
@@ -126,19 +231,34 @@ class EmailService:
         if not vendor_email:
             raise ValueError("Vendor email not found")
         
-        # Ensure Issue ID is in subject
-        if f'Issue #{issue.id}' not in subject and f'[Issue #{issue.id}]' not in subject:
-            subject = f'[Issue #{issue.id}] {subject}'
+        issue_slug = issue.get_issue_slug()
+        if f'Issue #{issue_slug}' not in subject and f'[Issue #{issue_slug}]' not in subject:
+            subject = f'[Issue #{issue_slug}] {subject}'
         
         try:
-            # Create email message
-            email = EmailMessage(
+            # Prepare context for HTML template
+            context = {
+                'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
+                'issue_id': str(issue.id),
+                'issue_slug': issue.get_issue_slug(),
+                'message_body': body,
+            }
+            
+            # Render HTML template
+            html_content = render_to_string('emails/manual_message.html', context)
+            plain_text = strip_tags(html_content)
+            
+            # Create email message with HTML
+            email = EmailMultiAlternatives(
                 subject=subject,
-                body=body,
+                body=plain_text,
                 from_email=self.from_email,
                 to=[vendor_email],
                 reply_to=[self.from_email],
             )
+            
+            # Attach HTML version
+            email.attach_alternative(html_content, "text/html")
             
             email.extra_headers = {
                 'X-Issue-ID': str(issue.id),
@@ -150,11 +270,11 @@ class EmailService:
             
             email_message_id = f"<issue-{issue.id}-{timezone.now().timestamp()}@buy2rent.eu>"
             
-            # Create communication log
+            # Create communication log (store plain text version)
             AICommunicationLog.objects.create(
                 issue=issue,
                 sender='Admin',
-                message=body,
+                message=plain_text,
                 message_type='email',
                 subject=subject,
                 email_from=self.from_email,
@@ -183,7 +303,7 @@ class EmailService:
     
     def send_approved_draft(self, communication_log, user) -> bool:
         """
-        Send an approved AI-generated draft
+        Send an approved AI-generated draft with HTML template
         
         Args:
             communication_log: AICommunicationLog instance with status='pending_approval'
@@ -199,14 +319,29 @@ class EmailService:
         vendor_email = communication_log.email_to
         
         try:
-            # Create email message
-            email = EmailMessage(
+            # Prepare context for HTML template (reply template)
+            context = {
+                'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
+                'issue_id': str(issue.id),
+                'issue_slug': issue.get_issue_slug(),
+                'message_body': communication_log.message,
+            }
+            
+            # Render HTML template
+            html_content = render_to_string('emails/issue_reply.html', context)
+            plain_text = strip_tags(html_content)
+            
+            # Create email message with HTML
+            email = EmailMultiAlternatives(
                 subject=communication_log.subject,
-                body=communication_log.message,
+                body=plain_text,
                 from_email=self.from_email,
                 to=[vendor_email],
                 reply_to=[self.from_email],
             )
+            
+            # Attach HTML version
+            email.attach_alternative(html_content, "text/html")
             
             email.extra_headers = {
                 'X-Issue-ID': str(issue.id),

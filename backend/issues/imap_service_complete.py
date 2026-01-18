@@ -57,15 +57,20 @@ class IMAPService:
     def extract_issue_id(self, subject: str, body: str) -> Optional[str]:
         """
         Extract Issue UUID from email subject or body
-        Looks for patterns like [Issue #uuid] or Issue #uuid
+        Looks for patterns like [Issue #product-slug-uuid] or Issue #uuid
         """
+        # Slug pattern: product-name-shortid (e.g., sofa-bed-b9070610)
+        slug_pattern = r'([a-z0-9-]+-[a-f0-9]{8})'
         # UUID pattern
         uuid_pattern = r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
         
-        # Patterns to search for
+        # Patterns to search for (slug patterns first, then UUID patterns)
         patterns = [
-            rf'\[Issue #({uuid_pattern})\]',  # [Issue #uuid]
-            rf'Issue #({uuid_pattern})',       # Issue #uuid
+            rf'\[Issue #({slug_pattern})\]',  # [Issue #product-slug-uuid]
+            rf'Issue #({slug_pattern})',       # Issue #product-slug-uuid
+            rf'Reference:\s*Issue #({slug_pattern})',  # Reference: Issue #product-slug-uuid
+            rf'\[Issue #({uuid_pattern})\]',  # [Issue #uuid] (backward compatibility)
+            rf'Issue #({uuid_pattern})',       # Issue #uuid (backward compatibility)
             rf'Issue ID:\s*({uuid_pattern})',  # Issue ID: uuid
             rf'Reference:\s*Issue #({uuid_pattern})',  # Reference: Issue #uuid
             rf'issue-({uuid_pattern})',        # issue-uuid (from thread ID)
@@ -75,13 +80,39 @@ class IMAPService:
         for pattern in patterns:
             match = re.search(pattern, subject, re.IGNORECASE)
             if match:
-                return match.group(1)
+                extracted = match.group(1)
+                # If it's a slug, extract the short UUID part
+                if '-' in extracted and len(extracted) > 8:
+                    # Get the last 8 characters (short UUID)
+                    short_uuid = extracted.split('-')[-1]
+                    # Find issue by matching first 8 chars of UUID
+                    from .models import Issue
+                    try:
+                        issue = Issue.objects.filter(id__startswith=short_uuid).first()
+                        if issue:
+                            return str(issue.id)
+                    except:
+                        pass
+                return extracted
         
         # Check body
         for pattern in patterns:
             match = re.search(pattern, body, re.IGNORECASE)
             if match:
-                return match.group(1)
+                extracted = match.group(1)
+                # If it's a slug, extract the short UUID part
+                if '-' in extracted and len(extracted) > 8:
+                    # Get the last 8 characters (short UUID)
+                    short_uuid = extracted.split('-')[-1]
+                    # Find issue by matching first 8 chars of UUID
+                    from .models import Issue
+                    try:
+                        issue = Issue.objects.filter(id__startswith=short_uuid).first()
+                        if issue:
+                            return str(issue.id)
+                    except:
+                        pass
+                return extracted
         
         return None
     
@@ -334,7 +365,7 @@ class IMAPService:
                 
                 # Get reply text from draft_result
                 reply_text = draft_result.get('reply', draft_result.get('body', ''))
-                reply_subject = f"Re: Issue #{issue.id}"
+                reply_subject = f"Re: Issue #{issue.get_issue_slug()}"
                 
                 # Check if we should auto-send or create draft
                 should_auto_send = auto_approve and confidence >= confidence_threshold
@@ -344,10 +375,10 @@ class IMAPService:
                     from .email_service import email_service
                     
                     subject = reply_subject
-                    body = f"{reply_text}\n\n---\nReference: Issue #{issue.id}\nPlease keep this reference in your reply."
+                    body = f"{reply_text}\n\n---\nReference: Issue #{issue.get_issue_slug()}\nPlease keep this reference in your reply."
                     
                     try:
-                        email_message_id = email_service.send_issue_email(issue, subject, body)
+                        email_message_id = email_service.send_issue_email(issue, subject, body, is_initial_report=False)
                         logger.info(f"Auto-sent AI reply for issue {issue_id} (confidence: {confidence})")
                     except Exception as e:
                         logger.error(f"Failed to auto-send AI reply for issue {issue_id}: {e}")
@@ -380,7 +411,7 @@ class IMAPService:
                 for admin in admins:
                     Notification.objects.create(
                         user=admin,
-                        title=f"Issue #{issue.id} Requires Attention",
+                        title=f"Issue #{issue.get_issue_slug()} Requires Attention",
                         message=f"Vendor response received. {analysis.get('suggested_next_action', 'Review required.')}",
                         notification_type='issue',
                         priority='high' if analysis.get('escalation') else 'medium',

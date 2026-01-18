@@ -87,6 +87,30 @@ class Issue(models.Model):
         if self.order_item:
             return self.order_item.product_name
         return self.product_name or 'Unknown Product'
+    
+    def get_issue_slug(self):
+        """Generate a readable slug based on product name and short UUID"""
+        import re
+        
+        # Get product name
+        product_name = self.get_product_name()
+        
+        # Clean product name: lowercase, remove special chars, replace spaces with hyphens
+        clean_name = re.sub(r'[^\w\s-]', '', product_name.lower())
+        clean_name = re.sub(r'[-\s]+', '-', clean_name)
+        clean_name = clean_name.strip('-')
+        
+        # Limit to first 30 characters for readability
+        if len(clean_name) > 30:
+            clean_name = clean_name[:30].rstrip('-')
+        
+        # Get first 8 characters of UUID for uniqueness
+        short_uuid = str(self.id)[:8]
+        
+        # Combine: product-name-shortid
+        slug = f"{clean_name}-{short_uuid}"
+        
+        return slug
 
 
 class IssueItem(models.Model):
@@ -184,6 +208,7 @@ class AICommunicationLog(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     sender = models.CharField(max_length=20, choices=SENDER_CHOICES)
     message = models.TextField()
+    html_content = models.TextField(blank=True, help_text="HTML version of the message for emails")
     
     # Enhanced email tracking fields
     message_type = models.CharField(max_length=20, choices=MESSAGE_TYPE_CHOICES, default='internal')

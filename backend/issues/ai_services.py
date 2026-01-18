@@ -63,14 +63,19 @@ class OpenAIService(AIServiceInterface):
         Impact: {issue_data.get('impact', 'N/A')}
         
         The email should:
-        1. Address the vendor by their actual name: "{vendor_name}"
-        2. Be professional and courteous
-        3. Clear about the issue and its impact
-        4. Include a request for resolution
-        5. Mention expected timeline based on priority
-        6. Sign off with the sender's name: "{sender_name}"
+        1. Be professional and courteous
+        2. Clear about the issue and its impact
+        3. Include a request for resolution
+        4. Mention expected timeline based on priority
         
-        Return as JSON with 'subject' and 'body' fields.
+        Return as JSON with these fields:
+        - "subject": A clear, concise subject line
+        - "opening_message": A brief, professional opening paragraph (1-2 sentences)
+        - "closing_message": A polite closing paragraph requesting action and timeline (2-3 sentences)
+        
+        Do NOT include greetings like "Dear..." or signatures in the opening/closing messages.
+        The opening should introduce the issue briefly.
+        The closing should request resolution and provide contact information.
         """
         
         try:
@@ -92,21 +97,28 @@ class OpenAIService(AIServiceInterface):
                 # If not valid JSON, create structure from content
                 result = {
                     'subject': f"Issue Report: {issue_data.get('type')}",
-                    'body': content
+                    'opening_message': 'We are writing to report an issue with our recent order.',
+                    'closing_message': 'We kindly request your urgent attention to resolve this matter. Please provide us with a resolution timeline at your earliest convenience.'
                 }
+            
             return {
                 'success': True,
                 'subject': result.get('subject', f"Issue Report: {issue_data.get('type')}"),
-                'body': result.get('body', ''),
+                'body': result.get('body', ''),  # Keep for backward compatibility
+                'opening_message': result.get('opening_message', 'We are writing to report an issue with our recent order.'),
+                'closing_message': result.get('closing_message', 'We kindly request your urgent attention to resolve this matter. Please provide us with a resolution timeline at your earliest convenience.'),
                 'confidence': 0.95,
                 'model': self.model
             }
         except Exception as e:
+            fallback_body = self._generate_fallback_email(issue_data)
             return {
                 'success': False,
                 'error': str(e),
                 'subject': f"Issue Report: {issue_data.get('type')}",
-                'body': self._generate_fallback_email(issue_data)
+                'body': fallback_body,
+                'opening_message': 'We are writing to report an issue with our recent order that requires your immediate attention.',
+                'closing_message': 'We kindly request your urgent attention to resolve this matter. Please provide us with a resolution timeline at your earliest convenience. Thank you for your cooperation.'
             }
     
     async def draft_reply(self, issue_data: Dict[str, Any], conversation_history: List[Dict], vendor_message: str) -> Dict[str, Any]:
@@ -299,23 +311,18 @@ class MockAIService(AIServiceInterface):
     
     async def generate_issue_email(self, issue_data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate mock issue report email"""
+        
+        # Generate structured messages for HTML template
+        opening_message = f"We are writing to report a {issue_data.get('priority', 'Medium').lower()} priority issue regarding {issue_data.get('product_name')}. The products received do not meet our quality standards and require your immediate attention."
+        
+        closing_message = f"We kindly request your urgent attention to resolve this matter. Please provide us with a resolution timeline at your earliest convenience. For any questions or clarifications, please reach out to us at procurement@buy2rent.eu. Your prompt action on this issue is highly appreciated."
+        
         return {
             'success': True,
-            'subject': f"[TEST] Issue Report: {issue_data.get('type')} - {issue_data.get('product_name')}",
-            'body': f"""
-Dear Vendor,
-
-This is a TEST email regarding an issue with {issue_data.get('product_name')}.
-
-Issue Type: {issue_data.get('type')}
-Priority: {issue_data.get('priority')}
-Description: {issue_data.get('description')}
-
-Please provide your response at your earliest convenience.
-
-Best regards,
-Procurement Team (TEST MODE)
-""",
+            'subject': f"Critical {issue_data.get('type')} - {issue_data.get('product_name')}",
+            'body': f"Issue with {issue_data.get('product_name')}: {issue_data.get('description')}",
+            'opening_message': opening_message,
+            'closing_message': closing_message,
             'confidence': 1.0,
             'model': 'mock'
         }
@@ -350,58 +357,25 @@ Procurement Team (TEST MODE)
         }
 
 
-class EmailService:
-    """Email service for sending and managing email communications"""
+# Import the proper EmailService with HTML template support
+from .email_service import EmailService as ProperEmailService
+
+
+class EmailServiceWrapper:
+    """Wrapper to make sync EmailService work with async AI services"""
     
     def __init__(self):
-        self.from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@procurement.buy2rent.eu')
+        self.email_service = ProperEmailService()
     
-    async def send_issue_email(self, issue, subject: str, body: str, to_email: str) -> bool:
-        """Send email to vendor about issue"""
-        try:
-            # Store in communication log first (using sync_to_async for DB operations)
-            from .models import AICommunicationLog
-            from asgiref.sync import sync_to_async
-            
-            @sync_to_async
-            def create_log_and_update_issue():
-                log_entry = AICommunicationLog.objects.create(
-                    issue=issue,
-                    sender='AI',
-                    message=body,
-                    message_type='email',
-                    subject=subject,
-                    email_from=self.from_email,
-                    email_to=to_email,
-                    ai_generated=True,
-                    status='sent',
-                    email_thread_id=f"issue-{issue.id}"
-                )
-                
-                # Update issue status
-                issue.status = 'Pending Vendor Response'
-                issue.ai_activated = True
-                issue.save()
-                
-                return log_entry
-            
-            log_entry = await create_log_and_update_issue()
-            
-            # Send actual email (in production, would use async email service)
-            await asyncio.to_thread(
-                send_mail,
-                subject=subject,
-                message=body,
-                from_email=self.from_email,
-                recipient_list=[to_email],
-                fail_silently=False,
-            )
-            
-            return True
-            
-        except Exception as e:
-            print(f"Error sending email: {e}")
-            return False
+    def send_issue_email(self, issue, subject: str, body: str, is_initial_report: bool = True, ai_data: Dict[str, Any] = None) -> str:
+        """Send email using the proper HTML email service"""
+        return self.email_service.send_issue_email(
+            issue=issue,
+            subject=subject,
+            body=body,
+            is_initial_report=is_initial_report,
+            ai_data=ai_data
+        )
     
     async def process_vendor_reply(self, issue, email_data: Dict[str, Any]) -> None:
         """Process incoming vendor email reply"""
@@ -429,7 +403,7 @@ class IssueAIManager:
     def __init__(self):
         use_mock = getattr(settings, 'USE_MOCK_AI', True)
         self.ai_service = MockAIService() if use_mock else OpenAIService()
-        self.email_service = EmailService()
+        self.email_service = EmailServiceWrapper()
     
     async def start_issue_conversation(self, issue) -> Dict[str, Any]:
         """Start AI conversation for an issue"""
@@ -458,20 +432,24 @@ class IssueAIManager:
             vendor_email = issue.vendor.email if issue.vendor else issue.vendor_contact
             if vendor_email:
                 # Add Issue ID to subject for tracking
-                subject_with_id = f"[Issue #{issue.id}] {email_result['subject']}"
+                issue_slug = issue.get_issue_slug()
+                subject_with_id = f"[Issue #{issue_slug}] {email_result['subject']}"
                 
-                # Add Issue ID reference to body footer for tracking
-                body_with_tracking = f"""{email_result['body']}
-
----
-Reference: Issue #{issue.id}
-Please keep this reference in your reply for tracking purposes."""
+                # Prepare AI data for template
+                ai_email_data = {
+                    'opening_message': email_result.get('opening_message', email_result.get('body', 'We are writing to report an issue with our recent order.')),
+                    'closing_message': email_result.get('closing_message', 'We kindly request your urgent attention to resolve this matter. Please provide us with a resolution timeline at your earliest convenience.'),
+                }
                 
-                await self.email_service.send_issue_email(
+                # Use body as fallback
+                body_text = email_result.get('body', '')
+                
+                self.email_service.send_issue_email(
                     issue=issue,
                     subject=subject_with_id,
-                    body=body_with_tracking,
-                    to_email=vendor_email
+                    body=body_text,
+                    is_initial_report=True,
+                    ai_data=ai_email_data
                 )
                 
                 return {
@@ -524,15 +502,17 @@ Please keep this reference in your reply for tracking purposes."""
             
             if should_auto_send:
                 # Auto-send the AI reply via email
-                subject = f"Re: Issue #{issue.id}"
-                body = f"{reply_result['reply']}\n\n---\nReference: Issue #{issue.id}\nPlease keep this reference in your reply."
+                issue_slug = issue.get_issue_slug()
+                subject = f"Re: Issue #{issue_slug}"
+                body = f"{reply_result['reply']}\n\n---\nReference: Issue #{issue_slug}\nPlease keep this reference in your reply."
                 
                 try:
                     email_message_id = await asyncio.to_thread(
                         self.email_service.send_issue_email,
                         issue,
                         subject,
-                        body
+                        body,
+                        is_initial_report=False
                     )
                     
                     return {
@@ -554,7 +534,7 @@ Please keep this reference in your reply for tracking purposes."""
                     sender='AI',
                     message=reply_result['reply'],
                     message_type='email',
-                    subject=f"Re: Issue #{issue.id}",
+                    subject=f"Re: Issue #{issue.get_issue_slug()}",
                     email_from=getattr(settings, 'DEFAULT_FROM_EMAIL', 'procurement@buy2rent.eu'),
                     email_to=issue.vendor.email if issue.vendor else issue.vendor_contact,
                     ai_generated=True,

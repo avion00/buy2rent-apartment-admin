@@ -202,16 +202,38 @@ export function AIConversationPanel({ issue, onUpdateIssue }: AIConversationPane
                               Action Required
                             </Badge>
                           )}
+                          {log.message_type === 'email' && (
+                            <Badge variant="outline" className="text-xs">
+                              Email
+                            </Badge>
+                          )}
                           <span className="text-xs text-muted-foreground">
                             {new Date(log.timestamp).toLocaleString()}
                           </span>
                         </div>
-                        <p className={cn(
-                          "text-sm whitespace-pre-wrap leading-relaxed",
-                          isHumanAction && "font-medium"
-                        )}>
-                          {log.message}
-                        </p>
+                        {log.subject && (
+                          <p className="text-sm font-semibold text-foreground">
+                            {log.subject}
+                          </p>
+                        )}
+                        {log.html_content && log.message_type === 'email' ? (
+                          <div 
+                            className={cn(
+                              "text-sm leading-relaxed prose prose-sm max-w-none",
+                              "prose-headings:text-foreground prose-p:text-foreground",
+                              "prose-strong:text-foreground prose-a:text-primary",
+                              isHumanAction && "font-medium"
+                            )}
+                            dangerouslySetInnerHTML={{ __html: log.html_content }}
+                          />
+                        ) : (
+                          <p className={cn(
+                            "text-sm whitespace-pre-wrap leading-relaxed",
+                            isHumanAction && "font-medium"
+                          )}>
+                            {log.message}
+                          </p>
+                        )}
                       </div>
                     </div>
                   );

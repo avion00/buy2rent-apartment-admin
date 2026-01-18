@@ -145,12 +145,45 @@ export default function IssueDetail() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-semibold mb-2">Description</h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {issue.description}
-                  </p>
-                </div>
+                {/* Product-specific Descriptions */}
+                {issue.items && issue.items.length > 0 ? (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold mb-3">Issue Descriptions by Product</h4>
+                    {issue.items.map((item: any, index: number) => (
+                      <div key={item.id || index} className="p-4 bg-muted/30 rounded-lg  space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <h5 className="font-semibold text-sm">{item.product_name || item.order_item_product_name || 'Unknown Product'}</h5>
+                          {item.quantity_affected && (
+                            <Badge variant="outline" className="flex-shrink-0">
+                              Qty: {item.quantity_affected}
+                            </Badge>
+                          )}
+                        </div>
+                        {item.issue_types && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {item.issue_types.split(',').map((type: string, i: number) => (
+                              <Badge key={i} variant="destructive" className="text-xs">
+                                {type.trim()}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div>
+                    <h4 className="text-sm font-semibold mb-2">Description</h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {issue.description}
+                    </p>
+                  </div>
+                )}
                 
                 <Separator />
                 
@@ -462,8 +495,57 @@ export default function IssueDetail() {
                   </div>
                 )}
 
-                {/* Product Details */}
-                {issue.product_details && (
+                {/* Product Details - Show all products from items */}
+                {issue.items && issue.items.length > 0 ? (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <Package className="h-4 w-4" /> Product Details ({issue.items.length})
+                    </h4>
+                    {issue.items.map((item: any, index: number) => (
+                      <div key={item.id || index} className="p-4 bg-muted/50 rounded-lg space-y-3">
+                        <div className="flex gap-4">
+                          {/* Product Image */}
+                          <div className="flex-shrink-0">
+                            {item.product_image ? (
+                              <img 
+                                src={item.product_image} 
+                                alt={item.product_name || 'Product'} 
+                                className="w-24 h-24 rounded-lg object-cover border-2 border-muted"
+                              />
+                            ) : (
+                              <div className="w-24 h-24 rounded-lg flex items-center justify-center border-2 border-muted bg-muted">
+                                <Package className="h-10 w-10 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          {/* Product Info */}
+                          <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Product Name</p>
+                              <p className="font-medium">{item.product_name || item.order_item_product_name || 'Unknown'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Quantity Affected</p>
+                              <p className="font-medium">{item.quantity_affected || 1}</p>
+                            </div>
+                            {item.issue_types && (
+                              <div>
+                                <p className="text-sm text-muted-foreground">Issue Types</p>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {item.issue_types.split(',').slice(0, 2).map((type: string, i: number) => (
+                                    <Badge key={i} variant="outline" className="text-xs">
+                                      {type.trim()}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : issue.product_details ? (
                   <div className="p-4 bg-muted/50 rounded-lg space-y-3">
                     <h4 className="font-semibold flex items-center gap-2">
                       <Package className="h-4 w-4" /> Product Details
@@ -510,7 +592,7 @@ export default function IssueDetail() {
                       </div>
                     </div>
                   </div>
-                )}
+                ) : null}
 
                 {/* Fallback if no order/product details */}
                 {!issue.order_details && !issue.order_item_details && !issue.product_details && (

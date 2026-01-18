@@ -66,12 +66,18 @@ class IssueViewSet(viewsets.ModelViewSet):
                 loop.close()
                 
                 if result.get('success'):
-                    # Add Issue ID to subject and body
-                    subject = f"[Issue #{issue.id}] {result['subject']}"
-                    body = f"{result['body']}\n\n---\nReference: Issue #{issue.id}\nPlease keep this reference in your reply."
+                    # Add Issue ID to subject
+                    subject = f"[Issue #{issue.get_issue_slug()}] {result['subject']}"
+                    body = result['body']
                     
-                    # Send email synchronously (TODO: use Celery)
-                    email_service.send_issue_email(issue, subject, body)
+                    # Send email with HTML template (initial report)
+                    email_service.send_issue_email(
+                        issue=issue,
+                        subject=subject,
+                        body=body,
+                        is_initial_report=True,
+                        ai_data=result
+                    )
                     logger.info(f"Auto-sent AI email for issue {issue.id}")
                 else:
                     logger.error(f"Failed to generate AI email for issue {issue.id}: {result.get('error')}")
@@ -177,7 +183,7 @@ class IssueViewSet(viewsets.ModelViewSet):
         
         # Validate required fields
         message = request.data.get('message', '')
-        subject = request.data.get('subject', f'Re: Issue #{issue.id}')
+        subject = request.data.get('subject', f'Re: Issue #{issue.get_issue_slug()}')
         from_email = request.data.get('from_email', issue.vendor.email if issue.vendor else '')
         
         if not message:
@@ -229,9 +235,10 @@ class IssueViewSet(viewsets.ModelViewSet):
         """Send a manual message to vendor without AI processing"""
         issue = self.get_object()
         # Ensure Issue ID is in subject
-        subject = request.data.get('subject', f'Re: Issue #{issue.id}')
-        if f'Issue #{issue.id}' not in subject and f'[Issue #{issue.id}]' not in subject:
-            subject = f'[Issue #{issue.id}] {subject}'
+        issue_slug = issue.get_issue_slug()
+        subject = request.data.get('subject', f'Re: Issue #{issue_slug}')
+        if f'Issue #{issue_slug}' not in subject and f'[Issue #{issue_slug}]' not in subject:
+            subject = f'[Issue #{issue_slug}] {subject}'
         message = request.data.get('message', '')
         to_email = request.data.get('to_email', issue.vendor.email if issue.vendor else '')
         
@@ -242,43 +249,18 @@ class IssueViewSet(viewsets.ModelViewSet):
             return Response({'success': False, 'message': 'Vendor email is required'}, status=400)
         
         try:
-            # Create communication log for manual message
-            from issues.models import AICommunicationLog
-            log = AICommunicationLog.objects.create(
+            # Send email using email service with HTML template
+            email_message_id = email_service.send_manual_message(
                 issue=issue,
-                sender='Admin',
-                message=message,
-                message_type='email',
                 subject=subject,
-                email_from=settings.DEFAULT_FROM_EMAIL,
-                email_to=to_email,
-                ai_generated=False,
-                status='sent',
-                requires_approval=False,
-                email_thread_id=f"issue-{issue.id}"
+                body=message,
+                user=request.user
             )
-            
-            # Send the email with Issue UUID reference
-            from django.core.mail import send_mail
-            email_body = f"{message}\n\n---\nReference: Issue #{issue.id}\nPlease keep this reference in your reply."
-            
-            send_mail(
-                subject=subject,
-                message=email_body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[to_email],
-                fail_silently=False,
-            )
-            
-            # Update issue status if needed
-            if issue.status == 'Open':
-                issue.status = 'Pending Vendor Response'
-                issue.save()
             
             return Response({
                 'success': True,
                 'message': 'Manual message sent successfully',
-                'log_id': str(log.id)
+                'email_message_id': email_message_id
             })
         except Exception as e:
             return Response({
@@ -440,24 +422,9 @@ class AICommunicationLogViewSet(viewsets.ModelViewSet):
             return Response({
                 'error': 'Message is not pending approval'
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Update message status
-        message.status = 'sent'
-        message.approved_by = request.user
-        message.approved_at = timezone.now()
-        message.save()
-        
-        # Send the email
-        from django.core.mail import send_mail
+
         try:
-            send_mail(
-                subject=message.subject,
-                message=message.message,
-                from_email=message.email_from,
-                recipient_list=[message.email_to],
-                fail_silently=False,
-            )
-            
+            email_service.send_approved_draft(message, request.user)
             return Response({
                 'success': True,
                 'message': 'Email approved and sent'
@@ -482,27 +449,20 @@ class AICommunicationLogViewSet(viewsets.ModelViewSet):
             return Response({
                 'error': 'Message content is required'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        if message.status != 'pending_approval':
+            return Response({
+                'error': 'Message is not pending approval'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         # Update message
         message.message = new_content
         message.subject = new_subject
         message.manual_override = True
-        message.status = 'sent'
-        message.approved_by = request.user
-        message.approved_at = timezone.now()
         message.save()
-        
-        # Send the email
-        from django.core.mail import send_mail
+
         try:
-            send_mail(
-                subject=new_subject,
-                message=new_content,
-                from_email=message.email_from,
-                recipient_list=[message.email_to],
-                fail_silently=False,
-            )
-            
+            email_service.send_approved_draft(message, request.user)
             return Response({
                 'success': True,
                 'message': 'Email edited and sent'

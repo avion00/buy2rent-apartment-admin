@@ -48,6 +48,7 @@ export interface AICommunicationLog {
   timestamp: string;
   sender: 'AI' | 'Vendor' | 'System' | 'Admin';
   message: string;
+  html_content?: string;
   message_type?: 'email' | 'internal' | 'system';
   subject?: string;
   email_from?: string;
