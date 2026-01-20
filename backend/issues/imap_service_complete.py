@@ -59,8 +59,10 @@ class IMAPService:
         Extract Issue UUID from email subject or body
         Looks for patterns like [Issue #product-slug-uuid] or Issue #uuid
         """
-        # Slug pattern: product-name-shortid (e.g., sofa-bed-b9070610)
+        # Slug pattern: product-name-shortid (e.g., bedsheet-aad4ae1e or sofa-bed-b9070610)
         slug_pattern = r'([a-z0-9-]+-[a-f0-9]{8})'
+        # Short UUID pattern (8 chars)
+        short_uuid_pattern = r'[a-f0-9]{8}'
         # UUID pattern
         uuid_pattern = r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
         
@@ -69,11 +71,13 @@ class IMAPService:
             rf'\[Issue #({slug_pattern})\]',  # [Issue #product-slug-uuid]
             rf'Issue #({slug_pattern})',       # Issue #product-slug-uuid
             rf'Reference:\s*Issue #({slug_pattern})',  # Reference: Issue #product-slug-uuid
+            rf'#({slug_pattern})',             # #product-slug-uuid (in subject)
             rf'\[Issue #({uuid_pattern})\]',  # [Issue #uuid] (backward compatibility)
             rf'Issue #({uuid_pattern})',       # Issue #uuid (backward compatibility)
             rf'Issue ID:\s*({uuid_pattern})',  # Issue ID: uuid
             rf'Reference:\s*Issue #({uuid_pattern})',  # Reference: Issue #uuid
             rf'issue-({uuid_pattern})',        # issue-uuid (from thread ID)
+            rf'#({short_uuid_pattern})',       # #aad4ae1e (short form)
         ]
         
         # Check subject first
@@ -81,38 +85,80 @@ class IMAPService:
             match = re.search(pattern, subject, re.IGNORECASE)
             if match:
                 extracted = match.group(1)
-                # If it's a slug, extract the short UUID part
-                if '-' in extracted and len(extracted) > 8:
-                    # Get the last 8 characters (short UUID)
-                    short_uuid = extracted.split('-')[-1]
-                    # Find issue by matching first 8 chars of UUID
-                    from .models import Issue
-                    try:
-                        issue = Issue.objects.filter(id__startswith=short_uuid).first()
+                logger.debug(f"Extracted from subject: {extracted}")
+                
+                # Try to find issue by the extracted value
+                from .models import Issue
+                try:
+                    # If it's a slug pattern (contains hyphens and ends with 8 hex chars)
+                    if '-' in extracted and len(extracted) > 8:
+                        # Get the last part (should be 8 hex chars)
+                        parts = extracted.split('-')
+                        short_uuid = parts[-1]
+                        
+                        # Try to find issue by matching first 8 chars of UUID
+                        if len(short_uuid) == 8 and re.match(r'^[a-f0-9]{8}$', short_uuid):
+                            issue = Issue.objects.filter(id__startswith=short_uuid).first()
+                            if issue:
+                                logger.info(f"Found issue by slug: {extracted} -> {issue.id}")
+                                return str(issue.id)
+                    
+                    # Try as full UUID
+                    if len(extracted) == 36:  # Full UUID format
+                        issue = Issue.objects.filter(id=extracted).first()
                         if issue:
+                            logger.info(f"Found issue by UUID: {extracted}")
                             return str(issue.id)
-                    except:
-                        pass
-                return extracted
+                    
+                    # Try as short UUID (8 chars)
+                    if len(extracted) == 8 and re.match(r'^[a-f0-9]{8}$', extracted):
+                        issue = Issue.objects.filter(id__startswith=extracted).first()
+                        if issue:
+                            logger.info(f"Found issue by short UUID: {extracted} -> {issue.id}")
+                            return str(issue.id)
+                except Exception as e:
+                    logger.error(f"Error finding issue for {extracted}: {e}")
+                    pass
         
         # Check body
         for pattern in patterns:
             match = re.search(pattern, body, re.IGNORECASE)
             if match:
                 extracted = match.group(1)
-                # If it's a slug, extract the short UUID part
-                if '-' in extracted and len(extracted) > 8:
-                    # Get the last 8 characters (short UUID)
-                    short_uuid = extracted.split('-')[-1]
-                    # Find issue by matching first 8 chars of UUID
-                    from .models import Issue
-                    try:
-                        issue = Issue.objects.filter(id__startswith=short_uuid).first()
+                logger.debug(f"Extracted from body: {extracted}")
+                
+                # Try to find issue by the extracted value
+                from .models import Issue
+                try:
+                    # If it's a slug pattern (contains hyphens and ends with 8 hex chars)
+                    if '-' in extracted and len(extracted) > 8:
+                        # Get the last part (should be 8 hex chars)
+                        parts = extracted.split('-')
+                        short_uuid = parts[-1]
+                        
+                        # Try to find issue by matching first 8 chars of UUID
+                        if len(short_uuid) == 8 and re.match(r'^[a-f0-9]{8}$', short_uuid):
+                            issue = Issue.objects.filter(id__startswith=short_uuid).first()
+                            if issue:
+                                logger.info(f"Found issue by slug in body: {extracted} -> {issue.id}")
+                                return str(issue.id)
+                    
+                    # Try as full UUID
+                    if len(extracted) == 36:  # Full UUID format
+                        issue = Issue.objects.filter(id=extracted).first()
                         if issue:
+                            logger.info(f"Found issue by UUID in body: {extracted}")
                             return str(issue.id)
-                    except:
-                        pass
-                return extracted
+                    
+                    # Try as short UUID (8 chars)
+                    if len(extracted) == 8 and re.match(r'^[a-f0-9]{8}$', extracted):
+                        issue = Issue.objects.filter(id__startswith=extracted).first()
+                        if issue:
+                            logger.info(f"Found issue by short UUID in body: {extracted} -> {issue.id}")
+                            return str(issue.id)
+                except Exception as e:
+                    logger.error(f"Error finding issue for {extracted} in body: {e}")
+                    pass
         
         return None
     
@@ -372,16 +418,24 @@ class IMAPService:
                 
                 if should_auto_send:
                     # Auto-send the AI reply
-                    from .email_service import email_service
+                    from .email_service import EmailService
                     
                     subject = reply_subject
-                    body = f"{reply_text}\n\n---\nReference: Issue #{issue.get_issue_slug()}\nPlease keep this reference in your reply."
+                    # Just send the reply text, email_service will wrap it in template
                     
                     try:
-                        email_message_id = email_service.send_issue_email(issue, subject, body, is_initial_report=False)
-                        logger.info(f"Auto-sent AI reply for issue {issue_id} (confidence: {confidence})")
+                        # Send email using email service (it creates its own log entry)
+                        email_svc = EmailService()
+                        email_message_id = email_svc.send_issue_email(
+                            issue=issue,
+                            subject=subject,
+                            body=reply_text,  # Plain text - will be wrapped in HTML template
+                            is_initial_report=False
+                        )
+                        
+                        logger.info(f"✓ Auto-sent AI reply for issue {issue_id} (confidence: {confidence})")
                     except Exception as e:
-                        logger.error(f"Failed to auto-send AI reply for issue {issue_id}: {e}")
+                        logger.error(f"✗ Failed to auto-send AI reply for issue {issue_id}: {e}")
                 else:
                     # Create draft for manual approval
                     AICommunicationLog.objects.create(
@@ -436,12 +490,13 @@ class IMAPService:
             # Select inbox
             self.mail.select(self.inbox_folder)
             
-            # Search for unread emails or recent emails
+            # Search for ALL emails (both read and unread) from last 2 days
+            # This ensures we don't miss any vendor replies
             from datetime import datetime, timedelta
-            yesterday = (datetime.now() - timedelta(days=1)).strftime("%d-%b-%Y")
+            two_days_ago = (datetime.now() - timedelta(days=2)).strftime("%d-%b-%Y")
             
-            # Search for recent emails
-            status_code, messages = self.mail.search(None, f'(SINCE "{yesterday}")')
+            # Search for recent emails (both read and unread)
+            status_code, messages = self.mail.search(None, f'(SINCE "{two_days_ago}")')
             
             if status_code != 'OK':
                 logger.error("Failed to search emails")
@@ -463,8 +518,13 @@ class IMAPService:
                     msg = email.message_from_bytes(raw_email)
                     email_data = self.parse_email(msg)
                     
-                    # Skip emails from our own system
-                    if email_data['from'] and 'buy2rent.eu' in email_data['from'].lower():
+                    # Skip emails from our own system (check actual sender email)
+                    system_email = settings.EMAIL_HOST_USER.lower()
+                    if email_data['from'] and email_data['from'].lower() == system_email:
+                        continue
+                    
+                    # Also skip if it's from buy2rent.eu domain
+                    if email_data['from'] and '@buy2rent.eu' in email_data['from'].lower():
                         continue
                     
                     # Check if email has Issue ID

@@ -220,7 +220,6 @@ python manage.py monitor_vendor_emails_complete --interval 300
    - Sets manual_override=True
 
 **All endpoints appear in Swagger UI** ✓
-
 ---
 
 ### 9. Serializers Updated ✓

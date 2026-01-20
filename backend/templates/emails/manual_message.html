@@ -110,7 +110,7 @@
 
         <div class="content">
             <div class="greeting">Dear {{ vendor_name }} team,</div>
-            <div class="message-body">{{ message_body }}</div>
+            <div class="message-body">{% if message_body_html %}{{ message_body_html|safe }}{% else %}{{ message_body }}{% endif %}</div>
         </div>
 
         <div class="footer-reference">

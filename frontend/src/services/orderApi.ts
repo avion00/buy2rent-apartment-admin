@@ -187,7 +187,7 @@ export const orderApi = {
 
   // Update order status
   updateStatus: async (id: string, status: string): Promise<Order> => {
-    const response = await axiosInstance.patch(`/orders/${id}/`, { status });
+    const response = await axiosInstance.patch(`/orders/${id}/update_status/`, { status });
     return response.data;
   },
 

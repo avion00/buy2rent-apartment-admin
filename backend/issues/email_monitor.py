@@ -50,24 +50,58 @@ class EmailMonitor:
                 pass
     
     def extract_issue_id_from_email(self, subject: str, body: str) -> Optional[str]:
-        """Extract issue ID from email subject or body"""
-        # Look for patterns like "Issue #uuid" or "issue-uuid"
+        """Extract Issue UUID from email subject or body"""
+        slug_pattern = r'([a-z0-9-]+-[a-f0-9]{8})'
+        short_uuid_pattern = r'[a-f0-9]{8}'
+        uuid_pattern = r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
+
         patterns = [
-            r'Issue\s*#?\s*([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})',
-            r'issue-([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})',
+            rf'\[Issue\s*#\s*({slug_pattern})\]',
+            rf'Issue\s*#\s*({slug_pattern})',
+            rf'#({slug_pattern})',
+            rf'\[Issue\s*#\s*({uuid_pattern})\]',
+            rf'Issue\s*#?\s*({uuid_pattern})',
+            rf'issue-({uuid_pattern})',
+            rf'#({short_uuid_pattern})',
         ]
-        
+
+        def _resolve(extracted: str) -> Optional[str]:
+            try:
+                if '-' in extracted and len(extracted) > 8:
+                    parts = extracted.split('-')
+                    short_uuid = parts[-1]
+                    if len(short_uuid) == 8 and re.match(r'^[a-f0-9]{8}$', short_uuid):
+                        issue = Issue.objects.filter(id__startswith=short_uuid).first()
+                        if issue:
+                            return str(issue.id)
+
+                if len(extracted) == 36:
+                    issue = Issue.objects.filter(id=extracted).first()
+                    if issue:
+                        return str(issue.id)
+
+                if len(extracted) == 8 and re.match(r'^[a-f0-9]{8}$', extracted):
+                    issue = Issue.objects.filter(id__startswith=extracted).first()
+                    if issue:
+                        return str(issue.id)
+            except Exception as e:
+                logger.error(f"Error resolving issue identifier {extracted}: {e}")
+            return None
+
         for pattern in patterns:
-            # Check subject
-            match = re.search(pattern, subject, re.IGNORECASE)
+            match = re.search(pattern, subject or '', re.IGNORECASE)
             if match:
-                return match.group(1)
-            
-            # Check body
-            match = re.search(pattern, body, re.IGNORECASE)
+                resolved = _resolve(match.group(1))
+                if resolved:
+                    return resolved
+
+        for pattern in patterns:
+            match = re.search(pattern, body or '', re.IGNORECASE)
             if match:
-                return match.group(1)
-        
+                resolved = _resolve(match.group(1))
+                if resolved:
+                    return resolved
+
         return None
     
     def parse_email_message(self, msg) -> Dict:
@@ -190,30 +224,44 @@ class EmailMonitor:
             issue = Issue.objects.get(id=issue_id)
             
             # Check if this email has already been processed
+            existing_vendor_log = None
             if email_data.get('message_id'):
-                existing = AICommunicationLog.objects.filter(
-                    email_message_id=email_data['message_id']
-                ).exists()
+                existing_vendor_log = AICommunicationLog.objects.filter(
+                    email_message_id=email_data['message_id'],
+                    issue=issue,
+                    sender='Vendor'
+                ).order_by('-timestamp').first()
                 
-                if existing:
+                if existing_vendor_log:
                     logger.info(f"Email already processed: {email_data['message_id']}")
-                    return
+                    # If AI has not responded after this vendor message, generate now
+                    ai_reply_exists = AICommunicationLog.objects.filter(
+                        issue=issue,
+                        sender='AI',
+                        message_type='email',
+                        timestamp__gte=existing_vendor_log.timestamp
+                    ).exists()
+                    
+                    if ai_reply_exists:
+                        return
             
-            # Create vendor response log
-            vendor_log = AICommunicationLog.objects.create(
-                issue=issue,
-                sender='Vendor',
-                message=email_data['body'],
-                message_type='email',
-                subject=email_data['subject'],
-                email_from=email_data['from'],
-                email_to=email_data['to'],
-                status='received',
-                email_thread_id=f"issue-{issue.id}",
-                email_message_id=email_data['message_id'],
-                in_reply_to=email_data['in_reply_to'],
-                timestamp=email_data['date'] or timezone.now()
-            )
+            # Create vendor response log (if not already stored)
+            vendor_log = existing_vendor_log
+            if not vendor_log:
+                vendor_log = AICommunicationLog.objects.create(
+                    issue=issue,
+                    sender='Vendor',
+                    message=email_data['body'],
+                    message_type='email',
+                    subject=email_data['subject'],
+                    email_from=email_data['from'],
+                    email_to=email_data['to'],
+                    status='received',
+                    email_thread_id=f"issue-{issue.id}",
+                    email_message_id=email_data['message_id'],
+                    in_reply_to=email_data['in_reply_to'],
+                    timestamp=email_data['date'] or timezone.now()
+                )
             
             logger.info(f"Added vendor response for issue {issue_id}")
             

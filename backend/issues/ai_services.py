@@ -11,6 +11,7 @@ from openai import OpenAI
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
+import re
 
 
 class AIServiceInterface(ABC):
@@ -42,7 +43,7 @@ class OpenAIService(AIServiceInterface):
     
     def __init__(self):
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = getattr(settings, 'OPENAI_MODEL', 'gpt-4-turbo-preview')
+        self.model = getattr(settings, 'OPENAI_MODEL', 'gpt-4.1')
     
     async def generate_issue_email(self, issue_data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate professional issue report email"""
@@ -81,7 +82,7 @@ class OpenAIService(AIServiceInterface):
         try:
             response = await asyncio.to_thread(
                 self.client.chat.completions.create,
-                model="gpt-3.5-turbo",  # Use gpt-3.5 for now as gpt-4-turbo might not be available
+                model=self.model,
                 messages=[
                     {"role": "system", "content": "You are a professional procurement specialist writing to vendors about issues. Always return valid JSON with 'subject' and 'body' fields."},
                     {"role": "user", "content": prompt}
@@ -126,9 +127,25 @@ class OpenAIService(AIServiceInterface):
         
         vendor_name = issue_data.get('vendor_name', 'Vendor')
         sender_name = issue_data.get('sender_name', 'Procurement Team')
-        
+
+        context_json = json.dumps(issue_data, ensure_ascii=False, default=str)
+
         messages = [
-            {"role": "system", "content": f"You are a professional procurement specialist handling vendor communications about product issues. Be helpful but firm about resolution requirements. Address the vendor by their name: {vendor_name}. Sign off as: {sender_name}."}
+            {
+                "role": "system",
+                "content": (
+                    "You are the Buy2Rent procurement system assistant writing email replies to the vendor. "
+                    "You must use the provided ISSUE_CONTEXT to answer accurately. "
+                    "Respond directly to the vendor's latest message. Keep the reply formal, polite, clear, and concise. "
+                    "Do NOT repeat the affected product list in every reply. "
+                    "Only include affected product details/images if the vendor explicitly asks for product details/images/list OR ISSUE_CONTEXT_JSON.include_products is true. "
+                    "If include_products is false, do not mention or paste product lists. "
+                    "If the vendor asks for the affected product list / details / images, you MUST provide the list from ISSUE_CONTEXT (names, quantities, issue types, descriptions, image URLs) and NOT ask the vendor to provide it. "
+                    "Only ask the vendor for information that is truly missing (e.g. tracking number, replacement ETA, pickup date). "
+                    f"Address the vendor as: {vendor_name}. Sign off as: {sender_name}.\n\n"
+                    f"ISSUE_CONTEXT_JSON: {context_json}"
+                )
+            }
         ]
         
         # Add conversation history
@@ -142,7 +159,7 @@ class OpenAIService(AIServiceInterface):
         try:
             response = await asyncio.to_thread(
                 self.client.chat.completions.create,
-                model="gpt-3.5-turbo",
+                model=self.model,
                 messages=messages,
                 temperature=0.7
             )
@@ -184,7 +201,7 @@ class OpenAIService(AIServiceInterface):
         try:
             response = await asyncio.to_thread(
                 self.client.chat.completions.create,
-                model="gpt-3.5-turbo",
+                model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an AI analyzing vendor responses. Return analysis as JSON with fields: sentiment, intent, key_commitments (array), suggested_action, escalation_recommended (boolean)."},
                     {"role": "user", "content": prompt}
@@ -255,7 +272,7 @@ class OpenAIService(AIServiceInterface):
         try:
             response = await asyncio.to_thread(
                 self.client.chat.completions.create,
-                model="gpt-3.5-turbo",
+                model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an AI summarizing vendor communications. Return JSON with fields: summary, key_points (array), next_action."},
                     {"role": "user", "content": prompt}
@@ -331,6 +348,42 @@ class MockAIService(AIServiceInterface):
         """Generate mock reply"""
         vendor_name = issue_data.get('vendor_name', 'Vendor')
         sender_name = issue_data.get('sender_name', 'Procurement Team')
+
+        vendor_text = (vendor_message or '').lower()
+        wants_products = bool(issue_data.get('include_products')) or any(k in vendor_text for k in ['product', 'products', 'list', 'items', 'issue details', 'images', 'image'])
+        affected_products = issue_data.get('affected_products') or []
+
+        if wants_products and affected_products:
+            lines = []
+            for idx, p in enumerate(affected_products, 1):
+                name = p.get('name', 'Unknown Product')
+                qty = p.get('quantity', 1)
+                issue_types = p.get('issue_types') or ''
+                desc = p.get('description') or ''
+                img = p.get('image_url') or ''
+                item_line = f"{idx}) {name} (Qty: {qty})"
+                if issue_types:
+                    item_line += f"\n   Issue types: {issue_types}"
+                if desc:
+                    item_line += f"\n   Description: {desc}"
+                if img:
+                    item_line += f"\n   Image: {img}"
+                lines.append(item_line)
+
+            reply_text = (
+                f"Dear {vendor_name},\n\n"
+                "Here is the list of affected products for this issue:\n\n"
+                + "\n\n".join(lines)
+                + f"\n\nBest regards,\n{sender_name}"
+            )
+
+            return {
+                'success': True,
+                'reply': reply_text,
+                'confidence': 1.0,
+                'model': 'mock'
+            }
+
         return {
             'success': True,
             'reply': f"Dear {vendor_name},\n\n[TEST REPLY] Thank you for your message. We acknowledge: '{vendor_message[:100]}...' and will process accordingly.\n\nBest regards,\n{sender_name}",
@@ -467,13 +520,60 @@ class IssueAIManager:
     async def generate_reply_for_approval(self, issue, vendor_message: str) -> Dict[str, Any]:
         """Generate AI reply and auto-send if approved"""
         
-        # Get vendor and sender names
-        vendor_name = issue.vendor.name if issue.vendor else "Vendor"
+        from asgiref.sync import sync_to_async
+
+        @sync_to_async
+        def get_vendor_context():
+            vendor_name = issue.vendor.name if issue.vendor else "Vendor"
+            vendor_email = issue.vendor.email if issue.vendor else issue.vendor_contact
+            issue_slug = issue.get_issue_slug()
+
+            domain = getattr(settings, 'SITE_DOMAIN', 'https://procurement.buy2rent.eu')
+
+            affected_products = []
+            if hasattr(issue, 'items') and issue.items.exists():
+                for item in issue.items.all():
+                    issue_types_display = item.issue_types
+                    if item.issue_types and isinstance(item.issue_types, str):
+                        types_list = [t.strip() for t in item.issue_types.split(',') if t.strip()]
+                        issue_types_display = ', '.join(types_list)
+
+                    image_url = item.get_product_image() if hasattr(item, 'get_product_image') else None
+                    if image_url and not str(image_url).startswith('http'):
+                        image_url = f"{domain}{image_url}"
+
+                    affected_products.append({
+                        'name': item.product_name or 'Unknown Product',
+                        'quantity': item.quantity_affected or 1,
+                        'issue_types': issue_types_display or '',
+                        'description': item.description or '',
+                        'image_url': image_url or ''
+                    })
+            else:
+                product_image = None
+                if getattr(issue, 'product', None):
+                    product_image = issue.product.product_image or issue.product.image_url or (issue.product.image_file.url if issue.product.image_file else None)
+                elif getattr(issue, 'order_item', None):
+                    product_image = issue.order_item.product_image_url
+
+                if product_image and not str(product_image).startswith('http'):
+                    product_image = f"{domain}{product_image}"
+
+                affected_products.append({
+                    'name': issue.get_product_name(),
+                    'quantity': 1,
+                    'issue_types': getattr(issue, 'type', '') or '',
+                    'description': getattr(issue, 'description', '') or '',
+                    'image_url': product_image or ''
+                })
+
+            return vendor_name, vendor_email, issue_slug, affected_products
+
+        vendor_name, vendor_email, issue_slug, affected_products = await get_vendor_context()
         sender_name = "Procurement Team"
         
         # Get conversation history
         from .models import AICommunicationLog
-        from asgiref.sync import sync_to_async
         
         @sync_to_async
         def get_history():
@@ -483,11 +583,35 @@ class IssueAIManager:
             ).order_by('timestamp').values('sender', 'message'))
         
         history = await get_history()
+
+        vendor_text = (vendor_message or '').lower()
+        product_keywords = [
+            'product', 'products', 'item', 'items', 'list', 'affected', 'issue details', 'details',
+            'image', 'images', 'photo', 'photos', 'which product', 'which products'
+        ]
+        wants_product_info = any(k in vendor_text for k in product_keywords)
+
+        matched_products = []
+        if not wants_product_info:
+            for p in affected_products:
+                name = (p.get('name') or '').strip().lower()
+                if name and name in vendor_text:
+                    matched_products.append(p)
+            if matched_products:
+                wants_product_info = True
+
+        products_for_context = matched_products if matched_products else (affected_products if wants_product_info else [])
         
         # Prepare issue data for draft_reply
         issue_data = {
             'vendor_name': vendor_name,
-            'sender_name': sender_name
+            'sender_name': sender_name,
+            'issue_id': str(issue.id),
+            'issue_slug': issue_slug,
+            'type': getattr(issue, 'type', ''),
+            'priority': getattr(issue, 'priority', ''),
+            'include_products': bool(wants_product_info),
+            'affected_products': products_for_context,
         }
         
         # Generate reply using draft_reply method
@@ -501,27 +625,25 @@ class IssueAIManager:
             should_auto_send = auto_approve and confidence >= confidence_threshold
             
             if should_auto_send:
-                # Auto-send the AI reply via email
-                issue_slug = issue.get_issue_slug()
-                subject = f"Re: Issue #{issue_slug}"
-                body = f"{reply_result['reply']}\n\n---\nReference: Issue #{issue_slug}\nPlease keep this reference in your reply."
-                
                 try:
-                    email_message_id = await asyncio.to_thread(
-                        self.email_service.send_issue_email,
-                        issue,
-                        subject,
-                        body,
-                        is_initial_report=False
-                    )
-                    
-                    return {
-                        'success': True,
-                        'reply': reply_result['reply'],
-                        'confidence': confidence,
-                        'auto_sent': True,
-                        'email_message_id': email_message_id
-                    }
+                    # Send the email immediately
+                    subject = f"Re: Issue #{issue_slug}"
+                    if vendor_email:
+                        email_message_id = await asyncio.to_thread(
+                            self.email_service.send_issue_email,
+                            issue=issue,
+                            subject=subject,
+                            body=reply_result['reply'],
+                            is_initial_report=False
+                        )
+                        
+                        return {
+                            'success': True,
+                            'reply': reply_result['reply'],
+                            'confidence': confidence,
+                            'auto_sent': True,
+                            'email_message_id': email_message_id
+                        }
                 except Exception as e:
                     logger.error(f"Failed to auto-send AI reply for issue {issue.id}: {e}")
                     # Fall through to create draft
@@ -534,9 +656,9 @@ class IssueAIManager:
                     sender='AI',
                     message=reply_result['reply'],
                     message_type='email',
-                    subject=f"Re: Issue #{issue.get_issue_slug()}",
+                    subject=f"Re: Issue #{issue_slug}",
                     email_from=getattr(settings, 'DEFAULT_FROM_EMAIL', 'procurement@buy2rent.eu'),
-                    email_to=issue.vendor.email if issue.vendor else issue.vendor_contact,
+                    email_to=vendor_email,
                     ai_generated=True,
                     ai_confidence=confidence,
                     status='pending_approval',
@@ -554,21 +676,65 @@ class IssueAIManager:
                 'requires_approval': True,
                 'auto_sent': False
             }
-        
+
+        error_text = reply_result.get('error', 'Failed to generate reply')
+        fallback_reply = (
+            "Thank you for your response. We have received your update and are reviewing it. "
+            "Please share the expected resolution timeline and the next steps from your side."
+        )
+
+        @sync_to_async
+        def create_fallback_logs():
+            from .models import AICommunicationLog
+            AICommunicationLog.objects.create(
+                issue=issue,
+                sender='System',
+                message=f"AI reply generation failed: {error_text}",
+                message_type='system',
+                status='internal',
+                email_thread_id=f"issue-{issue.id}"
+            )
+            draft = AICommunicationLog.objects.create(
+                issue=issue,
+                sender='AI',
+                message=fallback_reply,
+                message_type='email',
+                subject=f"Re: Issue #{issue_slug}",
+                email_from=getattr(settings, 'DEFAULT_FROM_EMAIL', 'procurement@buy2rent.eu'),
+                email_to=vendor_email,
+                ai_generated=False,
+                ai_confidence=None,
+                status='pending_approval',
+                requires_approval=True,
+                email_thread_id=f"issue-{issue.id}"
+            )
+            return draft
+
+        draft = await create_fallback_logs()
+
         return {
-            'success': False,
-            'error': reply_result.get('error', 'Failed to generate reply')
+            'success': True,
+            'draft_id': str(draft.id),
+            'reply': fallback_reply,
+            'confidence': None,
+            'requires_approval': True,
+            'auto_sent': False,
+            'fallback': True
         }
     
     async def analyze_vendor_response(self, issue, message: str) -> Dict[str, Any]:
         """Analyze vendor's response"""
         from asgiref.sync import sync_to_async
-        
-        issue_data = {
-            'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
-            'type': issue.type,
-            'priority': issue.priority
-        }
+
+        @sync_to_async
+        def get_issue_data():
+            return {
+                'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
+                'type': issue.type,
+                'priority': issue.priority
+            }
+
+        issue_data = await get_issue_data()
         
         analysis = await self.ai_service.analyze_vendor_reply(issue_data, message)
         

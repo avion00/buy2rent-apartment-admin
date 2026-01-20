@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Bot, User, Send, AlertCircle, Sparkles, MessageSquare, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -20,22 +21,64 @@ export function AIConversationPanel({ issue, onUpdateIssue }: AIConversationPane
   const [conversation, setConversation] = useState<AICommunicationLog[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const splitEmailReply = (message: string) => {
+    const text = (message || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    if (!text.trim()) {
+      return { main: '', quoted: '' };
+    }
+
+    const markers: Array<{ idx: number }> = [];
+
+    const gmailMarker = text.search(/\nOn\s.+\swrote:\s*\n/i);
+    if (gmailMarker !== -1) markers.push({ idx: gmailMarker });
+
+    const outlookMarker = text.search(/\nFrom:\s.+\nSent:\s.+\nTo:\s.+\nSubject:\s.+\n/i);
+    if (outlookMarker !== -1) markers.push({ idx: outlookMarker });
+
+    const quotedLineMarker = text.search(/\n>\s?/);
+    if (quotedLineMarker !== -1) markers.push({ idx: quotedLineMarker });
+
+    if (markers.length === 0) {
+      return { main: text.trim(), quoted: '' };
+    }
+
+    const splitAt = Math.min(...markers.map(m => m.idx));
+    const main = text.slice(0, splitAt).trim();
+    const quoted = text.slice(splitAt).trim();
+    return { main, quoted };
+  };
+
   // Fetch conversation on mount and when issue changes
   useEffect(() => {
-    const fetchConversation = async () => {
+    let cancelled = false;
+    let intervalId: number | undefined;
+
+    const fetchConversation = async (showLoading: boolean) => {
       try {
-        setLoading(true);
+        if (showLoading) setLoading(true);
         const data = await issueApi.getConversation(issue.id);
-        setConversation(data.conversation || []);
+        if (!cancelled) setConversation(data.conversation || []);
       } catch (error) {
-        console.error('Failed to fetch conversation:', error);
-        toast.error('Failed to load conversation');
+        if (showLoading) {
+          console.error('Failed to fetch conversation:', error);
+          toast.error('Failed to load conversation');
+        }
       } finally {
-        setLoading(false);
+        if (showLoading && !cancelled) setLoading(false);
       }
     };
 
-    fetchConversation();
+    fetchConversation(true);
+
+    // Keep the conversation responsive by polling in the background
+    intervalId = window.setInterval(() => {
+      fetchConversation(false);
+    }, 8000);
+
+    return () => {
+      cancelled = true;
+      if (intervalId) window.clearInterval(intervalId);
+    };
   }, [issue.id]);
 
   const handleSendMessage = async () => {
@@ -216,24 +259,36 @@ export function AIConversationPanel({ issue, onUpdateIssue }: AIConversationPane
                             {log.subject}
                           </p>
                         )}
-                        {log.html_content && log.message_type === 'email' ? (
-                          <div 
-                            className={cn(
-                              "text-sm leading-relaxed prose prose-sm max-w-none",
-                              "prose-headings:text-foreground prose-p:text-foreground",
-                              "prose-strong:text-foreground prose-a:text-primary",
-                              isHumanAction && "font-medium"
-                            )}
-                            dangerouslySetInnerHTML={{ __html: log.html_content }}
-                          />
-                        ) : (
-                          <p className={cn(
-                            "text-sm whitespace-pre-wrap leading-relaxed",
-                            isHumanAction && "font-medium"
-                          )}>
-                            {log.message}
-                          </p>
-                        )}
+                        {(() => {
+                          const isEmailLike = log.message_type === 'email' || !!log.subject;
+                          const { main, quoted } = isEmailLike ? splitEmailReply(log.message) : { main: log.message, quoted: '' };
+
+                          return (
+                            <div className="space-y-2">
+                              <p className={cn(
+                                "text-sm whitespace-pre-wrap leading-relaxed",
+                                isHumanAction && "font-medium"
+                              )}>
+                                {main}
+                              </p>
+
+                              {quoted && (
+                                <Accordion type="single" collapsible>
+                                  <AccordionItem value="quoted">
+                                    <AccordionTrigger className="py-2 text-xs text-muted-foreground hover:no-underline">
+                                      Replied to previous email
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                      <div className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                                        {quoted}
+                                      </div>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                </Accordion>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   );

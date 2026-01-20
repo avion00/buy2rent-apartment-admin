@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,7 @@ type Step = 'select-order' | 'review-items' | 'payment-details';
 
 const PaymentNew = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   // Current step in the wizard
   const [currentStep, setCurrentStep] = useState<Step>('select-order');
@@ -155,13 +156,34 @@ const PaymentNew = () => {
       }, 0);
   }, [selectedOrder, selectedItems]);
   
-  // When order is selected, auto-select all items
+  // When order is selected, auto-select items based on URL parameter
   useEffect(() => {
     if (selectedOrder && selectedOrder.items) {
-      setSelectedItems(selectedOrder.items.map(item => item.id || '').filter(Boolean));
-      // Set default due date to 30 days from now
-      const defaultDueDate = new Date();
-      defaultDueDate.setDate(defaultDueDate.getDate() + 30);
+      const productIdFromUrl = searchParams.get('product');
+      
+      if (productIdFromUrl) {
+        // Only select the specific product from URL
+        const matchingItem = selectedOrder.items.find(item => item.product === productIdFromUrl);
+        if (matchingItem && matchingItem.id) {
+          setSelectedItems([matchingItem.id]);
+        } else {
+          // If product not found, select all items as fallback
+          setSelectedItems(selectedOrder.items.map(item => item.id || '').filter(Boolean));
+        }
+      } else {
+        // No product specified, select all items
+        setSelectedItems(selectedOrder.items.map(item => item.id || '').filter(Boolean));
+      }
+      
+      // Set due date from order's expected_delivery or default to 30 days from now
+      let defaultDueDate: Date;
+      if (selectedOrder.expected_delivery) {
+        defaultDueDate = new Date(selectedOrder.expected_delivery);
+      } else {
+        defaultDueDate = new Date();
+        defaultDueDate.setDate(defaultDueDate.getDate() + 30);
+      }
+      
       setPaymentData(prev => ({
         ...prev,
         due_date: defaultDueDate.toISOString().split('T')[0],
@@ -171,7 +193,7 @@ const PaymentNew = () => {
         discount: "0",
       }));
     }
-  }, [selectedOrder]);
+  }, [selectedOrder, searchParams]);
   
   // Update total amount when selected items change
   useEffect(() => {
@@ -182,6 +204,17 @@ const PaymentNew = () => {
       }));
     }
   }, [selectedItemsTotal]);
+  
+  // Auto-select order from URL parameter
+  useEffect(() => {
+    const orderIdFromUrl = searchParams.get('order');
+    if (orderIdFromUrl && orders.length > 0 && !selectedOrder) {
+      const orderToSelect = orders.find(order => order.id === orderIdFromUrl);
+      if (orderToSelect) {
+        handleSelectOrder(orderToSelect);
+      }
+    }
+  }, [searchParams, orders, selectedOrder]);
   
   // Calculate final total (with shipping and discount)
   const finalTotal = useMemo(() => {

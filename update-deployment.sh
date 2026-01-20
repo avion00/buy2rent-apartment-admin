@@ -87,8 +87,15 @@ echo -e "${BLUE}🔄 Restarting services...${NC}"
 cd ..
 
 # Restart PM2 processes
-pm2 restart buy2rent-frontend
-pm2 restart buy2rent-backend
+PM2_RESTART_ARGS=""
+if [ "${UPDATE_ENV}" = "1" ]; then
+    PM2_RESTART_ARGS="--update-env"
+    echo "Using PM2 --update-env"
+fi
+
+pm2 restart buy2rent-frontend ${PM2_RESTART_ARGS}
+pm2 restart buy2rent-backend ${PM2_RESTART_ARGS}
+pm2 restart email-monitor ${PM2_RESTART_ARGS}
 
 # Save PM2 configuration
 pm2 save

@@ -18,7 +18,7 @@ import {
   Package, TrendingUp, AlertTriangle, Filter, Loader2 
 } from 'lucide-react';
 import { DeliveryDetails } from '@/components/deliveries/DeliveryDetails';
-import { DeliveryStatusUpdate } from '@/components/deliveries/DeliveryStatusUpdate';
+import { DeliveryStatusUpdateModal } from '@/components/modals/DeliveryStatusUpdateModal';
 import { DeliveryTracking } from '@/components/deliveries/DeliveryTracking';
 import {
   Select,
@@ -525,12 +525,18 @@ const Deliveries = () => {
           onOpenChange={setDetailsOpen}
           delivery={selectedDelivery}
         />
-        <DeliveryStatusUpdate
-          open={statusUpdateOpen}
-          onOpenChange={setStatusUpdateOpen}
-          delivery={selectedDelivery}
-          onStatusUpdate={handleStatusUpdate}
-        />
+        {selectedDelivery && (
+          <DeliveryStatusUpdateModal
+            open={statusUpdateOpen}
+            onOpenChange={setStatusUpdateOpen}
+            deliveryId={selectedDelivery.id}
+            currentStatus={selectedDelivery.status}
+            orderReference={selectedDelivery.order_reference}
+            onStatusUpdated={() => {
+              refetch();
+            }}
+          />
+        )}
         <DeliveryTracking
           open={trackingOpen}
           onOpenChange={setTrackingOpen}

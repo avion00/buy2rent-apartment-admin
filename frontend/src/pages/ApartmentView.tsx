@@ -1,6 +1,11 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useApartment, useApartmentStatistics, useApartmentActivities } from "@/hooks/useApartmentApi";
 import { useProductsByApartment, useDeleteProduct, useUpdateProduct } from "@/hooks/useProductApi";
+import { orderApi } from "@/services/orderApi";
+import { usePayments, useCreatePaymentHistory, usePatchPayment } from "@/hooks/usePaymentApi";
+import { RecordPaymentModal } from "@/components/modals/RecordPaymentModal";
+import { UpdatePaymentDueDateDialog } from "@/components/modals/UpdatePaymentDueDateDialog";
+import { deliveryApi } from "@/services/deliveryApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +75,7 @@ import { DeliveryLocationModal } from "@/components/modals/DeliveryLocationModal
 import { SkuEditModal } from "@/components/modals/SkuEditModal";
 import { UnitPriceEditModal } from "@/components/modals/UnitPriceEditModal";
 import { QuantityEditModal } from "@/components/modals/QuantityEditModal";
+import { DeliveryStatusUpdateModal } from "@/components/modals/DeliveryStatusUpdateModal";
 import ApartmentViewSkeleton, { ApartmentViewProductsSkeleton, StatisticsCardsSkeleton, RecentActivitySkeleton } from "@/components/skeletons/ApartmentViewSkeleton";
 
 const ApartmentView = () => {
@@ -132,6 +138,21 @@ const ApartmentView = () => {
   const [selectedProductForPrice, setSelectedProductForPrice] = useState<any>(null);
   const [quantityModalOpen, setQuantityModalOpen] = useState(false);
   const [selectedProductForQuantity, setSelectedProductForQuantity] = useState<any>(null);
+  const [deliveryStatusModalOpen, setDeliveryStatusModalOpen] = useState(false);
+  const [selectedDeliveryForStatus, setSelectedDeliveryForStatus] = useState<any>(null);
+  
+  // Payment modal state
+  const [recordPaymentModalOpen, setRecordPaymentModalOpen] = useState(false);
+  const [selectedPaymentForRecord, setSelectedPaymentForRecord] = useState<any>(null);
+  
+  // Payment due date update modal state
+  const [dueDateModalOpen, setDueDateModalOpen] = useState(false);
+  const [selectedPaymentForDueDate, setSelectedPaymentForDueDate] = useState<any>(null);
+  
+  // Fetch payments for this apartment
+  const { data: paymentsData } = usePayments({ apartment: id });
+  const createPaymentHistoryMutation = useCreatePaymentHistory();
+  const patchPaymentMutation = usePatchPayment();
 
   // Delete handlers
   const handleDeleteClick = (productId: string, productName: string) => {
@@ -565,9 +586,9 @@ const ApartmentView = () => {
                         <TableHead className="text-right">Total</TableHead>
                         <TableHead>Product Status</TableHead>
                         <TableHead>Delivery Status</TableHead>
-                        <TableHead>Expected Delivery</TableHead>
-                        <TableHead>Delivery Location</TableHead>
-                        <TableHead>Actual Delivery</TableHead>
+                        <TableHead className="min-w-[140px]">Expected Delivery</TableHead>
+                        <TableHead className="min-w-[200px]">Delivery Location</TableHead>
+                        <TableHead className="min-w-[140px]">Actual Delivery</TableHead>
                         <TableHead>Payment Status</TableHead>
                         <TableHead>Payment Due</TableHead>
                         <TableHead>Issue State</TableHead>
@@ -719,21 +740,38 @@ const ApartmentView = () => {
                             </TableCell>
                             <TableCell>
                               <div className="space-y-1 min-w-[200px]">
-                                {/* Order Status Information */}
+                                {/* Order Status Information - Editable */}
                                 {product.order_status_info && product.order_status_info.length > 0 ? (
                                   product.order_status_info.map((orderInfo: any, idx: number) => (
                                     <div key={idx} className="flex items-center gap-2 flex-wrap">
-                                      <Badge
-                                        variant={
-                                          orderInfo.status === 'sent' ? 'default' :
-                                          'outline'
-                                        }
-                                        className="text-xs"
+                                      <Select
+                                        value={orderInfo.status}
+                                        onValueChange={async (newStatus) => {
+                                          try {
+                                            await orderApi.updateStatus(orderInfo.order_id, newStatus);
+                                            toast({
+                                              title: "Success",
+                                              description: `Order status updated to ${newStatus}`,
+                                            });
+                                            refetch();
+                                          } catch (error) {
+                                            toast({
+                                              title: "Error",
+                                              description: "Failed to update order status",
+                                              variant: "destructive",
+                                            });
+                                          }
+                                        }}
                                       >
-                                        {orderInfo.status === 'draft' ? 'Draft' :
-                                         orderInfo.status === 'sent' ? 'Sent' :
-                                         orderInfo.status}
-                                      </Badge>
+                                        <SelectTrigger className="h-7 w-[100px] text-xs">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="draft">Draft</SelectItem>
+                                          <SelectItem value="sent">Sent</SelectItem>
+                                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                                        </SelectContent>
+                                      </Select>
                                       <a
                                         href={`/orders/${orderInfo.order_id}`}
                                         className="text-xs text-primary hover:underline"
@@ -755,29 +793,39 @@ const ApartmentView = () => {
                             </TableCell>
                             <TableCell>
                               <div className="space-y-1 min-w-[200px]">
-                                {/* Delivery Status Information from Database */}
+                                {/* Delivery Status Information - Click to open detailed modal */}
                                 {product.delivery_status_info && product.delivery_status_info.length > 0 ? (
                                   product.delivery_status_info.map((deliveryInfo: any, idx: number) => (
                                     <div key={idx} className="flex items-center gap-2 flex-wrap">
-                                      <Badge
-                                        variant={
-                                          deliveryInfo.status === 'Received' ? 'default' :
-                                          deliveryInfo.status === 'Returned' ? 'destructive' :
-                                          deliveryInfo.status === 'In Transit' ? 'secondary' :
-                                          deliveryInfo.status === 'Delayed' ? 'secondary' :
-                                          'outline'
-                                        }
-                                        className={cn(
-                                          "text-xs",
-                                          deliveryInfo.status === 'Received' && "bg-green-500/10 text-green-500",
-                                          deliveryInfo.status === 'In Transit' && "bg-blue-500/10 text-blue-500",
-                                          deliveryInfo.status === 'Confirmed' && "bg-yellow-500/10 text-yellow-500",
-                                          deliveryInfo.status === 'Delayed' && "bg-orange-500/10 text-orange-500",
-                                          deliveryInfo.status === 'Returned' && "bg-red-500/10 text-red-500"
-                                        )}
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-xs"
+                                        onClick={() => {
+                                          setSelectedDeliveryForStatus(deliveryInfo);
+                                          setDeliveryStatusModalOpen(true);
+                                        }}
                                       >
-                                        {deliveryInfo.status}
-                                      </Badge>
+                                        <Badge
+                                          variant={
+                                            deliveryInfo.status === 'Received' ? 'default' :
+                                            deliveryInfo.status === 'Returned' ? 'destructive' :
+                                            deliveryInfo.status === 'In Transit' ? 'secondary' :
+                                            deliveryInfo.status === 'Delayed' ? 'secondary' :
+                                            'outline'
+                                          }
+                                          className={cn(
+                                            "text-xs",
+                                            deliveryInfo.status === 'Received' && "bg-green-500/10 text-green-500",
+                                            deliveryInfo.status === 'In Transit' && "bg-blue-500/10 text-blue-500",
+                                            deliveryInfo.status === 'Confirmed' && "bg-yellow-500/10 text-yellow-500",
+                                            deliveryInfo.status === 'Delayed' && "bg-orange-500/10 text-orange-500",
+                                            deliveryInfo.status === 'Returned' && "bg-red-500/10 text-red-500"
+                                          )}
+                                        >
+                                          {deliveryInfo.status}
+                                        </Badge>
+                                      </Button>
                                       <a
                                         href={`/deliveries`}
                                         className="text-xs text-primary hover:underline"
@@ -804,205 +852,231 @@ const ApartmentView = () => {
                             </TableCell>
                             <TableCell>
                               <div className="space-y-1">
-                                {/* Show expected delivery from order if available */}
-                                {product.order_status_info && product.order_status_info.length > 0 ? (
-                                  product.order_status_info.map((orderInfo: any, idx: number) => (
-                                    orderInfo.expected_delivery ? (
-                                      <div key={idx} className="flex items-center gap-2">
-                                        <CalendarIcon className="h-3 w-3 text-muted-foreground" />
-                                        <span className="text-xs">
-                                          {format(new Date(orderInfo.expected_delivery), "PP")}
-                                        </span>
-                                      </div>
-                                    ) : null
-                                  ))
-                                ) : (
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className={cn(
-                                          "w-[140px] justify-start text-left font-normal",
-                                          !product.expected_delivery_date && "text-muted-foreground",
-                                        )}
-                                      >
-                                        <CalendarIcon className="mr-2 h-3 w-3" />
-                                        {product.expected_delivery_date
-                                          ? format(new Date(product.expected_delivery_date), "PP")
-                                          : "Pick date"}
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                        mode="single"
-                                        selected={
-                                          product.expected_delivery_date ? new Date(product.expected_delivery_date) : undefined
-                                        }
-                                        onSelect={(date) => {
-                                          if (date) {
-                                            updateProduct(product.id, { expected_delivery_date: formatDateForAPI(date) });
-                                            toast({
-                                              title: "Success",
-                                              description: "Expected delivery date updated",
-                                            });
-                                          }
-                                        }}
-                                        initialFocus
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                {/* Priority 1: Show shipping address from order */}
-                                {product.order_status_info && product.order_status_info.length > 0 && product.order_status_info.some((o: any) => o.shipping_address) ? (
-                                  product.order_status_info.map((orderInfo: any, idx: number) => (
-                                    orderInfo.shipping_address ? (
-                                      <div key={idx} className="flex items-center gap-2">
-                                        <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                                        <span className="text-xs line-clamp-2">
-                                          {orderInfo.shipping_address}
-                                        </span>
-                                      </div>
-                                    ) : null
-                                  ))
-                                ) : (
-                                  <>
-                                    {/* Priority 2: Show delivery location from tracking */}
-                                    {product.delivery_status_info && product.delivery_status_info.length > 0 ? (
-                                      product.delivery_status_info.map((deliveryInfo: any, idx: number) => (
-                                        deliveryInfo.location ? (
-                                          <div key={idx} className="flex items-center gap-2">
-                                            <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                                            <span className="text-xs line-clamp-2">
-                                              {deliveryInfo.location}
-                                            </span>
-                                          </div>
-                                        ) : null
-                                      ))
-                                    ) : null}
-                                    
-                                    {/* Priority 3: Show product delivery address as fallback */}
-                                    {(!product.delivery_status_info || product.delivery_status_info.length === 0 || !product.delivery_status_info.some((d: any) => d.location)) && (
-                                      product.delivery_address || product.delivery_city ? (
-                                        <Button
-                                          variant="link"
-                                          size="sm"
-                                          onClick={() => {
-                                            setSelectedProductForDelivery(product);
-                                            setDeliveryLocationModalOpen(true);
-                                          }}
-                                          className="p-0 h-auto text-primary hover:underline flex items-center gap-1 text-left"
-                                        >
-                                          <MapPin className="h-3 w-3 flex-shrink-0" />
-                                          <span className="line-clamp-2">
-                                            {product.delivery_city ? `${product.delivery_city}${product.delivery_address ? ', ' + product.delivery_address.split(',')[0] : ''}` : product.delivery_address}
-                                          </span>
-                                        </Button>
-                                      ) : (
-                                        <span className="text-xs text-muted-foreground">Not set</span>
-                                      )
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                {/* Show actual delivery date from delivery if available */}
+                                {/* Show expected delivery from delivery record - editable */}
                                 {product.delivery_status_info && product.delivery_status_info.length > 0 ? (
-                                  <>
-                                    {product.delivery_status_info.map((deliveryInfo: any, idx: number) => (
-                                      deliveryInfo.actual_date ? (
-                                        <div key={idx} className="flex items-center gap-2">
+                                  product.delivery_status_info.map((deliveryInfo: any, idx: number) => (
+                                    <Popover key={idx}>
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-auto p-1 hover:bg-muted flex items-center gap-2"
+                                        >
                                           <CalendarIcon className="h-3 w-3 text-muted-foreground" />
                                           <span className="text-xs">
-                                            {format(new Date(deliveryInfo.actual_date), "PP")}
+                                            {deliveryInfo.expected_date ? format(new Date(deliveryInfo.expected_date), "PP") : "Set date"}
                                           </span>
-                                        </div>
-                                      ) : null
-                                    ))}
-                                  </>
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                          mode="single"
+                                          selected={deliveryInfo.expected_date ? new Date(deliveryInfo.expected_date) : undefined}
+                                          onSelect={async (date) => {
+                                            if (date) {
+                                              try {
+                                                await deliveryApi.updateDeliveryField(deliveryInfo.delivery_id, 'expected_date', formatDateForAPI(date));
+                                                toast({
+                                                  title: "Success",
+                                                  description: "Expected delivery date updated",
+                                                });
+                                                refetch();
+                                              } catch (error) {
+                                                toast({
+                                                  title: "Error",
+                                                  description: "Failed to update expected delivery date",
+                                                  variant: "destructive",
+                                                });
+                                              }
+                                            }
+                                          }}
+                                          initialFocus
+                                        />
+                                      </PopoverContent>
+                                    </Popover>
+                                  ))
                                 ) : (
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className={cn(
-                                          "w-[140px] justify-start text-left font-normal",
-                                          !product.actual_delivery_date && "text-muted-foreground",
-                                        )}
-                                      >
-                                        <CalendarIcon className="mr-2 h-3 w-3" />
-                                        {product.actual_delivery_date
-                                          ? format(new Date(product.actual_delivery_date), "PP")
-                                          : "Pick date"}
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                        mode="single"
-                                        selected={
-                                          product.actual_delivery_date ? new Date(product.actual_delivery_date) : undefined
-                                        }
-                                        onSelect={(date) => {
-                                          if (date) {
-                                            updateProduct(product.id, { actual_delivery_date: formatDateForAPI(date) });
-                                            toast({
-                                              title: "Success",
-                                              description: "Actual delivery date updated",
-                                            });
-                                          }
-                                        }}
-                                        initialFocus
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
+                                  <span className="text-xs text-muted-foreground">No delivery</span>
                                 )}
                               </div>
                             </TableCell>
                             <TableCell>
-                              {/* Show payment status from orders/payments */}
-                              {product.payment_status_from_orders ? (
-                                <Badge 
-                                  variant={
-                                    product.payment_status_from_orders === 'Paid' ? 'default' :
-                                    product.payment_status_from_orders === 'Partially Paid' ? 'secondary' :
-                                    'outline'
-                                  }
-                                  className={
-                                    product.payment_status_from_orders === 'Paid' ? 'bg-green-500/10 text-green-500' :
-                                    product.payment_status_from_orders === 'Partially Paid' ? 'bg-yellow-500/10 text-yellow-500' :
-                                    'bg-red-500/10 text-red-500'
-                                  }
-                                >
-                                  {product.payment_status_from_orders}
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="bg-gray-500/10 text-gray-500">
-                                  Unpaid
-                                </Badge>
-                              )}
+                              <div className="space-y-1">
+                                {/* Show shipping address from order - editable */}
+                                {product.order_status_info && product.order_status_info.length > 0 ? (
+                                  product.order_status_info.map((orderInfo: any, idx: number) => (
+                                    <div key={idx} className="flex items-center gap-2 w-full">
+                                      <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                      <Input
+                                        className="h-7 text-xs flex-1"
+                                        placeholder="Enter delivery address"
+                                        defaultValue={orderInfo.shipping_address || ''}
+                                        onBlur={async (e) => {
+                                          const newAddress = e.target.value;
+                                          if (newAddress !== orderInfo.shipping_address) {
+                                            try {
+                                              await orderApi.updateOrder(orderInfo.order_id, { shipping_address: newAddress });
+                                              toast({
+                                                title: "Success",
+                                                description: "Delivery location updated",
+                                              });
+                                              refetch();
+                                            } catch (error) {
+                                              toast({
+                                                title: "Error",
+                                                description: "Failed to update delivery location",
+                                                variant: "destructive",
+                                              });
+                                            }
+                                          }
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            e.currentTarget.blur();
+                                          }
+                                        }}
+                                      />
+                                    </div>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">No order</span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div className="space-y-1">
-                                {product.payment_due_date ? (
-                                  <>
-                                    <div className="text-xs">
-                                      {new Date(product.payment_due_date).toLocaleDateString()}
-                                    </div>
-                                    {outstandingBalance > 0 && (
-                                      <div className="text-xs text-red-500 font-medium">
-                                        Balance: {outstandingBalance.toLocaleString()} HUF
-                                      </div>
-                                    )}
-                                  </>
+                                {/* Show actual delivery date from delivery record - editable */}
+                                {product.delivery_status_info && product.delivery_status_info.length > 0 ? (
+                                  product.delivery_status_info.map((deliveryInfo: any, idx: number) => (
+                                    <Popover key={idx}>
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-auto p-1 hover:bg-muted flex items-center gap-2"
+                                        >
+                                          <CalendarIcon className="h-3 w-3 text-muted-foreground" />
+                                          <span className="text-xs">
+                                            {deliveryInfo.actual_date ? format(new Date(deliveryInfo.actual_date), "PP") : "Set date"}
+                                          </span>
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                          mode="single"
+                                          selected={deliveryInfo.actual_date ? new Date(deliveryInfo.actual_date) : undefined}
+                                          onSelect={async (date) => {
+                                            if (date) {
+                                              try {
+                                                await deliveryApi.updateDeliveryField(deliveryInfo.delivery_id, 'actual_date', formatDateForAPI(date));
+                                                toast({
+                                                  title: "Success",
+                                                  description: "Actual delivery date updated",
+                                                });
+                                                refetch();
+                                              } catch (error) {
+                                                toast({
+                                                  title: "Error",
+                                                  description: "Failed to update actual delivery date",
+                                                  variant: "destructive",
+                                                });
+                                              }
+                                            }
+                                          }}
+                                          initialFocus
+                                        />
+                                      </PopoverContent>
+                                    </Popover>
+                                  ))
                                 ) : (
-                                  "-"
+                                  <span className="text-xs text-muted-foreground">No delivery</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {/* Show payment status for each order - compact layout */}
+                              <div className="space-y-1">
+                                {product.order_status_info && product.order_status_info.length > 0 ? (
+                                  product.order_status_info.map((orderInfo: any, idx: number) => {
+                                    const orderId = orderInfo.order_id;
+                                    const payment = paymentsData?.results?.find((p: any) => p.order === orderId);
+                                    const paymentStatus = payment?.status || 'Unpaid';
+                                    
+                                    return (
+                                      <div key={idx} className="flex flex-col gap-0.5">
+                                        <Badge 
+                                          variant={
+                                            paymentStatus === 'Paid' ? 'default' :
+                                            paymentStatus === 'Partially Paid' ? 'secondary' :
+                                            'outline'
+                                          }
+                                          className={cn(
+                                            'cursor-pointer hover:opacity-80 transition-opacity text-[10px] w-fit',
+                                            paymentStatus === 'Paid' ? 'bg-green-500/10 text-green-500' :
+                                            paymentStatus === 'Partially Paid' ? 'bg-yellow-500/10 text-yellow-500' :
+                                            'bg-red-500/10 text-red-500'
+                                          )}
+                                          onClick={() => {
+                                            if (paymentStatus === 'Unpaid') {
+                                              navigate(`/payments/new?order=${orderId}&product=${product.id}`);
+                                            } else if (payment) {
+                                              setSelectedPaymentForRecord(payment);
+                                              setRecordPaymentModalOpen(true);
+                                            }
+                                          }}
+                                        >
+                                          {paymentStatus}
+                                        </Badge>
+                                        <span className="text-[10px] text-muted-foreground ml-0.5">
+                                          {orderInfo.po_number || 'N/A'}
+                                        </span>
+                                      </div>
+                                    );
+                                  })
+                                ) : (
+                                  <Badge variant="outline" className="bg-gray-500/10 text-gray-500 text-[10px]">
+                                    No Order
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {/* Show payment due dates for each order */}
+                              <div className="space-y-1">
+                                {product.order_status_info && product.order_status_info.length > 0 ? (
+                                  product.order_status_info.map((orderInfo: any, idx: number) => {
+                                    const orderId = orderInfo.order_id;
+                                    const payment = paymentsData?.results?.find((p: any) => p.order === orderId);
+                                    
+                                    return (
+                                      <div key={idx} className="flex flex-col gap-0.5">
+                                        {payment?.due_date ? (
+                                          <>
+                                            <div 
+                                              className="text-[10px] font-medium cursor-pointer hover:text-primary hover:underline"
+                                              onClick={() => {
+                                                setSelectedPaymentForDueDate(payment);
+                                                setDueDateModalOpen(true);
+                                              }}
+                                            >
+                                              {new Date(payment.due_date).toLocaleDateString()}
+                                            </div>
+                                            {payment.status !== 'Paid' && (
+                                              <div className="text-[10px] text-muted-foreground">
+                                                {orderInfo.po_number || 'N/A'}
+                                              </div>
+                                            )}
+                                          </>
+                                        ) : (
+                                          <div className="text-[10px] text-muted-foreground">
+                                            No payment
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })
+                                ) : (
+                                  <span className="text-[10px] text-muted-foreground">-</span>
                                 )}
                               </div>
                             </TableCell>
@@ -1260,6 +1334,78 @@ const ApartmentView = () => {
           }}
         />
       )}
+
+      {/* Delivery Status Update Modal */}
+      {selectedDeliveryForStatus && (
+        <DeliveryStatusUpdateModal
+          open={deliveryStatusModalOpen}
+          onOpenChange={setDeliveryStatusModalOpen}
+          deliveryId={selectedDeliveryForStatus.delivery_id}
+          currentStatus={selectedDeliveryForStatus.status}
+          orderReference={selectedDeliveryForStatus.order_reference}
+          onStatusUpdated={() => {
+            refetch();
+          }}
+        />
+      )}
+
+      {/* Record Payment Modal */}
+      <RecordPaymentModal
+        payment={selectedPaymentForRecord}
+        open={recordPaymentModalOpen}
+        onOpenChange={setRecordPaymentModalOpen}
+        onSave={async (amount, method, reference, note) => {
+          try {
+            await createPaymentHistoryMutation.mutateAsync({
+              payment: selectedPaymentForRecord.id,
+              date: new Date().toISOString().split('T')[0],
+              amount,
+              method,
+              reference_no: reference,
+              note,
+            });
+            toast({
+              title: "Success",
+              description: "Payment recorded successfully",
+            });
+            setRecordPaymentModalOpen(false);
+            refetch();
+          } catch (error) {
+            toast({
+              title: "Error",
+              description: "Failed to record payment",
+              variant: "destructive",
+            });
+          }
+        }}
+      />
+
+      {/* Update Payment Due Date Dialog */}
+      <UpdatePaymentDueDateDialog
+        payment={selectedPaymentForDueDate}
+        open={dueDateModalOpen}
+        onOpenChange={setDueDateModalOpen}
+        onUpdate={async (paymentId, newDueDate) => {
+          try {
+            await patchPaymentMutation.mutateAsync({
+              id: paymentId,
+              data: { due_date: newDueDate },
+            });
+            toast({
+              title: "Success",
+              description: "Payment due date updated successfully",
+            });
+            refetch();
+          } catch (error) {
+            toast({
+              title: "Error",
+              description: "Failed to update payment due date",
+              variant: "destructive",
+            });
+            throw error;
+          }
+        }}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, id: '', name: '', apartmentId: '' })}>

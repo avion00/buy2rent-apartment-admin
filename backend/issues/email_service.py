@@ -7,10 +7,84 @@ from django.conf import settings
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.html import strip_tags
+from django.utils.html import strip_tags, escape
+from django.utils.safestring import mark_safe
+from datetime import timedelta
 import logging
+import re
 
 logger = logging.getLogger(__name__)
+
+def _format_message_html(message: str):
+    text = (message or '').replace('\r\n', '\n').replace('\r', '\n')
+
+    def is_image_url(url: str) -> bool:
+        return bool(re.search(r'\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$', url, re.IGNORECASE))
+
+    snippets = []
+
+    def token_for(html: str) -> str:
+        token = f"__HTMLTOKEN{len(snippets)}__"
+        snippets.append((token, html))
+        return token
+
+    md_link_re = re.compile(r'\[([^\]]+)\]\((https?://[^\s)]+)\)')
+
+    def md_link_sub(m):
+        label = m.group(1)
+        url = m.group(2)
+        if is_image_url(url) or 'media/' in url:
+            html = (
+                f'<div style="margin:12px 0;">'
+                f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer">'
+                f'<img src="{escape(url)}" alt="{escape(label)}" '
+                f'style="max-width:100%;height:auto;border-radius:8px;border:1px solid #e5e7eb;" />'
+                f'</a>'
+                f'<div style="font-size:12px;color:#6b7280;margin-top:6px;">'
+                f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:none;">Open image</a>'
+                f'</div>'
+                f'</div>'
+            )
+            return token_for(html)
+        html = (
+            f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer" '
+            f'style="color:#2563eb;text-decoration:none;">{escape(label)}</a>'
+        )
+        return token_for(html)
+
+    text = md_link_re.sub(md_link_sub, text)
+
+    url_re = re.compile(r'(https?://[^\s<>]+)')
+
+    def url_sub(m):
+        url = m.group(1)
+        if is_image_url(url) or 'media/' in url:
+            html = (
+                f'<div style="margin:12px 0;">'
+                f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer">'
+                f'<img src="{escape(url)}" alt="Product Image" '
+                f'style="max-width:100%;height:auto;border-radius:8px;border:1px solid #e5e7eb;" />'
+                f'</a>'
+                f'<div style="font-size:12px;color:#6b7280;margin-top:6px;">'
+                f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:none;">Open image</a>'
+                f'</div>'
+                f'</div>'
+            )
+            return token_for(html)
+        html = (
+            f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer" '
+            f'style="color:#2563eb;text-decoration:none;">{escape(url)}</a>'
+        )
+        return token_for(html)
+
+    text = url_re.sub(url_sub, text)
+
+    rendered = escape(text)
+    for token, html in snippets:
+        rendered = rendered.replace(token, html)
+
+    rendered = rendered.replace('\n', '<br>')
+    return mark_safe(rendered)
 
 
 class EmailService:
@@ -40,6 +114,25 @@ class EmailService:
         if not vendor_email:
             logger.error(f"No vendor email for issue {issue.id}")
             raise ValueError("Vendor email not found")
+
+        normalized_body = (body or '').strip()
+
+        recently = timezone.now() - timedelta(minutes=2)
+        existing_sent = AICommunicationLog.objects.filter(
+            issue=issue,
+            sender='AI',
+            message_type='email',
+            status='sent',
+            email_to=vendor_email,
+            subject=subject,
+            message=normalized_body,
+            timestamp__gte=recently,
+        ).order_by('-timestamp').first()
+        if existing_sent:
+            logger.warning(
+                f"Duplicate send prevented for issue {issue.id} to {vendor_email} subject={subject!r}"
+            )
+            return existing_sent.email_message_id or ''
         
         try:
             # Prepare context for HTML template
@@ -132,7 +225,8 @@ class EmailService:
                     'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
                     'issue_id': str(issue.id),
                     'issue_slug': issue.get_issue_slug(),
-                    'message_body': body,
+                    'message_body': normalized_body,
+                    'message_body_html': _format_message_html(normalized_body),
                 }
                 html_content = render_to_string('emails/issue_reply.html', context)
             
@@ -152,6 +246,8 @@ class EmailService:
             email.attach_alternative(html_content, "text/html")
             
             # Add custom headers for tracking
+
+            
             email.extra_headers = {
                 'X-Issue-ID': str(issue.id),
                 'X-Issue-Thread': f'issue-{issue.id}',
@@ -163,12 +259,17 @@ class EmailService:
             # Get Message-ID (Django doesn't expose this easily, so we generate one)
             email_message_id = f"<issue-{issue.id}-{timezone.now().timestamp()}@buy2rent.eu>"
             
-            # Create communication log (store both plain text and HTML version)
+            # Create communication log (store plain text for UI, HTML for email template)
+            # Extract just the message body from plain_text (remove template wrapper)
+            import re
+            # Try to extract the actual message content from the plain text
+            message_only = normalized_body
+            
             log_entry = AICommunicationLog.objects.create(
                 issue=issue,
                 sender='AI',
-                message=plain_text,
-                html_content=html_content,
+                message=message_only,  # Plain text message for UI display
+                html_content=html_content,  # Full HTML template for email reference
                 message_type='email',
                 subject=subject,
                 email_from=self.from_email,
@@ -232,8 +333,12 @@ class EmailService:
             raise ValueError("Vendor email not found")
         
         issue_slug = issue.get_issue_slug()
-        if f'Issue #{issue_slug}' not in subject and f'[Issue #{issue_slug}]' not in subject:
+        if subject:
+            subject = subject.replace(f'Issue #{issue.id}', f'Issue #{issue_slug}')
+        if f'Issue #{issue_slug}' not in (subject or '') and f'[Issue #{issue_slug}]' not in (subject or ''):
             subject = f'[Issue #{issue_slug}] {subject}'
+
+        normalized_body = (body or '').strip()
         
         try:
             # Prepare context for HTML template
@@ -241,7 +346,8 @@ class EmailService:
                 'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
                 'issue_id': str(issue.id),
                 'issue_slug': issue.get_issue_slug(),
-                'message_body': body,
+                'message_body': normalized_body,
+                'message_body_html': _format_message_html(normalized_body),
             }
             
             # Render HTML template
@@ -274,7 +380,8 @@ class EmailService:
             AICommunicationLog.objects.create(
                 issue=issue,
                 sender='Admin',
-                message=plain_text,
+                message=normalized_body,
+                html_content=html_content,
                 message_type='email',
                 subject=subject,
                 email_from=self.from_email,

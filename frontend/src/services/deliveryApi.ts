@@ -214,9 +214,16 @@ export const deliveryApi = {
     location?: string;
     delay_reason?: string;
   }): Promise<Delivery> => {
-    const response = await axiosInstance.patch(`/deliveries/${id}/`, {
+    const response = await axiosInstance.patch(`/deliveries/${id}/update_status/`, {
       status,
       ...additionalData,
+    });
+    return response.data;
+  },
+
+  updateDeliveryField: async (id: string, field: string, value: any): Promise<Delivery> => {
+    const response = await axiosInstance.patch(`/deliveries/${id}/`, {
+      [field]: value,
     });
     return response.data;
   },

@@ -358,7 +358,7 @@ logging.getLogger('drf_spectacular').setLevel(logging.ERROR)
 
 # Vendor Communication Settings
 OPENAI_API_KEY = config('OPENAI_API_KEY', default='sk-proj-test-key')  # Add your real API key in .env file
-OPENAI_MODEL = config('OPENAI_MODEL', default='gpt-3.5-turbo')  # Using gpt-3.5-turbo for cost efficiency
+OPENAI_MODEL = config('OPENAI_MODEL', default='gpt-4.1')  # Override in .env if needed
 USE_MOCK_AI = config('USE_MOCK_AI', default=False, cast=bool)  # Use real OpenAI for production
 
 # AI Email Settings

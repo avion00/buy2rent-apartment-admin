@@ -6,4 +6,4 @@ source myenv/bin/activate
 INTERVAL=$(grep IMAP_CHECK_INTERVAL .env | cut -d '=' -f2)
 INTERVAL=${INTERVAL:-30}
 
-python manage.py monitor_vendor_emails_complete --interval $INTERVAL
+python manage.py monitor_vendor_emails --interval $INTERVAL

@@ -8,6 +8,8 @@ from django.conf import settings
 from issues.email_monitor import email_monitor
 import time
 import logging
+import os
+import fcntl
 
 logger = logging.getLogger(__name__)
 
@@ -39,47 +41,67 @@ class Command(BaseCommand):
         interval = options['interval']
         max_errors = options['max_errors']
         error_count = 0
-        
-        self.stdout.write(self.style.SUCCESS('Starting email monitor...'))
-        
-        if once:
-            # Run once
-            self.stdout.write('Checking for vendor emails...')
+
+        lock_path = os.environ.get('EMAIL_MONITOR_LOCK_FILE', '/tmp/buy2rent_email_monitor.lock')
+        lock_fp = None
+        try:
             try:
-                # Enable logging to see what's happening
-                import logging
-                logging.basicConfig(level=logging.INFO)
-                
-                email_monitor.monitor_inbox()
-                self.stdout.write(self.style.SUCCESS('Email check complete'))
+                lock_fp = open(lock_path, 'w')
+                fcntl.flock(lock_fp.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                self.stdout.write(self.style.WARNING(
+                    f'Email monitor already running (lock: {lock_path}). Exiting.'
+                ))
+                return
             except Exception as e:
-                logger.error(f"Error during email monitoring: {e}", exc_info=True)
-                self.stdout.write(self.style.ERROR(f'Error: {e}'))
+                self.stdout.write(self.style.ERROR(f'Failed to acquire email monitor lock: {e}'))
                 raise
-        else:
-            # Continuous monitoring
+
+            self.stdout.write(self.style.SUCCESS('Starting email monitor...'))
+
+            if once:
+                self.stdout.write('Checking for vendor emails...')
+                try:
+                    import logging
+                    logging.basicConfig(level=logging.INFO)
+                    email_monitor.monitor_inbox()
+                    self.stdout.write(self.style.SUCCESS('Email check complete'))
+                except Exception as e:
+                    logger.error(f"Error during email monitoring: {e}", exc_info=True)
+                    self.stdout.write(self.style.ERROR(f'Error: {e}'))
+                    raise
+                return
+
             self.stdout.write(f'Monitoring emails every {interval} seconds...')
             self.stdout.write('Press Ctrl+C to stop')
-            
+
             while True:
                 try:
                     email_monitor.monitor_inbox()
-                    error_count = 0  # Reset error count on successful run
+                    error_count = 0
                     time.sleep(interval)
-                    
                 except KeyboardInterrupt:
                     self.stdout.write(self.style.WARNING('\nStopping email monitor...'))
                     break
-                    
                 except Exception as e:
                     error_count += 1
                     logger.error(f"Error during email monitoring: {e}", exc_info=True)
                     self.stdout.write(self.style.ERROR(f'Error: {e}'))
-                    
+
                     if error_count >= max_errors:
                         self.stdout.write(self.style.ERROR(
                             f'Too many errors ({error_count}). Stopping monitor...'
                         ))
                         break
-                    
+
                     time.sleep(interval)
+        finally:
+            if lock_fp:
+                try:
+                    fcntl.flock(lock_fp.fileno(), fcntl.LOCK_UN)
+                except Exception:
+                    pass
+                try:
+                    lock_fp.close()
+                except Exception:
+                    pass
