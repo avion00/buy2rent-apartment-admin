@@ -5,6 +5,8 @@ import { orderApi } from "@/services/orderApi";
 import { usePayments, useCreatePaymentHistory, usePatchPayment } from "@/hooks/usePaymentApi";
 import { RecordPaymentModal } from "@/components/modals/RecordPaymentModal";
 import { UpdatePaymentDueDateDialog } from "@/components/modals/UpdatePaymentDueDateDialog";
+import { ReportIssueFromProductDialog } from "@/components/modals/ReportIssueFromProductDialog";
+import { issueApi } from "@/services/issueApi";
 import { deliveryApi } from "@/services/deliveryApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -148,6 +150,10 @@ const ApartmentView = () => {
   // Payment due date update modal state
   const [dueDateModalOpen, setDueDateModalOpen] = useState(false);
   const [selectedPaymentForDueDate, setSelectedPaymentForDueDate] = useState<any>(null);
+  
+  // Issue reporting modal state
+  const [reportIssueModalOpen, setReportIssueModalOpen] = useState(false);
+  const [existingIssueId, setExistingIssueId] = useState<string | null>(null);
   
   // Fetch payments for this apartment
   const { data: paymentsData } = usePayments({ apartment: id });
@@ -1083,11 +1089,26 @@ const ApartmentView = () => {
                             <TableCell>
                               {/* Show issue type from Issues page */}
                               {product.issue_status_info && product.issue_status_info.status !== 'No Issue' ? (
-                                <div className="text-xs text-gray-700">
+                                <div 
+                                  className="text-xs text-gray-700 cursor-pointer hover:text-primary hover:underline transition-colors"
+                                  onClick={() => {
+                                    setSelectedProductForIssue(product);
+                                    setExistingIssueId(product.issue_status_info?.issue_id || null);
+                                    setReportIssueModalOpen(true);
+                                  }}
+                                >
                                   {product.issue_status_info.type || 'Issue reported'}
                                 </div>
                               ) : (
-                                <Badge variant="outline" className="bg-green-500/10 text-green-500 text-xs">
+                                <Badge 
+                                  variant="outline" 
+                                  className="bg-green-500/10 text-green-500 text-xs cursor-pointer hover:bg-green-500/20 transition-colors"
+                                  onClick={() => {
+                                    setSelectedProductForIssue(product);
+                                    setExistingIssueId(null);
+                                    setReportIssueModalOpen(true);
+                                  }}
+                                >
                                   No Issue
                                 </Badge>
                               )}
@@ -1114,7 +1135,7 @@ const ApartmentView = () => {
                                   ? "AI Active"
                                   : product.issue_state && product.issue_state !== "No Issue"
                                     ? "Manage Issue"
-                                    : "Report Issue"}
+                                    : "AI Chatbot"}
                               </Button>
                             </TableCell>
                             <TableCell>
@@ -1400,6 +1421,47 @@ const ApartmentView = () => {
             toast({
               title: "Error",
               description: "Failed to update payment due date",
+              variant: "destructive",
+            });
+            throw error;
+          }
+        }}
+      />
+
+      {/* Report Issue from Product Dialog */}
+      <ReportIssueFromProductDialog
+        product={selectedProductForIssue}
+        apartmentId={id || ''}
+        existingIssueId={existingIssueId}
+        open={reportIssueModalOpen}
+        onOpenChange={(open) => {
+          setReportIssueModalOpen(open);
+          if (!open) {
+            setExistingIssueId(null);
+          }
+        }}
+        onSubmit={async (issueData, issueId) => {
+          try {
+            if (issueId) {
+              // Update existing issue
+              await issueApi.updateIssue(issueId, issueData);
+              toast({
+                title: "Success",
+                description: "Issue updated successfully",
+              });
+            } else {
+              // Create new issue
+              await issueApi.createIssue(issueData);
+              toast({
+                title: "Success",
+                description: "Issue reported successfully",
+              });
+            }
+            refetch();
+          } catch (error: any) {
+            toast({
+              title: "Error",
+              description: error.response?.data?.message || `Failed to ${issueId ? 'update' : 'report'} issue`,
               variant: "destructive",
             });
             throw error;

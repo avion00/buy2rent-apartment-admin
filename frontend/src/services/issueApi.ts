@@ -303,6 +303,13 @@ export interface UpdateIssueData {
   invoice_number?: string;
   tracking_number?: string;
   auto_notify_vendor?: boolean;
+  // Additional fields for comprehensive updates
+  apartment?: string;
+  vendor?: string;
+  order?: string;
+  product?: string;
+  product_name?: string;
+  items_data?: IssueItemData[];
 }
 
 export interface IssueListResponse {
