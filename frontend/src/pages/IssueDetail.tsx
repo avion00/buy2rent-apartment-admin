@@ -496,7 +496,7 @@ export default function IssueDetail() {
                 )}
 
                 {/* Product Details - Show all products from items */}
-                {issue.items && issue.items.length > 0 ? (
+                {/* {issue.items && issue.items.length > 0 ? (
                   <div className="space-y-3">
                     <h4 className="font-semibold flex items-center gap-2">
                       <Package className="h-4 w-4" /> Product Details ({issue.items.length})
@@ -504,7 +504,7 @@ export default function IssueDetail() {
                     {issue.items.map((item: any, index: number) => (
                       <div key={item.id || index} className="p-4 bg-muted/50 rounded-lg space-y-3">
                         <div className="flex gap-4">
-                          {/* Product Image */}
+                         
                           <div className="flex-shrink-0">
                             {item.product_image ? (
                               <img 
@@ -518,7 +518,7 @@ export default function IssueDetail() {
                               </div>
                             )}
                           </div>
-                          {/* Product Info */}
+                         
                           <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
                             <div>
                               <p className="text-sm text-muted-foreground">Product Name</p>
@@ -551,7 +551,7 @@ export default function IssueDetail() {
                       <Package className="h-4 w-4" /> Product Details
                     </h4>
                     <div className="flex gap-4">
-                      {/* Product Image */}
+                     
                       <div className="flex-shrink-0">
                         {issue.product_details.product_image ? (
                           <img 
@@ -565,7 +565,7 @@ export default function IssueDetail() {
                           </div>
                         )}
                       </div>
-                      {/* Product Info */}
+                      
                       <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                           <p className="text-sm text-muted-foreground">Product Name</p>
@@ -592,7 +592,7 @@ export default function IssueDetail() {
                       </div>
                     </div>
                   </div>
-                ) : null}
+                ) : null} */}
 
                 {/* Fallback if no order/product details */}
                 {!issue.order_details && !issue.order_item_details && !issue.product_details && (

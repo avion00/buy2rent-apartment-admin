@@ -88,6 +88,8 @@ class IssueViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def activate_ai_email(self, request, pk=None):
         """Activate AI email communication for this issue"""
+        from asgiref.sync import async_to_sync
+        
         try:
             issue = self.get_object()
             
@@ -105,28 +107,21 @@ class IssueViewSet(viewsets.ModelViewSet):
                     'message': 'AI email already activated for this issue'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Run async function in sync context
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                result = loop.run_until_complete(
-                    ai_manager.start_issue_conversation(issue)
-                )
-                
-                if result['success']:
-                    return Response({
-                        'success': True,
-                        'message': 'AI email communication activated',
-                        'email_subject': result.get('email_subject')
-                    }, status=status.HTTP_200_OK)
-                else:
-                    return Response({
-                        'success': False,
-                        'message': result.get('message', 'Failed to activate AI'),
-                        'error': result.get('error')
-                    }, status=status.HTTP_400_BAD_REQUEST)
-            finally:
-                loop.close()
+            # Run async function in sync context using async_to_sync
+            result = async_to_sync(ai_manager.start_issue_conversation)(issue)
+            
+            if result['success']:
+                return Response({
+                    'success': True,
+                    'message': 'AI email communication activated',
+                    'email_subject': result.get('email_subject')
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'message': result.get('message', 'Failed to activate AI'),
+                    'error': result.get('error')
+                }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({
                 'success': False,

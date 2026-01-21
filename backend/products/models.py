@@ -338,7 +338,8 @@ class Product(models.Model):
                 'status': 'No Issue',
                 'priority': None,
                 'type': None,
-                'issue_id': None
+                'issue_id': None,
+                'ai_activated': False
             }
         
         return {
@@ -346,7 +347,8 @@ class Product(models.Model):
             'priority': latest_issue.priority,
             'type': latest_issue.type,
             'issue_id': str(latest_issue.id),
-            'created_at': latest_issue.created_at.isoformat() if latest_issue.created_at else None
+            'created_at': latest_issue.created_at.isoformat() if latest_issue.created_at else None,
+            'ai_activated': latest_issue.ai_activated
         }
     
     @property

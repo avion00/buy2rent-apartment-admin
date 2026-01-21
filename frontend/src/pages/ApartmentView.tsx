@@ -79,6 +79,7 @@ import { UnitPriceEditModal } from "@/components/modals/UnitPriceEditModal";
 import { QuantityEditModal } from "@/components/modals/QuantityEditModal";
 import { DeliveryStatusUpdateModal } from "@/components/modals/DeliveryStatusUpdateModal";
 import ApartmentViewSkeleton, { ApartmentViewProductsSkeleton, StatisticsCardsSkeleton, RecentActivitySkeleton } from "@/components/skeletons/ApartmentViewSkeleton";
+import { AICommunicationDialog } from "@/components/dialogs/AICommunicationDialog";
 
 const ApartmentView = () => {
   const { id } = useParams<{ id: string }>();
@@ -154,6 +155,10 @@ const ApartmentView = () => {
   // Issue reporting modal state
   const [reportIssueModalOpen, setReportIssueModalOpen] = useState(false);
   const [existingIssueId, setExistingIssueId] = useState<string | null>(null);
+  
+  // AI Communication Dialog state
+  const [aiCommunicationDialogOpen, setAiCommunicationDialogOpen] = useState(false);
+  const [selectedProductForAI, setSelectedProductForAI] = useState<any>(null);
   
   // Fetch payments for this apartment
   const { data: paymentsData } = usePayments({ apartment: id });
@@ -1013,13 +1018,13 @@ const ApartmentView = () => {
                                         <Badge 
                                           variant={
                                             paymentStatus === 'Paid' ? 'default' :
-                                            paymentStatus === 'Partially Paid' ? 'secondary' :
+                                            paymentStatus === 'Partial' ? 'secondary' :
                                             'outline'
                                           }
                                           className={cn(
                                             'cursor-pointer hover:opacity-80 transition-opacity text-[10px] w-fit',
                                             paymentStatus === 'Paid' ? 'bg-green-500/10 text-green-500' :
-                                            paymentStatus === 'Partially Paid' ? 'bg-yellow-500/10 text-yellow-500' :
+                                            paymentStatus === 'Partial' ? 'bg-yellow-500/10 text-yellow-500' :
                                             'bg-red-500/10 text-red-500'
                                           )}
                                           onClick={() => {
@@ -1117,24 +1122,26 @@ const ApartmentView = () => {
                               <Button
                                 size="sm"
                                 variant={
-                                  product.issue_state && product.issue_state !== "No Issue" ? "default" : "outline"
+                                  product.issue_status_info && product.issue_status_info.status !== "No Issue" ? "default" : "outline"
                                 }
                                 onClick={() => {
-                                  setSelectedProductForIssue(product);
-                                  setIssueModalOpen(true);
+                                  setSelectedProductForAI(product);
+                                  setAiCommunicationDialogOpen(true);
                                 }}
-                                className={cn(product.issue_state === "AI Resolving" && "animate-pulse")}
+                                className={cn(
+                                  product.issue_status_info?.ai_activated && "animate-pulse"
+                                )}
                               >
                                 <Bot
                                   className={cn(
                                     "mr-1 h-3 w-3",
-                                    product.issue_state === "AI Resolving" && "animate-spin",
+                                    product.issue_status_info?.ai_activated && "animate-spin",
                                   )}
                                 />
-                                {product.issue_state === "AI Resolving"
+                                {product.issue_status_info?.ai_activated
                                   ? "AI Active"
-                                  : product.issue_state && product.issue_state !== "No Issue"
-                                    ? "Manage Issue"
+                                  : product.issue_status_info && product.issue_status_info.status !== "No Issue"
+                                    ? "AI Chatbot"
                                     : "AI Chatbot"}
                               </Button>
                             </TableCell>
@@ -1466,6 +1473,17 @@ const ApartmentView = () => {
             });
             throw error;
           }
+        }}
+      />
+
+      {/* AI Communication Dialog */}
+      <AICommunicationDialog
+        open={aiCommunicationDialogOpen}
+        onOpenChange={setAiCommunicationDialogOpen}
+        issueId={selectedProductForAI?.issue_status_info?.issue_id || null}
+        productName={selectedProductForAI?.product || 'Product'}
+        onIssueCreated={(issueId) => {
+          refetch();
         }}
       />
 

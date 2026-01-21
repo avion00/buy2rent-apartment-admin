@@ -100,6 +100,7 @@ export interface UpdateOrderData {
   status?: string;
   expected_delivery?: string;
   actual_delivery?: string;
+  shipping_address?: string;
   notes?: string;
   items?: OrderItem[];
 }

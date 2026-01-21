@@ -111,6 +111,7 @@ export interface IssueStatusInfo {
   type: string | null;
   issue_id: string | null;
   created_at: string | null;
+  ai_activated?: boolean;
 }
 
 // Product type definition

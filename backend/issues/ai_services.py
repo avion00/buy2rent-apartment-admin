@@ -497,7 +497,9 @@ class IssueAIManager:
                 # Use body as fallback
                 body_text = email_result.get('body', '')
                 
-                self.email_service.send_issue_email(
+                # Call synchronous email service from async context
+                await asyncio.to_thread(
+                    self.email_service.send_issue_email,
                     issue=issue,
                     subject=subject_with_id,
                     body=body_text,

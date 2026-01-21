@@ -9605,3 +9605,131 @@
 2026-01-20 22:28:35 +01:00:  HTTP  1/20/2026 10:28:35 PM 127.0.0.1 Returned 200 in 3 ms
 2026-01-20 22:28:42 +01:00:  HTTP  1/20/2026 10:28:42 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
 2026-01-20 22:28:42 +01:00:  HTTP  1/20/2026 10:28:42 PM 127.0.0.1 Returned 304 in 5 ms
+2026-01-21 01:11:56 +01:00:  HTTP  1/21/2026 1:11:56 AM 185.247.137.203 GET /
+2026-01-21 01:11:56 +01:00:  HTTP  1/21/2026 1:11:56 AM 185.247.137.203 Returned 200 in 11 ms
+2026-01-21 07:54:15 +01:00:  HTTP  1/21/2026 7:54:15 AM 127.0.0.1 HEAD /
+2026-01-21 07:54:15 +01:00:  HTTP  1/21/2026 7:54:15 AM 127.0.0.1 Returned 200 in 10 ms
+2026-01-21 11:21:48 +01:00:  HTTP  1/21/2026 11:21:48 AM 127.0.0.1 GET /login
+2026-01-21 11:21:48 +01:00:  HTTP  1/21/2026 11:21:48 AM 127.0.0.1 Returned 200 in 9 ms
+2026-01-21 11:21:48 +01:00:  HTTP  1/21/2026 11:21:48 AM 127.0.0.1 GET /assets/index-B3-kR3lz.css
+2026-01-21 11:21:48 +01:00:  HTTP  1/21/2026 11:21:48 AM 127.0.0.1 GET /assets/index-BoHtlYpS.js
+2026-01-21 11:21:48 +01:00:  HTTP  1/21/2026 11:21:48 AM 127.0.0.1 Returned 200 in 2 ms
+2026-01-21 11:21:48 +01:00:  HTTP  1/21/2026 11:21:48 AM 127.0.0.1 Returned 200 in 4 ms
+2026-01-21 11:21:51 +01:00:  HTTP  1/21/2026 11:21:51 AM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 11:21:51 +01:00:  HTTP  1/21/2026 11:21:51 AM 127.0.0.1 Returned 304 in 6 ms
+2026-01-21 16:53:11 +01:00: 
+2026-01-21 16:53:11 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 16:53:12 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 16:54:35 +01:00:  HTTP  1/21/2026 4:54:35 PM 127.0.0.1 GET /login
+2026-01-21 16:54:35 +01:00:  HTTP  1/21/2026 4:54:35 PM 127.0.0.1 Returned 304 in 40 ms
+2026-01-21 16:54:36 +01:00:  HTTP  1/21/2026 4:54:36 PM 127.0.0.1 GET /assets/index-B3-kR3lz.css
+2026-01-21 16:54:36 +01:00:  HTTP  1/21/2026 4:54:36 PM 127.0.0.1 GET /assets/index-BoHtlYpS.js
+2026-01-21 16:54:36 +01:00:  HTTP  1/21/2026 4:54:36 PM 127.0.0.1 Returned 304 in 5 ms
+2026-01-21 16:54:36 +01:00:  HTTP  1/21/2026 4:54:36 PM 127.0.0.1 Returned 304 in 13 ms
+2026-01-21 17:26:09 +01:00:  HTTP  1/21/2026 5:26:09 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 17:26:09 +01:00:  HTTP  1/21/2026 5:26:09 PM 127.0.0.1 Returned 304 in 9 ms
+2026-01-21 17:42:21 +01:00: 
+2026-01-21 17:42:21 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 17:42:22 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 17:43:00 +01:00:  HTTP  1/21/2026 5:43:00 PM 127.0.0.1 GET /issues/f3e2098d-0d5f-4230-8fcd-e50512984034
+2026-01-21 17:43:00 +01:00:  HTTP  1/21/2026 5:43:00 PM 127.0.0.1 Returned 200 in 52 ms
+2026-01-21 17:43:00 +01:00:  HTTP  1/21/2026 5:43:00 PM 127.0.0.1 GET /assets/index-Ddb8v7pN.js
+2026-01-21 17:43:00 +01:00:  HTTP  1/21/2026 5:43:00 PM 127.0.0.1 GET /assets/index-B3-kR3lz.css
+2026-01-21 17:43:00 +01:00:  HTTP  1/21/2026 5:43:00 PM 127.0.0.1 Returned 304 in 6 ms
+2026-01-21 17:43:00 +01:00:  HTTP  1/21/2026 5:43:00 PM 127.0.0.1 Returned 200 in 34 ms
+2026-01-21 17:43:05 +01:00:  HTTP  1/21/2026 5:43:05 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 17:43:05 +01:00:  HTTP  1/21/2026 5:43:05 PM 127.0.0.1 Returned 304 in 7 ms
+2026-01-21 17:45:18 +01:00: 
+2026-01-21 17:45:18 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 17:45:19 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 18:01:48 +01:00: 
+2026-01-21 18:01:48 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 18:01:49 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 18:13:43 +01:00: 
+2026-01-21 18:13:43 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 18:13:44 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 18:16:41 +01:00: 
+2026-01-21 18:16:41 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 18:16:42 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 18:16:56 +01:00:  HTTP  1/21/2026 6:16:56 PM 127.0.0.1 GET /issues/f3e2098d-0d5f-4230-8fcd-e50512984034
+2026-01-21 18:16:56 +01:00:  HTTP  1/21/2026 6:16:56 PM 127.0.0.1 Returned 200 in 44 ms
+2026-01-21 18:16:56 +01:00:  HTTP  1/21/2026 6:16:56 PM 127.0.0.1 GET /assets/index-BYg4-8ob.js
+2026-01-21 18:16:56 +01:00:  HTTP  1/21/2026 6:16:56 PM 127.0.0.1 GET /assets/index-B3-kR3lz.css
+2026-01-21 18:16:56 +01:00:  HTTP  1/21/2026 6:16:56 PM 127.0.0.1 Returned 304 in 4 ms
+2026-01-21 18:16:56 +01:00:  HTTP  1/21/2026 6:16:56 PM 127.0.0.1 Returned 200 in 24 ms
+2026-01-21 18:17:00 +01:00:  HTTP  1/21/2026 6:17:00 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:17:00 +01:00:  HTTP  1/21/2026 6:17:00 PM 127.0.0.1 Returned 304 in 4 ms
+2026-01-21 18:17:40 +01:00:  HTTP  1/21/2026 6:17:40 PM 127.0.0.1 GET /apartments/3001db17-bf9b-4e15-b1cd-b0a799d3b8aa
+2026-01-21 18:17:40 +01:00:  HTTP  1/21/2026 6:17:40 PM 127.0.0.1 Returned 200 in 5 ms
+2026-01-21 18:17:40 +01:00:  HTTP  1/21/2026 6:17:40 PM 127.0.0.1 GET /assets/index-BYg4-8ob.js
+2026-01-21 18:17:40 +01:00:  HTTP  1/21/2026 6:17:40 PM 127.0.0.1 Returned 304 in 4 ms
+2026-01-21 18:17:40 +01:00:  HTTP  1/21/2026 6:17:40 PM 127.0.0.1 GET /assets/index-B3-kR3lz.css
+2026-01-21 18:17:40 +01:00:  HTTP  1/21/2026 6:17:40 PM 127.0.0.1 Returned 304 in 2 ms
+2026-01-21 18:17:41 +01:00:  HTTP  1/21/2026 6:17:41 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:17:41 +01:00:  HTTP  1/21/2026 6:17:41 PM 127.0.0.1 Returned 304 in 4 ms
+2026-01-21 18:26:37 +01:00: 
+2026-01-21 18:26:37 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 18:26:38 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 18:27:39 +01:00: 
+2026-01-21 18:27:39 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 18:27:40 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 18:27:52 +01:00:  HTTP  1/21/2026 6:27:52 PM 127.0.0.1 GET /apartments/3001db17-bf9b-4e15-b1cd-b0a799d3b8aa
+2026-01-21 18:27:52 +01:00:  HTTP  1/21/2026 6:27:52 PM 127.0.0.1 Returned 200 in 40 ms
+2026-01-21 18:27:52 +01:00:  HTTP  1/21/2026 6:27:52 PM 127.0.0.1 GET /assets/index-Cl6jNn-r.css
+2026-01-21 18:27:52 +01:00:  HTTP  1/21/2026 6:27:52 PM 127.0.0.1 GET /assets/index-qyYiVjzM.js
+2026-01-21 18:27:52 +01:00:  HTTP  1/21/2026 6:27:52 PM 127.0.0.1 Returned 200 in 19 ms
+2026-01-21 18:27:52 +01:00:  HTTP  1/21/2026 6:27:52 PM 127.0.0.1 Returned 200 in 66 ms
+2026-01-21 18:27:54 +01:00:  HTTP  1/21/2026 6:27:54 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:27:54 +01:00:  HTTP  1/21/2026 6:27:54 PM 127.0.0.1 Returned 304 in 6 ms
+2026-01-21 18:28:20 +01:00:  HTTP  1/21/2026 6:28:20 PM 127.0.0.1 GET /assets/index-Cl6jNn-r.css
+2026-01-21 18:28:20 +01:00:  HTTP  1/21/2026 6:28:20 PM 127.0.0.1 Returned 304 in 2 ms
+2026-01-21 18:32:13 +01:00: 
+2026-01-21 18:32:13 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 18:32:13 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 18:32:26 +01:00:  HTTP  1/21/2026 6:32:26 PM 127.0.0.1 GET /apartments/3001db17-bf9b-4e15-b1cd-b0a799d3b8aa
+2026-01-21 18:32:26 +01:00:  HTTP  1/21/2026 6:32:26 PM 127.0.0.1 Returned 200 in 34 ms
+2026-01-21 18:32:26 +01:00:  HTTP  1/21/2026 6:32:26 PM 127.0.0.1 GET /assets/index-Ba0fRW_C.js
+2026-01-21 18:32:26 +01:00:  HTTP  1/21/2026 6:32:26 PM 127.0.0.1 GET /assets/index-BKBm9H_n.css
+2026-01-21 18:32:26 +01:00:  HTTP  1/21/2026 6:32:26 PM 127.0.0.1 Returned 200 in 6 ms
+2026-01-21 18:32:26 +01:00:  HTTP  1/21/2026 6:32:26 PM 127.0.0.1 Returned 200 in 31 ms
+2026-01-21 18:32:31 +01:00:  HTTP  1/21/2026 6:32:31 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:32:31 +01:00:  HTTP  1/21/2026 6:32:31 PM 127.0.0.1 Returned 200 in 4 ms
+2026-01-21 18:37:18 +01:00:  HTTP  1/21/2026 6:37:18 PM 127.0.0.1 GET /assets/index-BKBm9H_n.css
+2026-01-21 18:37:18 +01:00:  HTTP  1/21/2026 6:37:18 PM 127.0.0.1 Returned 304 in 6 ms
+2026-01-21 18:43:18 +01:00: 
+2026-01-21 18:43:18 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 18:43:19 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 18:45:06 +01:00: 
+2026-01-21 18:45:06 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 18:45:07 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 18:46:41 +01:00: 
+2026-01-21 18:46:41 +01:00:  INFO  Gracefully shutting down. Please wait...
+2026-01-21 18:46:42 +01:00:  INFO  Accepting connections at http://localhost:5173
+2026-01-21 18:46:55 +01:00:  HTTP  1/21/2026 6:46:55 PM 127.0.0.1 GET /apartments/3001db17-bf9b-4e15-b1cd-b0a799d3b8aa
+2026-01-21 18:46:55 +01:00:  HTTP  1/21/2026 6:46:55 PM 127.0.0.1 Returned 200 in 38 ms
+2026-01-21 18:46:55 +01:00:  HTTP  1/21/2026 6:46:55 PM 127.0.0.1 GET /assets/index-BKBm9H_n.css
+2026-01-21 18:46:55 +01:00:  HTTP  1/21/2026 6:46:55 PM 127.0.0.1 GET /assets/index-Ba0fRW_C.js
+2026-01-21 18:46:55 +01:00:  HTTP  1/21/2026 6:46:55 PM 127.0.0.1 Returned 200 in 8 ms
+2026-01-21 18:46:55 +01:00:  HTTP  1/21/2026 6:46:55 PM 127.0.0.1 Returned 200 in 31 ms
+2026-01-21 18:46:57 +01:00:  HTTP  1/21/2026 6:46:57 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:46:57 +01:00:  HTTP  1/21/2026 6:46:57 PM 127.0.0.1 Returned 200 in 6 ms
+2026-01-21 18:48:08 +01:00:  HTTP  1/21/2026 6:48:08 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:48:08 +01:00:  HTTP  1/21/2026 6:48:08 PM 127.0.0.1 Returned 200 in 5 ms
+2026-01-21 18:48:15 +01:00:  HTTP  1/21/2026 6:48:15 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:48:15 +01:00:  HTTP  1/21/2026 6:48:15 PM 127.0.0.1 Returned 200 in 3 ms
+2026-01-21 18:48:22 +01:00:  HTTP  1/21/2026 6:48:22 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:48:22 +01:00:  HTTP  1/21/2026 6:48:22 PM 127.0.0.1 Returned 200 in 4 ms
+2026-01-21 18:48:27 +01:00:  HTTP  1/21/2026 6:48:27 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:48:27 +01:00:  HTTP  1/21/2026 6:48:27 PM 127.0.0.1 Returned 200 in 2 ms
+2026-01-21 18:48:33 +01:00:  HTTP  1/21/2026 6:48:33 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:48:33 +01:00:  HTTP  1/21/2026 6:48:33 PM 127.0.0.1 Returned 200 in 5 ms
+2026-01-21 18:48:38 +01:00:  HTTP  1/21/2026 6:48:38 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:48:38 +01:00:  HTTP  1/21/2026 6:48:38 PM 127.0.0.1 Returned 200 in 2 ms
+2026-01-21 18:48:47 +01:00:  HTTP  1/21/2026 6:48:47 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:48:47 +01:00:  HTTP  1/21/2026 6:48:47 PM 127.0.0.1 Returned 200 in 2 ms
+2026-01-21 18:48:54 +01:00:  HTTP  1/21/2026 6:48:54 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:48:54 +01:00:  HTTP  1/21/2026 6:48:54 PM 127.0.0.1 Returned 200 in 2 ms
+2026-01-21 18:49:03 +01:00:  HTTP  1/21/2026 6:49:03 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:49:03 +01:00:  HTTP  1/21/2026 6:49:03 PM 127.0.0.1 Returned 200 in 3 ms
+2026-01-21 18:49:07 +01:00:  HTTP  1/21/2026 6:49:07 PM 127.0.0.1 GET /assets/buy2rent-CUbASZeg.png
+2026-01-21 18:49:07 +01:00:  HTTP  1/21/2026 6:49:07 PM 127.0.0.1 Returned 200 in 3 ms
