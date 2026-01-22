@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Issue Report - Buy2Rent</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {font-family: Arial, sans-serif !important;}
+    </style>
+    <![endif]-->
+    <style>
+        /* Reset styles for Gmail compatibility */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+            -ms-interpolation-mode: bicubic;
+        }
+        
+        /* Main container */
+        .email-wrapper {
+            width: 100%;
+            background-color: #f5f5f5;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #ffffff;
+            padding: 32px 40px 24px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        .header-subtitle {
+            color: #6b7280;
+            font-size: 13px;
+            font-weight: 400;
+            margin-top: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        /* Status banner */
+        .status-banner {
+            background-color: #f9fafb;
+            padding: 24px 40px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .status-title {
+            color: #111827;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+            line-height: 1.4;
+        }
+        /* Content */
+        .content {
+            padding: 32px 40px;
+        }
+        .greeting {
+            font-size: 15px;
+            font-weight: 400;
+            margin: 0 0 16px 0;
+            color: #111827;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+            line-height: 1.5;
+        }
+        .message-text {
+            font-size: 15px;
+            color: #374151;
+            margin: 0 0 24px 0;
+            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        /* Details section */
+        .details-grid {
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 24px 0;
+            border: 1px solid #e5e7eb;
+        }
+        .details-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #111827;
+            margin: 0 0 16px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        .detail-row {
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+        .detail-label {
+            font-weight: 500;
+            color: #6b7280;
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+            display: inline-block;
+            min-width: 140px;
+        }
+        .detail-value {
+            color: #111827;
+            font-size: 14px;
+            font-weight: 400;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        /* Priority badges */
+        .priority-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        .priority-critical {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .priority-high {
+            background-color: #fff7ed;
+            color: #9a3412;
+            border: 1px solid #fed7aa;
+        }
+        .priority-medium {
+            background-color: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+        .priority-low {
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        /* Products section */
+        .products-section {
+            margin: 32px 0;
+        }
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #111827;
+            margin: 0 0 16px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        /* Product cards */
+        .product-card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .product-header {
+            margin-bottom: 16px;
+        }
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin: 0 0 8px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+            line-height: 1.4;
+        }
+        .product-meta {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 8px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+            line-height: 1.5;
+        }
+        .product-meta strong {
+            color: #374151;
+            font-weight: 500;
+        }
+        .product-issue-types {
+            display: inline-block;
+            background-color: #fef2f2;
+            color: #991b1b;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 4px 4px 4px 0;
+            border: 1px solid #fecaca;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        .product-description {
+            background-color: #f9fafb;
+            border-left: 3px solid #3b82f6;
+            padding: 16px;
+            margin-top: 12px;
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.6;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        .product-description strong {
+            display: block;
+            color: #111827;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        /* Impact box */
+        .impact-box {
+            background-color: #fffbeb;
+            border-left: 3px solid #f59e0b;
+            border-radius: 4px;
+            padding: 16px;
+            margin: 24px 0;
+        }
+        .impact-box p {
+            margin: 0;
+            color: #92400e;
+            font-size: 14px;
+            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        .impact-box strong {
+            font-weight: 600;
+            color: #78350f;
+        }
+        /* CTA button */
+        .cta-section {
+            text-align: center;
+            margin: 32px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #7c3aed;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        /* Footer */
+        .footer-reference {
+            background-color: #f9fafb;
+            padding: 20px 40px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        .reference-code {
+            color: #111827;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Courier New', 'Consolas', monospace;
+            margin: 0;
+        }
+        .reference-note {
+            color: #6b7280;
+            font-size: 12px;
+            margin: 8px 0 0 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        .footer {
+            background-color: #ffffff;
+            padding: 24px 40px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        .footer-brand {
+            font-weight: 600;
+            font-size: 14px;
+            color: #111827;
+            margin: 0 0 8px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        .footer-text {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 4px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        }
+        /* Mobile responsive */
+        @media only screen and (max-width: 600px) {
+            .header, .content, .status-banner, .footer-reference, .footer {
+                padding-left: 24px !important;
+                padding-right: 24px !important;
+            }
+            .details-grid, .product-card {
+                padding: 16px !important;
+            }
+            .detail-label {
+                display: block;
+                margin-bottom: 4px;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+    <table role="presentation" class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff;">
+                    <!-- Header -->
+                    <tr>
+                        <td class="header" style="background-color: #ffffff; padding: 32px 40px 24px; border-bottom: 1px solid #e5e7eb; text-align: center;">
+                            <img src="https://procurement.buy2rent.eu/static/buy2rent-logo.png" alt="Buy2Rent" style="max-width: 280px; height: auto; display: block; margin: 0 auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Status Banner -->
+                    <tr>
+                        <td class="status-banner" style="background-color: #f9fafb; padding: 24px 40px; border-bottom: 1px solid #e5e7eb;">
+                            <h2 class="status-title" style="color: #111827; font-size: 20px; font-weight: 600; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">New Issue Report</h2>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td class="content" style="padding: 32px 40px;">
+                            <p class="greeting" style="font-size: 15px; color: #111827; margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">Dear {{ vendor_name }} team,</p>
+                            <p class="message-text" style="font-size: 15px; color: #374151; margin: 0 0 24px 0; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">{{ opening_message }}</p>
+
+                            <!-- Details Grid -->
+                            <table role="presentation" class="details-grid" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f9fafb; border-radius: 8px; padding: 24px; margin: 24px 0; border: 1px solid #e5e7eb;">
+                                <tr>
+                                    <td>
+                                        <p class="details-title" style="font-size: 13px; font-weight: 600; color: #111827; margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">Issue Details</p>
+                                        
+                                        <p class="detail-row" style="margin: 12px 0; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">
+                                            <span class="detail-label" style="color: #6b7280; font-weight: 500;">Issue ID:</span>
+                                            <span class="detail-value" style="color: #111827; font-weight: 600;">#{{ issue_slug }}</span>
+                                        </p>
+                                        
+                                        <p class="detail-row" style="margin: 12px 0; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">
+                                            <span class="detail-label" style="color: #6b7280; font-weight: 500;">Priority:</span>
+                                            <span class="priority-badge priority-{{ priority_class }}" style="display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500;">{{ priority }}</span>
+                                        </p>
+                                        
+                                        {% if order_reference %}
+                                        <p class="detail-row" style="margin: 12px 0; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">
+                                            <span class="detail-label" style="color: #6b7280; font-weight: 500;">Order Reference:</span>
+                                            <span class="detail-value" style="color: #111827;">{{ order_reference }}</span>
+                                        </p>
+                                        {% endif %}
+                                        
+                                        <p class="detail-row" style="margin: 12px 0 0 0; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">
+                                            <span class="detail-label" style="color: #6b7280; font-weight: 500;">Reported:</span>
+                                            <span class="detail-value" style="color: #111827;">{{ reported_date }}</span>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Products Section -->
+                            <div class="products-section" style="margin: 32px 0;">
+                                <p class="section-title" style="font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 16px 0; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">Affected Products ({{ affected_products|length }})</p>
+                                
+                                {% for product in affected_products %}
+                                <table role="presentation" class="product-card" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 16px;">
+                                    <tr>
+                                        <td>
+                                            <div class="product-header">
+                                                <p class="product-name" style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">{{ product.name }}</p>
+                                            </div>
+                                            
+                                            <p class="product-meta" style="font-size: 14px; color: #6b7280; margin: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">
+                                                <strong style="color: #374151; font-weight: 500;">Quantity:</strong> {{ product.quantity }}
+                                            </p>
+                                            
+                                            {% if product.issue_types %}
+                                            <p class="product-meta" style="font-size: 14px; color: #6b7280; margin: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">
+                                                <strong style="color: #374151; font-weight: 500;">Issue Type:</strong><br>
+                                                <span class="product-issue-types" style="display: inline-block; background-color: #fef2f2; color: #991b1b; padding: 4px 10px; border-radius: 12px; font-size: 12px; margin-top: 4px; border: 1px solid #fecaca;">{{ product.issue_types }}</span>
+                                            </p>
+                                            {% endif %}
+                                            
+                                            {% if product.description %}
+                                            <div class="product-description" style="background-color: #f9fafb; border-left: 3px solid #3b82f6; padding: 16px; margin-top: 12px; border-radius: 4px;">
+                                                <strong style="display: block; color: #111827; font-size: 13px; font-weight: 600; margin-bottom: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">Description:</strong>
+                                                <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">{{ product.description }}</p>
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                                {% endfor %}
+                            </div>
+
+                            {% if impact %}
+                            <table role="presentation" class="impact-box" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fffbeb; border-left: 3px solid #f59e0b; border-radius: 4px; padding: 16px; margin: 24px 0;">
+                                <tr>
+                                    <td>
+                                        <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">
+                                            <strong style="font-weight: 600; color: #78350f;">Business Impact:</strong> {{ impact }}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            {% endif %}
+
+                            <p class="message-text" style="font-size: 15px; color: #374151; margin: 0 0 24px 0; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">{{ closing_message }}</p>
+
+                            <!-- CTA Button -->
+                            <table role="presentation" class="cta-section" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 32px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="mailto:{{ reply_email }}" class="cta-button" style="display: inline-block; background-color: #7c3aed; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; font-size: 15px; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">Reply to this Issue</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer Reference -->
+                    <tr>
+                        <td class="footer-reference" style="background-color: #f9fafb; padding: 20px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p class="reference-code" style="color: #111827; font-size: 14px; font-weight: 600; margin: 0; font-family: 'Courier New', 'Consolas', monospace;">Reference: Issue #{{ issue_slug }}</p>
+                            <p class="reference-note" style="color: #6b7280; font-size: 12px; margin: 8px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">Please keep this reference in your reply</p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td class="footer" style="background-color: #ffffff; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p class="footer-brand" style="font-weight: 600; font-size: 14px; color: #111827; margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">Buy2Rent Procurement Team</p>
+                            <p class="footer-text" style="color: #6b7280; font-size: 13px; margin: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">This is an automated message from our procurement system.</p>
+                            <p class="footer-text" style="color: #6b7280; font-size: 13px; margin: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;">For urgent matters, contact {{ reply_email }}</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

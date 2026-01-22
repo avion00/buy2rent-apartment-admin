@@ -1,219 +1,491 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Issue Reply - Buy2Rent</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Re: Issue #{{ issue_slug }} - Buy2Rent</title>
+    <style type="text/css">
         body {
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f5f7fa;
-            line-height: 1.6;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
         }
-        .email-wrapper {
-            width: 100%;
-            background-color: #f5f7fa;
-            padding: 0;
-        }
-        .email-container {
-            width: 100%;
-            max-width: 100%;
-            margin: 0 auto;
-            background-color: #ffffff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            padding: 40px 60px;
-            text-align: center;
-        }
-        .logo {
-            max-width: 200px;
+        img {
+            border: 0;
             height: auto;
-            margin-bottom: 15px;
-        }
-        .header-subtitle {
-            color: #bdc3c7;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
-        .status-banner {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-            padding: 25px 60px;
-            text-align: center;
-            border-bottom: 4px solid #1e8449;
-        }
-        .status-banner h2 {
-            color: #ffffff;
-            font-size: 22px;
-            font-weight: 700;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .content {
-            padding: 50px 60px;
-            background-color: #ffffff;
-        }
-        .greeting {
-            font-size: 17px;
-            font-weight: 600;
-            margin-bottom: 25px;
-            color: #2c3e50;
-        }
-        .message-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #ecf0f1 100%);
-            padding: 30px;
-            border-radius: 8px;
-            border-left: 5px solid #27ae60;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .message-body {
-            font-size: 15px;
-            color: #2c3e50;
-            line-height: 1.9;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        .closing-section {
-            margin-top: 30px;
-            padding-top: 25px;
-            border-top: 2px solid #ecf0f1;
-        }
-        .closing-text {
-            font-size: 15px;
-            color: #34495e;
-            line-height: 1.8;
-            margin-bottom: 15px;
-        }
-        .signature {
-            margin-top: 25px;
-            font-size: 15px;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-        .signature-line {
-            color: #7f8c8d;
-            font-size: 14px;
-            font-weight: 400;
-            margin-top: 5px;
-        }
-        .footer-reference {
-            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
-            padding: 25px 60px;
-            text-align: center;
-        }
-        .reference-code {
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 700;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 1.5px;
-        }
-        .reference-note {
-            color: #95a5a6;
-            font-size: 12px;
-            margin-top: 10px;
-            font-weight: 500;
-        }
-        .footer {
-            background-color: #ecf0f1;
-            padding: 30px 60px;
-            text-align: center;
-        }
-        .footer-brand {
-            font-weight: 700;
-            font-size: 16px;
-            color: #2c3e50;
-            margin-bottom: 12px;
-        }
-        .footer-text {
-            color: #7f8c8d;
-            font-size: 13px;
-            line-height: 1.6;
-            margin: 6px 0;
-        }
-        .footer-contact {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #bdc3c7;
-        }
-        .contact-email {
-            color: #3498db;
+            line-height: 100%;
+            outline: none;
             text-decoration: none;
-            font-weight: 600;
+            -ms-interpolation-mode: bicubic;
+        }
+        table {
+            border-collapse: collapse !important;
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
         }
         @media only screen and (max-width: 600px) {
-            .header, .content, .status-banner, .footer-reference, .footer {
-                padding-left: 25px;
-                padding-right: 25px;
+            .m-shell {
+                width: 100% !important;
             }
-            .message-section {
-                padding: 20px;
+            .mpx-16 {
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+            }
+            .mfz-12 {
+                font-size: 16px !important;
+            }
+            .mfz-14 {
+                font-size: 16px !important;
+            }
+            .mpt-10 {
+                padding-top: 10px !important;
+            }
+            .mpb-0 {
+                padding-bottom: 0 !important;
+            }
+            .container-padding {
+                padding: 10px !important;
+            }
+            .title-text {
+                font-size: 20px !important;
+                line-height: 24px !important;
             }
         }
     </style>
 </head>
-<body>
-    <div class="email-wrapper">
-        <div class="email-container">
-            <div class="header">
-                <img src="https://procurement.buy2rent.eu/static/buy2rent-logo.png" alt="Buy2Rent" class="logo">
-                <div class="header-subtitle">Procurement System</div>
-            </div>
-
-            <div class="status-banner">
-                <h2>💬 Re: Issue #{{ issue_slug }}</h2>
-            </div>
-
-            <div class="content">
-                <div class="greeting">Dear {{ vendor_name }} team,</div>
-                
-                <div class="message-section">
-                    <div class="message-body">{% if message_body_html %}{{ message_body_html|safe }}{% else %}{{ message_body }}{% endif %}</div>
-                </div>
-
-                <div class="closing-section">
-                    <div class="closing-text">
-                        We appreciate your prompt attention to this matter and look forward to your continued cooperation in resolving this issue.
-                    </div>
-                    <div class="closing-text">
-                        Should you have any questions or require additional information, please do not hesitate to reach out to us directly.
-                    </div>
-                    
-                    <div class="signature">
-                        Best regards,<br>
-                        <span class="signature-line">Buy2Rent Procurement Team</span><br>
-                        <span class="signature-line">Email: procurement@buy2rent.eu</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="footer-reference">
-                <div class="reference-code">Reference: Issue #{{ issue_slug }}</div>
-                <div class="reference-note">Please keep this reference in your reply for tracking purposes</div>
-            </div>
-
-            <div class="footer">
-                <div class="footer-brand">Buy2Rent Procurement System</div>
-                <div class="footer-text">This message is part of an ongoing conversation regarding your order.</div>
-                <div class="footer-text">All communications are tracked and logged for quality assurance.</div>
-                <div class="footer-contact">
-                    <div class="footer-text">
-                        For urgent matters, contact us at: <a href="mailto:procurement@buy2rent.eu" class="contact-email">procurement@buy2rent.eu</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+<body style="margin:0;padding:0;background-color:#ffffff;">
+<div
+    style="padding:0!important;margin:0 auto!important;display:block!important;min-width:100%!important;width:100%!important;background:#ffffff">
+    <div id="preview-text" style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        Re: Issue #{{ issue_slug }} - Buy2Rent Response
     </div>
+    <center>
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:0;padding:0;width:100%;height:100%"
+            bgcolor="#ffffff">
+            <tbody>
+                <tr>
+                    <td style="margin:0;padding:0;width:100%;height:100%" align="center" valign="top">
+                        <table width="600" border="0" cellspacing="0" cellpadding="0" class="m-shell">
+                            <tbody>
+                                <tr>
+                                    <td class="td"
+                                        style="width:600px;min-width:600px;font-size:0pt;line-height:0pt;padding:0;margin:0;font-weight:normal">
+                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+
+
+                                            <tbody>
+                                                <tr>
+                                                    <td class="mpx-16"
+                                                        style="padding-top:16px;padding-bottom:16px;padding-left:34px;padding-right:34px">
+                                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td width="144"
+                                                                        style="font-size:0pt;line-height:0pt;text-align:left">
+                                                                        <img src="https://procurement.buy2rent.eu/static/buy2rent-logo.png"
+                                                                            width="144" height="" border="0"
+                                                                            alt="Buy2Rent" style="display:block;">
+                                                                    </td>
+                                                                    <td width="15"
+                                                                        style="font-size:0pt;line-height:0pt;text-align:left">
+                                                                        &nbsp;</td>
+                                                                    <td align="right">
+                                                                        <table border="0" cellspacing="0"
+                                                                            cellpadding="0">
+                                                                            <tbody>
+                                                                                <tr>
+                                                                                    <td width="16"
+                                                                                        style="font-size:0pt;line-height:0pt;text-align:left">
+                                                                                        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                                                                                            width="16" height="16"
+                                                                                            border="0">
+                                                                                    </td>
+                                                                                    <td width="4"
+                                                                                        style="font-size:0pt;line-height:0pt;text-align:left">
+                                                                                        &nbsp;</td>
+                                                                                    <td class="c-lggrey"
+                                                                                        style="font-size:12px;line-height:16px;font-family:Helvetica,Arial,sans-serif;text-align:left;min-width:auto!important;font-weight:500;color:#809399">
+                                                                                        <span class="c-lggrey"
+                                                                                            style="text-decoration:none;color:#809399">{{ vendor_name }}</span>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+
+
+                                                <tr>
+                                                    <td>
+                                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td class="mfz-12 mpb-0"
+                                                                        style="font-size:18px;color:#181c1f;font-family:Helvetica,Arial,sans-serif;text-align:center;min-width:auto!important;line-height:20px;font-weight:bold;padding-bottom:20px;padding-top:20px">
+                                                                        <strong>Update on Your Order</strong>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="font-size:0pt;line-height:0pt;text-align:left">
+                                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td
+                                                                        style="font-size:0pt;line-height:0pt;text-align:left;padding-top:12px;padding-left:32px;padding-right:32px">
+                                                                        <table width="100%" border="0" cellspacing="0"
+                                                                            cellpadding="0">
+                                                                            <tbody>
+                                                                                <tr>
+                                                                                    <td
+                                                                                        style="border-top:1px solid #e6e6e6;font-size:0pt;line-height:0pt;text-align:left;padding-top:12px">
+                                                                                        &nbsp;</td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+
+
+
+                                                <tr>
+                                                    <td class="mpx-16"
+                                                        style="padding-left:20px;padding-right:20px;padding-bottom:40px">
+                                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+
+
+
+
+
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td style="padding:0;padding-top:20px"
+                                                                        class="mpt-10">
+                                                                        <table width="100%" border="0" cellspacing="0"
+                                                                            cellpadding="0"
+                                                                            style="background-color:#eef1f3;border-radius:8px">
+                                                                            <tbody>
+                                                                                <tr>
+                                                                                    <td class="container-padding"
+                                                                                        style="padding:12px;border-radius:8px">
+                                                                                        <table width="100%" border="0"
+                                                                                            cellspacing="0"
+                                                                                            cellpadding="0">
+
+
+                                                                                            <tbody>
+                                                                                                <tr>
+                                                                                                    <td class="title-text"
+                                                                                                        style="font-size:24px;line-height:28px;color:#181c1f;font-family:Helvetica,Arial,sans-serif;text-align:left;font-weight:bold;padding-bottom:8px">
+                                                                                                        <strong>Response from Buy2Rent</strong>
+                                                                                                    </td>
+                                                                                                </tr>
+
+
+                                                                                                <tr>
+                                                                                                    <td align="left"
+                                                                                                        style="padding-bottom:12px">
+                                                                                                        <table
+                                                                                                            border="0"
+                                                                                                            cellspacing="0"
+                                                                                                            cellpadding="0">
+                                                                                                            <tbody>
+                                                                                                                <tr>
+                                                                                                                    <td width="24"
+                                                                                                                        style="font-size:0pt;line-height:0pt;text-align:left;border-radius:50%;overflow:hidden">
+                                                                                                                        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                                                                                                                            width="24"
+                                                                                                                            height="24"
+                                                                                                                            alt="Buy2Rent"
+                                                                                                                            style="display:block;border-radius:50%">
+                                                                                                                    </td>
+                                                                                                                    <td width="8"
+                                                                                                                        style="font-size:0pt;line-height:0pt">
+                                                                                                                        &nbsp;
+                                                                                                                    </td>
+                                                                                                                    <td
+                                                                                                                        style="font-size:12px;line-height:16px;font-family:Helvetica,Arial,sans-serif;color:#333d42;font-weight:bold">
+                                                                                                                        Buy2Rent Procurement Team
+                                                                                                                    </td>
+                                                                                                                </tr>
+                                                                                                            </tbody>
+                                                                                                        </table>
+                                                                                                    </td>
+                                                                                                </tr>
+
+
+
+
+                                                                                                <tr>
+                                                                                                    <td align="left"
+                                                                                                        style="padding:0;padding-bottom:12px">
+                                                                                                        <table
+                                                                                                            width="100%"
+                                                                                                            border="0"
+                                                                                                            cellspacing="0"
+                                                                                                            cellpadding="0">
+                                                                                                            <tbody>
+                                                                                                                <tr>
+                                                                                                                    <td
+                                                                                                                        style="font-size:15px;line-height:22px;color:#1b2426;font-family:Helvetica,Arial,sans-serif;text-align:left;padding:16px;background-color:#ffffff;border-radius:8px">
+                                                                                                                        {% if message_body_html %}{{ message_body_html|safe }}{% else %}{{ message_body }}{% endif %}
+                                                                                                                    </td>
+                                                                                                                </tr>
+                                                                                                            </tbody>
+                                                                                                        </table>
+                                                                                                    </td>
+                                                                                                </tr>
+
+
+
+                                                                                            </tbody>
+                                                                                        </table>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+
+                                                                <tr>
+                                                                    <td class="mpx-16"
+                                                                        style="padding-left:12px;padding-right:12px;padding-top:12px">
+                                                                        <table width="100%" border="0" cellspacing="0"
+                                                                            cellpadding="0">
+                                                                            <tbody>
+
+
+
+                                                                                <tr>
+                                                                                    <td
+                                                                                        style="font-size:0pt;line-height:0pt;text-align:left;padding-top:12px;padding-bottom:12px">
+                                                                                        <table width="100%" border="0"
+                                                                                            cellspacing="0"
+                                                                                            cellpadding="0">
+                                                                                            <tbody>
+                                                                                                <tr>
+                                                                                                    <td
+                                                                                                        style="padding-bottom:9px">
+                                                                                                        <table
+                                                                                                            width="100%"
+                                                                                                            border="0"
+                                                                                                            cellspacing="0"
+                                                                                                            cellpadding="0">
+                                                                                                            <tbody>
+                                                                                                                <tr>
+
+                                                                                                                    <td width="32"
+                                                                                                                        style="font-size:0pt;line-height:0pt;text-align:left;border-radius:50%;overflow:hidden">
+                                                                                                                        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                                                                                                                            width="32"
+                                                                                                                            height="32"
+                                                                                                                            border="0"
+                                                                                                                            alt="Buy2Rent"
+                                                                                                                            style="display:block;border-radius:50%">
+                                                                                                                    </td>
+                                                                                                                    <td width="7"
+                                                                                                                        style="font-size:0pt;line-height:0pt;text-align:left">
+                                                                                                                        &nbsp;
+                                                                                                                    </td>
+
+                                                                                                                    <td
+                                                                                                                        style="font-size:0pt;line-height:0pt;text-align:left">
+                                                                                                                        <table
+                                                                                                                            width="100%"
+                                                                                                                            border="0"
+                                                                                                                            cellspacing="0"
+                                                                                                                            cellpadding="0">
+                                                                                                                            <tbody>
+                                                                                                                                <tr>
+                                                                                                                                    <td class="c-dark-5"
+                                                                                                                                        style="font-size:14px;line-height:18px;font-family:Helvetica,Arial,sans-serif;text-align:left;min-width:auto!important;color:#2a3c42">
+                                                                                                                                        <span
+                                                                                                                                            class="c-dark-5"
+                                                                                                                                            style="text-decoration:none;color:#2a3c42"><strong>Buy2Rent Procurement</strong></span>
+                                                                                                                                    </td>
+                                                                                                                                </tr>
+                                                                                                                                <tr>
+                                                                                                                                    <td
+                                                                                                                                        style="font-size:12px;line-height:16px;color:#181c1f;font-family:Helvetica,Arial,sans-serif;text-align:left;min-width:auto!important">
+                                                                                                                                        <span
+                                                                                                                                            class="c-dkgrey"
+                                                                                                                                            style="text-decoration:none;color:#7a9299">Buy2Rent Procurement Team</span>
+                                                                                                                                    </td>
+                                                                                                                                </tr>
+                                                                                                                            </tbody>
+                                                                                                                        </table>
+                                                                                                                    </td>
+                                                                                                                </tr>
+                                                                                                            </tbody>
+                                                                                                        </table>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td
+                                                                                                        style="font-size:0pt;line-height:0pt;text-align:left">
+                                                                                                        <table
+                                                                                                            width="100%"
+                                                                                                            border="0"
+                                                                                                            cellspacing="0"
+                                                                                                            cellpadding="0">
+                                                                                                            <tbody>
+                                                                                                                <tr>
+                                                                                                                    <td valign="top"
+                                                                                                                        style="font-size:0pt;line-height:0pt;text-align:left">
+                                                                                                                        <table
+                                                                                                                            width="100%"
+                                                                                                                            border="0"
+                                                                                                                            cellspacing="0"
+                                                                                                                            cellpadding="0">
+                                                                                                                            <tbody>
+                                                                                                                                <tr>
+                                                                                                                                    <td class="mfz-14 c-dark-3"
+                                                                                                                                        style="font-size:18px;line-height:21px;font-family:Helvetica,Arial,sans-serif;text-align:left;min-width:auto!important;color:#1b2426;padding-bottom:5px;vertical-align:top;padding-right:30px">
+                                                                                                                                        <span
+                                                                                                                                            class="c-dark-3"
+                                                                                                                                            style="text-decoration:none;color:#1b2426">
+                                                                                                                                            <strong>Please reply to this email to continue the conversation</strong>
+                                                                                                                                        </span>
+                                                                                                                                    </td>
+                                                                                                                                </tr>
+                                                                                                                                <tr>
+                                                                                                                                </tr>
+                                                                                                                                <tr>
+                                                                                                                                    <td
+                                                                                                                                        style="font-size:12px;line-height:16px;color:#0f1a1c;font-family:Helvetica,Arial,sans-serif;text-align:left;min-width:auto!important">
+                                                                                                                                        <span
+                                                                                                                                            style="text-decoration:none;color:#5c6c74">
+                                                                                                                                            <img src="https://cdn-icons-png.flaticon.com/512/561/561127.png"
+                                                                                                                                                width="15px"
+                                                                                                                                                alt=""
+                                                                                                                                                style="vertical-align:middle">
+                                                                                                                                            Please reply to this email to continue the conversation
+                                                                                                                                        </span>
+                                                                                                                                    </td>
+                                                                                                                                </tr>
+                                                                                                                            </tbody>
+                                                                                                                        </table>
+                                                                                                                    </td>
+
+                                                                                                                </tr>
+                                                                                                            </tbody>
+                                                                                                        </table>
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            </tbody>
+                                                                                        </table>
+                                                                                    </td>
+                                                                                </tr>
+
+
+
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+
+
+
+
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+
+
+
+
+
+                                                <tr>
+                                                    <td style="font-size:0pt;line-height:0pt;text-align:left">
+                                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td
+                                                                        style="font-size:0pt;line-height:0pt;text-align:left;padding-top:12px">
+                                                                        <table width="100%" border="0" cellspacing="0"
+                                                                            cellpadding="0">
+                                                                            <tbody>
+                                                                                <tr>
+                                                                                    <td
+                                                                                        style="border-top:1px solid #e6e6e6;font-size:0pt;line-height:0pt;text-align:left;padding-top:12px">
+                                                                                        &nbsp;</td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+
+
+
+                                                <tr>
+                                                    <td style="padding:0;padding-top:20px" class="mpt-10">
+                                                        <table width="100%" border="0" cellspacing="0" cellpadding="0"
+                                                            style="background-color:#f8f9fa;border-radius:8px">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td class="container-padding"
+                                                                        style="padding:20px;border-radius:8px;text-align:center">
+                                                                        <table width="100%" border="0" cellspacing="0"
+                                                                            cellpadding="0">
+                                                                            <tbody>
+                                                                                <tr>
+                                                                                    <td
+                                                                                        style="font-size:14px;line-height:20px;color:#5c6c74;font-family:Helvetica,Arial,sans-serif;text-align:center;padding-bottom:8px">
+                                                                                        <strong
+                                                                                            style="color:#2a3c42">Buy2Rent
+                                                                                            Procurement System</strong>
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td
+                                                                                        style="font-size:12px;line-height:18px;color:#7a9299;font-family:Helvetica,Arial,sans-serif;text-align:center">
+                                                                                        For urgent matters, please contact us directly at procurement@buy2rent.eu
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td
+                                                                                        style="font-size:11px;line-height:16px;color:#95a5a6;font-family:Helvetica,Arial,sans-serif;text-align:center;padding-top:12px">
+                                                                                        © 2026 Buy2Rent. All rights reserved.
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+
+
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </center>
+</div>
 </body>
 </html>

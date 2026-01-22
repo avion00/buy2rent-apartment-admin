@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Reply - Buy2Rent Procurement</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Main Container */
+        .email-wrapper {
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Header */
+        .email-header {
+            background: linear-gradient(135deg, #1a2b6d 0%, #2c3e50 100%);
+            padding: 40px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
+        }
+
+        .logo-container {
+            position: relative;
+            z-index: 2;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            max-width: 180px;
+            height: auto;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .header-title {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 10px 0 5px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Conversation Banner */
+        .conversation-banner {
+            background: linear-gradient(90deg, #3498db 0%, #2ecc71 100%);
+            padding: 22px 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .banner-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .banner-icon {
+            background-color: rgba(255, 255, 255, 0.2);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 18px;
+        }
+
+        .banner-icon i {
+            font-size: 22px;
+            color: white;
+        }
+
+        .banner-text h2 {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 3px;
+        }
+
+        .banner-text p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .issue-tag {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .issue-tag i {
+            margin-right: 6px;
+            font-size: 10px;
+        }
+
+        /* Content Sections */
+        .email-content {
+            padding: 45px 50px;
+        }
+
+        /* Greeting */
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
+        }
+
+        .greeting i {
+            margin-right: 12px;
+            color: #3498db;
+            font-size: 20px;
+        }
+
+        /* Message Container */
+        .message-container {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #eef2f7;
+            margin: 30px 0;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .message-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .message-meta {
+            display: flex;
+            align-items: center;
+        }
+
+        .sender-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .sender-info h4 {
+            color: #2c3e50;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 3px;
+        }
+
+        .sender-info p {
+            color: #7b8a8b;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .message-time {
+            color: #7b8a8b;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .message-time i {
+            margin-right: 6px;
+            color: #3498db;
+        }
+
+        /* Message Body */
+        .message-body {
+            padding: 30px;
+            font-size: 15px;
+            color: #5a6c7d;
+            line-height: 1.8;
+        }
+
+        .message-body h1,
+        .message-body h2,
+        .message-body h3 {
+            color: #2c3e50;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .message-body p {
+            margin-bottom: 15px;
+        }
+
+        .message-body ul,
+        .message-body ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .message-body li {
+            margin-bottom: 8px;
+        }
+
+        .message-body blockquote {
+            border-left: 4px solid #3498db;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .message-body pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .message-body code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        /* Action Section */
+        .action-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 10px;
+            padding: 25px 30px;
+            margin: 30px 0;
+            border-left: 4px solid #2196f3;
+        }
+
+        .action-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .action-title i {
+            color: #2196f3;
+            font-size: 20px;
+            margin-right: 12px;
+        }
+
+        .action-title h3 {
+            color: #1565c0;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .action-content {
+            color: #0d47a1;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Reply Actions */
+        .reply-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .reply-action {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .reply-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .reply-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: white;
+            font-size: 20px;
+        }
+
+        .reply-action h4 {
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .reply-action p {
+            color: #7b8a8b;
+            font-size: 12px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .reply-button {
+            display: inline-block;
+            background: #3498db;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background 0.3s ease;
+        }
+
+        .reply-button:hover {
+            background: #2980b9;
+        }
+
+        /* Closing Section */
+        .closing-section {
+            margin-top: 35px;
+            padding-top: 25px;
+            border-top: 2px solid #eef2f7;
+        }
+
+        .closing-text {
+            font-size: 15px;
+            color: #5a6c7d;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .signature {
+            margin-top: 25px;
+        }
+
+        .signature-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .signature-title {
+            font-size: 14px;
+            color: #7b8a8b;
+            margin-bottom: 5px;
+        }
+
+        .signature-contact {
+            font-size: 14px;
+            color: #3498db;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .signature-contact i {
+            margin-right: 8px;
+            width: 16px;
+        }
+
+        /* Reference Section */
+        .reference-section {
+            background: #2c3e50;
+            padding: 25px 50px;
+            text-align: center;
+        }
+
+        .reference-code {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .reference-note {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+        }
+
+        /* Footer */
+        .email-footer {
+            background: #f1f5f9;
+            padding: 30px 50px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .footer-brand {
+            font-weight: 700;
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+
+        .footer-text {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 8px 0;
+        }
+
+        .footer-contact {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin: 0 15px 10px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .contact-item i {
+            margin-right: 8px;
+            color: #3498db;
+        }
+
+        .footer-links {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: #3498db;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media only screen and (max-width: 650px) {
+            .email-wrapper {
+                border-radius: 0;
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+
+            .email-header,
+            .email-content,
+            .reference-section,
+            .email-footer {
+                padding-left: 25px;
+                padding-right: 25px;
+            }
+
+            .conversation-banner {
+                padding: 20px 25px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .issue-tag {
+                margin-top: 15px;
+            }
+
+            .reply-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .message-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .message-time {
+                margin-top: 10px;
+            }
+
+            .message-body {
+                padding: 20px;
+            }
+
+            .footer-contact {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .contact-item {
+                margin: 0 0 10px;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Print styles */
+        @media print {
+            .email-wrapper {
+                box-shadow: none;
+                margin: 0;
+            }
+
+            .reply-action {
+                border: 1px solid #e2e8f0;
+            }
+
+            .reply-button {
+                background: #3498db;
+                color: #ffffff;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-wrapper">
+        <!-- Header -->
+        <div class="email-header">
+            <div class="header-pattern"></div>
+            <div class="logo-container">
+                <img src="https://procurement.buy2rent.eu/static/buy2rent-logo.png" alt="Buy2Rent" class="logo">
+            </div>
+            <h1 class="header-title">Procurement System</h1>
+            <div class="header-subtitle">Issue Resolution Center</div>
+        </div>
+
+        <!-- Conversation Banner -->
+        <div class="conversation-banner">
+            <div class="banner-content">
+                <div class="banner-icon">
+                    <i class="fas fa-reply"></i>
+                </div>
+                <div class="banner-text">
+                    <h2>Re: Issue #{{ issue_slug }}</h2>
+                    <p>Response from Buy2Rent Procurement Team</p>
+                </div>
+            </div>
+            <div class="issue-tag">
+                <i class="fas fa-clock"></i>
+                Requires Attention
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="email-content">
+            <!-- Greeting -->
+            <div class="greeting fade-in">
+                <i class="fas fa-handshake"></i>
+                Dear {{ vendor_name }} team,
+            </div>
+
+            <!-- Message Container -->
+            <div class="message-container fade-in">
+                <div class="message-header">
+                    <div class="message-meta">
+                        <div class="sender-avatar">
+                            BR
+                        </div>
+                        <div class="sender-info">
+                            <h4>Buy2Rent Procurement Team</h4>
+                            <p>procurement@buy2rent.eu</p>
+                        </div>
+                    </div>
+                    <div class="message-time">
+                        <i class="fas fa-clock"></i>
+                        {{ message_date|default("Sent Today") }}
+                    </div>
+                </div>
+
+                <div class="message-body">
+                    {{ message_body }}
+                </div>
+            </div>
+
+            <!-- Action Section -->
+            <div class="action-section fade-in">
+                <div class="action-title">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>Required Action</h3>
+                </div>
+                <div class="action-content">
+                    Please review the message above and take appropriate action. Your prompt response is required to
+                    ensure timely resolution of this issue.
+                </div>
+            </div>
+
+            <!-- Reply Actions -->
+            <div class="reply-actions fade-in">
+                <div class="reply-action">
+                    <div class="reply-icon">
+                        <i class="fas fa-reply"></i>
+                    </div>
+                    <h4>Reply to Message</h4>
+                    <p>Respond directly to this communication</p>
+                    <a href="mailto:procurement@buy2rent.eu?subject=Re:%20Issue%20%23{{ issue_slug }}"
+                        class="reply-button">
+                        Reply Now
+                    </a>
+                </div>
+
+                <div class="reply-action">
+                    <div class="reply-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h4>Confirm Resolution</h4>
+                    <p>Let us know if the issue has been resolved</p>
+                    <a href="mailto:procurement@buy2rent.eu?subject=Resolution:%20Issue%20%23{{ issue_slug }}"
+                        class="reply-button">
+                        Mark Resolved
+                    </a>
+                </div>
+
+                <div class="reply-action">
+                    <div class="reply-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <h4>Need Clarification?</h4>
+                    <p>Request more information or details</p>
+                    <a href="mailto:procurement@buy2rent.eu?subject=Clarification:%20Issue%20%23{{ issue_slug }}"
+                        class="reply-button">
+                        Ask Question
+                    </a>
+                </div>
+            </div>
+
+            <!-- Closing Section -->
+            <div class="closing-section fade-in">
+                <div class="closing-text">
+                    We appreciate your prompt attention to this matter and look forward to your continued cooperation in
+                    resolving this issue.
+                </div>
+
+                <div class="closing-text">
+                    Should you have any questions or require additional information, please do not hesitate to reach out
+                    to us directly using the information provided below.
+                </div>
+
+                <div class="signature">
+                    <div class="signature-name">Buy2Rent Procurement Team</div>
+                    <div class="signature-title">Procurement & Vendor Relations</div>
+                    <div class="signature-contact">
+                        <i class="fas fa-envelope"></i>
+                        procurement@buy2rent.eu
+                    </div>
+                    <div class="signature-contact">
+                        <i class="fas fa-phone"></i>
+                        +1 (555) 123-4567 (Ext. 789)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reference Section -->
+        <div class="reference-section">
+            <div class="reference-code">REFERENCE: ISSUE-#{{ issue_slug }}-RESPONSE</div>
+            <div class="reference-note">Include this reference in all related communications</div>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <div class="footer-brand">Buy2Rent Procurement System</div>
+            <div class="footer-text">This message is part of an ongoing conversation regarding your order.</div>
+            <div class="footer-text">All communications are tracked and logged for quality assurance.</div>
+
+            <div class="footer-contact">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    procurement@buy2rent.eu
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    +1 (555) 123-4567
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-globe"></i>
+                    procurement.buy2rent.eu
+                </div>
+            </div>
+
+            <div class="footer-links">
+                <a href="#" class="footer-link">Vendor Portal</a>
+                <a href="#" class="footer-link">Issue Tracking</a>
+                <a href="#" class="footer-link">Support Center</a>
+                <a href="#" class="footer-link">Contact Directory</a>
+            </div>
+
+            <div class="footer-text" style="margin-top: 20px; font-size: 11px;">
+                &copy; 2023 Buy2Rent Procurement. This is an automated message from our procurement system.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple animation trigger for email clients that support JavaScript
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('.fade-in');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+
+</html>

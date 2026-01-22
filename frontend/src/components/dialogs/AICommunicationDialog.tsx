@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Bot, User, Send, AlertCircle, Sparkles, MessageSquare, Loader2, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -152,7 +153,6 @@ export function AICommunicationDialog({
 
     try {
       await issueApi.sendManualMessage(issue.id, {
-        subject: `Re: Issue #${issue.id}`,
         message: newMessage,
         to_email: issue.vendor_details?.email || '',
       });
@@ -229,8 +229,74 @@ export function AICommunicationDialog({
         </DialogHeader>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            {/* Skeleton Status Bar */}
+            <div className="px-6 py-3 bg-muted/30 border-b shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                    <Skeleton className="h-4 w-6" />
+                    <Skeleton className="h-3 w-12" />
+                  </div>
+                  <div className="h-4 w-px bg-border" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                    <Skeleton className="h-4 w-6" />
+                    <Skeleton className="h-3 w-8" />
+                  </div>
+                  <div className="h-4 w-px bg-border" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                    <Skeleton className="h-4 w-6" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                  <div className="h-4 w-px bg-border" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                    <Skeleton className="h-4 w-6" />
+                    <Skeleton className="h-3 w-14" />
+                  </div>
+                </div>
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+            </div>
+
+            {/* Skeleton Communication Log */}
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 py-4">
+              <div className="flex items-center justify-between mb-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+                <Skeleton className="h-3 w-48" />
+              </div>
+
+              {/* Skeleton Messages */}
+              <div className="space-y-2.5">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-2.5 p-3 rounded-lg border bg-muted/50">
+                    <Skeleton className="w-7 h-7 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-12 rounded" />
+                        <Skeleton className="h-5 w-16 rounded" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-5/6" />
+                      <Skeleton className="h-3 w-4/6" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Skeleton Input */}
+              <div className="flex gap-2 mt-3 pt-3 border-t shrink-0">
+                <Skeleton className="h-9 flex-1 rounded-md" />
+                <Skeleton className="h-9 w-9 rounded-md" />
+              </div>
+            </div>
           </div>
         ) : (
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col">

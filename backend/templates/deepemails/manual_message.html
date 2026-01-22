@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message from Buy2Rent Procurement</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f7f9fc;
+            line-height: 1.6;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Main Container */
+        .email-wrapper {
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Header */
+        .email-header {
+            background: linear-gradient(135deg, #1a2b6d 0%, #2c3e50 100%);
+            padding: 40px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
+        }
+
+        .logo-container {
+            position: relative;
+            z-index: 2;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            max-width: 180px;
+            height: auto;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .header-title {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 10px 0 5px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Message Type Banner */
+        .message-type-banner {
+            background: linear-gradient(90deg, #8e44ad 0%, #9b59b6 100%);
+            padding: 22px 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .banner-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .banner-icon {
+            background-color: rgba(255, 255, 255, 0.2);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 18px;
+        }
+
+        .banner-icon i {
+            font-size: 22px;
+            color: white;
+        }
+
+        .banner-text h2 {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 3px;
+        }
+
+        .banner-text p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .message-tag {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .message-tag i {
+            margin-right: 6px;
+            font-size: 10px;
+        }
+
+        /* Content Sections */
+        .email-content {
+            padding: 45px 50px;
+        }
+
+        /* Greeting */
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f3f7;
+        }
+
+        .greeting i {
+            margin-right: 12px;
+            color: #8e44ad;
+            font-size: 20px;
+        }
+
+        /* Message Container */
+        .message-container {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #eef2f7;
+            margin: 30px 0;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .message-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .message-meta {
+            display: flex;
+            align-items: center;
+        }
+
+        .sender-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8e44ad 0%, #2c3e50 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .sender-info h4 {
+            color: #2c3e50;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 3px;
+        }
+
+        .sender-info p {
+            color: #7b8a8b;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .message-time {
+            color: #7b8a8b;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .message-time i {
+            margin-right: 6px;
+            color: #8e44ad;
+        }
+
+        /* Message Body */
+        .message-body {
+            padding: 30px;
+            font-size: 15px;
+            color: #5a6c7d;
+            line-height: 1.8;
+            min-height: 150px;
+        }
+
+        .message-body h1,
+        .message-body h2,
+        .message-body h3 {
+            color: #2c3e50;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .message-body h1 {
+            font-size: 22px;
+            border-bottom: 2px solid #f0f3f7;
+            padding-bottom: 10px;
+        }
+
+        .message-body h2 {
+            font-size: 18px;
+        }
+
+        .message-body h3 {
+            font-size: 16px;
+        }
+
+        .message-body p {
+            margin-bottom: 15px;
+        }
+
+        .message-body ul,
+        .message-body ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .message-body li {
+            margin-bottom: 8px;
+        }
+
+        .message-body blockquote {
+            border-left: 4px solid #8e44ad;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #6c757d;
+            font-style: italic;
+            background: #f9f5ff;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .message-body pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border-left: 4px solid #8e44ad;
+        }
+
+        .message-body code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #8e44ad;
+        }
+
+        .message-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .message-body th {
+            background: #f0f3f7;
+            color: #2c3e50;
+            font-weight: 600;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .message-body td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eef2f7;
+        }
+
+        .message-body tr:hover {
+            background: #f9f9f9;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .quick-action {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            border-left: 4px solid #8e44ad;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .quick-action:hover {
+            background: #f0f3f7;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .action-text h4 {
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .action-text p {
+            color: #7b8a8b;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        /* Closing Section */
+        .closing-section {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid #eef2f7;
+        }
+
+        .closing-text {
+            font-size: 15px;
+            color: #5a6c7d;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .signature {
+            margin-top: 25px;
+        }
+
+        .signature-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .signature-title {
+            font-size: 14px;
+            color: #7b8a8b;
+            margin-bottom: 5px;
+        }
+
+        .signature-contact {
+            font-size: 14px;
+            color: #8e44ad;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .signature-contact i {
+            margin-right: 8px;
+            width: 16px;
+        }
+
+        /* Reference Section */
+        .reference-section {
+            background: #2c3e50;
+            padding: 25px 50px;
+            text-align: center;
+        }
+
+        .reference-code {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .reference-note {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+        }
+
+        /* Footer */
+        .email-footer {
+            background: #f1f5f9;
+            padding: 30px 50px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .footer-brand {
+            font-weight: 700;
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+
+        .footer-text {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 8px 0;
+        }
+
+        .footer-contact {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin: 0 15px 10px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .contact-item i {
+            margin-right: 8px;
+            color: #8e44ad;
+        }
+
+        .footer-links {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: #8e44ad;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media only screen and (max-width: 650px) {
+            .email-wrapper {
+                border-radius: 0;
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+
+            .email-header,
+            .email-content,
+            .reference-section,
+            .email-footer {
+                padding-left: 25px;
+                padding-right: 25px;
+            }
+
+            .message-type-banner {
+                padding: 20px 25px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .message-tag {
+                margin-top: 15px;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .message-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .message-time {
+                margin-top: 10px;
+            }
+
+            .message-body {
+                padding: 20px;
+            }
+
+            .footer-contact {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .contact-item {
+                margin: 0 0 10px;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Print styles */
+        @media print {
+            .email-wrapper {
+                box-shadow: none;
+                margin: 0;
+            }
+
+            .quick-action {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-wrapper">
+        <!-- Header -->
+        <div class="email-header">
+            <div class="header-pattern"></div>
+            <div class="logo-container">
+                <img src="https://procurement.buy2rent.eu/static/buy2rent-logo.png" alt="Buy2Rent" class="logo">
+            </div>
+            <h1 class="header-title">Procurement System</h1>
+            <div class="header-subtitle">Vendor Communication</div>
+        </div>
+
+        <!-- Message Type Banner -->
+        <div class="message-type-banner">
+            <div class="banner-content">
+                <div class="banner-icon">
+                    <i class="fas fa-envelope-open-text"></i>
+                </div>
+                <div class="banner-text">
+                    <h2>Message from Buy2Rent</h2>
+                    <p>Important communication regarding your partnership</p>
+                </div>
+            </div>
+            <div class="message-tag">
+                <i class="fas fa-bullhorn"></i>
+                Official Communication
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="email-content">
+            <!-- Greeting -->
+            <div class="greeting fade-in">
+                <i class="fas fa-handshake"></i>
+                Dear {{ vendor_name }} team,
+            </div>
+
+            <!-- Message Container -->
+            <div class="message-container fade-in">
+                <div class="message-header">
+                    <div class="message-meta">
+                        <div class="sender-avatar">
+                            BR
+                        </div>
+                        <div class="sender-info">
+                            <h4>Buy2Rent Procurement Team</h4>
+                            <p>procurement@buy2rent.eu</p>
+                        </div>
+                    </div>
+                    <div class="message-time">
+                        <i class="fas fa-clock"></i>
+                        {{ message_date|default("Sent Today") }}
+                    </div>
+                </div>
+
+                <div class="message-body">
+                    {% if message_body_html %}
+                    {{ message_body_html|safe }}
+                    {% else %}
+                    {{ message_body }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions fade-in">
+                <a href="mailto:procurement@buy2rent.eu?subject=Re:%20Message%20Regarding%20Issue%20%23{{ issue_slug }}"
+                    class="quick-action">
+                    <div class="action-icon">
+                        <i class="fas fa-reply"></i>
+                    </div>
+                    <div class="action-text">
+                        <h4>Reply to Message</h4>
+                        <p>Respond directly to this communication</p>
+                    </div>
+                </a>
+
+                <a href="#" class="quick-action">
+                    <div class="action-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="action-text">
+                        <h4>Need Clarification?</h4>
+                        <p>Request more information or details</p>
+                    </div>
+                </a>
+
+                <a href="#" class="quick-action">
+                    <div class="action-icon">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <div class="action-text">
+                        <h4>Download Details</h4>
+                        <p>Save this message for your records</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Closing Section -->
+            <div class="closing-section fade-in">
+                <div class="closing-text">
+                    This message has been sent to you as part of our ongoing partnership and communication. Please
+                    review the content carefully and take any necessary actions as indicated.
+                </div>
+
+                <div class="closing-text">
+                    If you have any questions or require further assistance, please don't hesitate to contact our team
+                    using the information provided below.
+                </div>
+
+                <div class="signature">
+                    <div class="signature-name">Buy2Rent Procurement Team</div>
+                    <div class="signature-title">Procurement & Vendor Relations</div>
+                    <div class="signature-contact">
+                        <i class="fas fa-envelope"></i>
+                        procurement@buy2rent.eu
+                    </div>
+                    <div class="signature-contact">
+                        <i class="fas fa-phone"></i>
+                        +1 (555) 123-4567 (Ext. 789)
+                    </div>
+                    <div class="signature-contact">
+                        <i class="fas fa-clock"></i>
+                        Response requested within 3 business days
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reference Section -->
+        <div class="reference-section">
+            <div class="reference-code">REFERENCE: MSG-{{ issue_slug }}-{{ "now"|date("Ymd") }}</div>
+            <div class="reference-note">Please include this reference in all related communications</div>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <div class="footer-brand">Buy2Rent Procurement System</div>
+            <div class="footer-text">This is an official communication from the Buy2Rent procurement team.</div>
+            <div class="footer-text">All messages are logged and archived for record-keeping purposes.</div>
+
+            <div class="footer-contact">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    procurement@buy2rent.eu
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    +1 (555) 123-4567
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-globe"></i>
+                    procurement.buy2rent.eu
+                </div>
+            </div>
+
+            <div class="footer-links">
+                <a href="#" class="footer-link">Vendor Portal</a>
+                <a href="#" class="footer-link">Support Center</a>
+                <a href="#" class="footer-link">Message Archive</a>
+                <a href="#" class="footer-link">Contact Directory</a>
+            </div>
+
+            <div class="footer-text" style="margin-top: 20px; font-size: 11px;">
+                &copy; 2023 Buy2Rent Procurement. This email and any attachments are confidential and intended solely
+                for the use of the individual or entity to whom they are addressed.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple animation trigger for email clients that support JavaScript
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('.fade-in');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MultiSelectTags } from "@/components/ui/multi-select-tags";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AITextEnhancer } from "@/components/ui/AITextEnhancer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -323,9 +324,33 @@ export function ReportIssueFromProductDialog({
 
         <ScrollArea className="max-h-[60vh] pr-4">
           {loadingExistingIssue ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="ml-2 text-sm text-muted-foreground">Loading issue data...</span>
+            <div className="space-y-4 py-4">
+              {/* Product Info Skeleton */}
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <Skeleton className="w-16 h-16 rounded" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              </div>
+
+              {/* Order Selection Skeleton */}
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-40" />
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
+                    <Skeleton className="w-4 h-4 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-5 w-16 rounded" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <>

@@ -474,7 +474,7 @@ class IssueAIManager:
             'product_name': issue.get_product_name(),
             'description': issue.description,
             'impact': issue.impact,
-            'order_reference': f"Order #{issue.order.id}" if issue.order else None
+            'order_reference': issue.order.po_number if issue.order else None
         }
         
         # Generate email
@@ -484,9 +484,12 @@ class IssueAIManager:
             # Send email
             vendor_email = issue.vendor.email if issue.vendor else issue.vendor_contact
             if vendor_email:
-                # Add Issue ID to subject for tracking
-                issue_slug = issue.get_issue_slug()
-                subject_with_id = f"[Issue #{issue_slug}] {email_result['subject']}"
+                # Use urgent subject with order reference
+                subject = email_result['subject']
+                if issue.order and issue.order.po_number:
+                    subject = f"Critical Issue Report: {subject} - Immediate Attention Required (Order #{issue.order.po_number})"
+                else:
+                    subject = f"Critical Issue Report: {subject} - Immediate Attention Required"
                 
                 # Prepare AI data for template
                 ai_email_data = {
@@ -501,7 +504,7 @@ class IssueAIManager:
                 await asyncio.to_thread(
                     self.email_service.send_issue_email,
                     issue=issue,
-                    subject=subject_with_id,
+                    subject=subject,
                     body=body_text,
                     is_initial_report=True,
                     ai_data=ai_email_data
@@ -610,6 +613,7 @@ class IssueAIManager:
             'sender_name': sender_name,
             'issue_id': str(issue.id),
             'issue_slug': issue_slug,
+            'order_reference': issue.order.po_number if issue.order else None,
             'type': getattr(issue, 'type', ''),
             'priority': getattr(issue, 'priority', ''),
             'include_products': bool(wants_product_info),
@@ -629,7 +633,9 @@ class IssueAIManager:
             if should_auto_send:
                 try:
                     # Send the email immediately
-                    subject = f"Re: Issue #{issue_slug}"
+                    subject = 'Urgent: Response to Your Message - Immediate Action Required'
+                    if issue.order and issue.order.po_number:
+                        subject = f'Urgent: Response Required - Order #{issue.order.po_number}'
                     if vendor_email:
                         email_message_id = await asyncio.to_thread(
                             self.email_service.send_issue_email,
@@ -658,7 +664,7 @@ class IssueAIManager:
                     sender='AI',
                     message=reply_result['reply'],
                     message_type='email',
-                    subject=f"Re: Issue #{issue_slug}",
+                    subject=f"Urgent: Response Required - Order #{issue.order.po_number}" if issue.order else 'Urgent: Response to Your Message - Immediate Action Required',
                     email_from=getattr(settings, 'DEFAULT_FROM_EMAIL', 'procurement@buy2rent.eu'),
                     email_to=vendor_email,
                     ai_generated=True,
@@ -701,7 +707,7 @@ class IssueAIManager:
                 sender='AI',
                 message=fallback_reply,
                 message_type='email',
-                subject=f"Re: Issue #{issue_slug}",
+                subject=f"Urgent: Response Required - Order #{issue.order.po_number}" if issue.order else 'Urgent: Response to Your Message - Immediate Action Required',
                 email_from=getattr(settings, 'DEFAULT_FROM_EMAIL', 'procurement@buy2rent.eu'),
                 email_to=vendor_email,
                 ai_generated=False,

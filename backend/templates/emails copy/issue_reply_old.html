@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Reply - Buy2Rent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 100%;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            padding: 30px 40px;
+            text-align: center;
+        }
+        .logo {
+            max-width: 180px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .header-subtitle {
+            color: #95a5a6;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .status-banner {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            padding: 20px 40px;
+            text-align: center;
+            border-bottom: 3px solid #2471a3;
+        }
+        .status-banner h2 {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+        .content {
+            padding: 40px;
+            max-width: 100%;
+        }
+        .greeting {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        .message-body {
+            font-size: 14px;
+            color: #34495e;
+            line-height: 1.8;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+            white-space: pre-wrap;
+        }
+        .footer-reference {
+            background: #34495e;
+            padding: 20px 40px;
+            text-align: center;
+        }
+        .reference-code {
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+        .reference-note {
+            color: #95a5a6;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+        .footer {
+            background-color: #ecf0f1;
+            padding: 25px 40px;
+            text-align: center;
+        }
+        .footer-brand {
+            font-weight: 700;
+            font-size: 15px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .footer-text {
+            color: #7f8c8d;
+            font-size: 12px;
+            line-height: 1.5;
+            margin: 5px 0;
+        }
+        @media only screen and (max-width: 600px) {
+            .content, .status-banner, .footer-reference, .footer {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="https://procurement.buy2rent.eu/static/buy2rent-logo.png" alt="Buy2Rent" class="logo">
+            <div class="header-subtitle">Procurement System</div>
+        </div>
+
+        <div class="status-banner">
+            <h2>💬 Re: Issue #{{ issue_slug }}</h2>
+        </div>
+
+        <div class="content">
+            <div class="greeting">Dear {{ vendor_name }} team,</div>
+            <div class="message-body">{{ message_body }}</div>
+        </div>
+
+        <div class="footer-reference">
+            <div class="reference-code">Reference: Issue #{{ issue_slug }}</div>
+            <div class="reference-note">Please keep this reference in your reply for tracking purposes</div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-brand">Buy2Rent Procurement Team</div>
+            <div class="footer-text">This is an automated message from our procurement system.</div>
+            <div class="footer-text">For urgent matters, please contact us directly.</div>
+        </div>
+    </div>
+</body>
+</html>

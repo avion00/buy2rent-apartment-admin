@@ -48,6 +48,8 @@ interface EmailMessage {
   ai_confidence?: number;
   approved_by?: string;
   approved_at?: string;
+  email_from?: string;
+  email_to?: string;
 }
 
 interface AIEmailThreadProps {
@@ -62,7 +64,6 @@ export const AIEmailThread: React.FC<AIEmailThreadProps> = ({ issueId, onClose }
   const [vendorMessage, setVendorMessage] = useState('');
   const [generatingReply, setGeneratingReply] = useState(false);
   const [messageMode, setMessageMode] = useState<'vendor' | 'manual'>('vendor');
-  const [manualSubject, setManualSubject] = useState(`Re: Issue #${issueId}`);
   const [manualMessage, setManualMessage] = useState('');
 
   const fetchEmailThread = async () => {
@@ -107,7 +108,7 @@ export const AIEmailThread: React.FC<AIEmailThreadProps> = ({ issueId, onClose }
     try {
       const response = await api.post(`/issues/${issueId}/add_vendor_response/`, {
         message: vendorMessage,
-        subject: `Re: Issue #${issueId}`,
+        subject: 'Response to Your Message',
         from_email: 'vendor@example.com'
       });
       
@@ -134,7 +135,7 @@ export const AIEmailThread: React.FC<AIEmailThreadProps> = ({ issueId, onClose }
     try {
       const response = await api.post(`/issues/${issueId}/add_vendor_response/`, {
         message: vendorMessage,
-        subject: `Re: Issue #${issueId}`,
+        subject: 'Response to Your Message',
         from_email: 'vendor@example.com',
       });
       
@@ -156,7 +157,6 @@ export const AIEmailThread: React.FC<AIEmailThreadProps> = ({ issueId, onClose }
 
     try {
       const response = await api.post(`/issues/${issueId}/send_manual_message/`, {
-        subject: manualSubject,
         message: manualMessage,
         to_email: messages.find(m => m.sender === 'Vendor')?.email_from || 'vendor@example.com',
       });
@@ -164,7 +164,6 @@ export const AIEmailThread: React.FC<AIEmailThreadProps> = ({ issueId, onClose }
       if (response.data.success) {
         toast.success('Manual message sent successfully');
         setManualMessage('');
-        setManualSubject(`Re: Issue #${issueId}`);
         fetchEmailThread();
       } else {
         toast.error(response.data.message || 'Failed to send message');
@@ -364,15 +363,8 @@ export const AIEmailThread: React.FC<AIEmailThreadProps> = ({ issueId, onClose }
               </TabsContent>
               
               <TabsContent value="manual" className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Subject
-                  </label>
-                  <Input
-                    value={manualSubject}
-                    onChange={(e) => setManualSubject(e.target.value)}
-                    placeholder="Email subject"
-                  />
+                <div className="text-sm text-muted-foreground mb-2">
+                  Subject will be automatically generated with order reference
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">

@@ -48,7 +48,6 @@ export const ManualMessageDialog: React.FC<ManualMessageDialogProps> = ({
   vendorName,
   onMessageSent,
 }) => {
-  const [subject, setSubject] = useState(`Re: Issue #${issueId}`);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -61,7 +60,6 @@ export const ManualMessageDialog: React.FC<ManualMessageDialogProps> = ({
     setSending(true);
     try {
       const response = await api.post(`/issues/${issueId}/send_manual_message/`, {
-        subject,
         message,
         to_email: vendorEmail,
       });
@@ -69,7 +67,6 @@ export const ManualMessageDialog: React.FC<ManualMessageDialogProps> = ({
       if (response.data.success) {
         toast.success('Message sent successfully');
         setMessage('');
-        setSubject(`Re: Issue #${issueId}`);
         onMessageSent();
         onClose();
       } else {
@@ -94,15 +91,6 @@ export const ManualMessageDialog: React.FC<ManualMessageDialogProps> = ({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="subject">Subject</Label>
-            <Input
-              id="subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Email subject"
-            />
-          </div>
-          <div className="grid gap-2">
             <Label htmlFor="message">Message</Label>
             <Textarea
               id="message"
@@ -111,6 +99,9 @@ export const ManualMessageDialog: React.FC<ManualMessageDialogProps> = ({
               placeholder="Type your message here..."
               className="min-h-[200px]"
             />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Subject will be automatically generated with order reference
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <User className="h-4 w-4" />

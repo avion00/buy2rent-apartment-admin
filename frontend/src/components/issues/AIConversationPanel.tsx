@@ -89,7 +89,6 @@ export function AIConversationPanel({ issue, onUpdateIssue }: AIConversationPane
     try {
       // Send message to vendor via email
       await issueApi.sendManualMessage(issue.id, {
-        subject: `Re: Issue #${issue.id}`,
         message: newMessage,
         to_email: issue.vendor_details?.email || ''
       });

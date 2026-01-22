@@ -5,11 +5,12 @@ from products.models import Product
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_image = serializers.SerializerMethodField()
+    category_name = serializers.SerializerMethodField()
     
     class Meta:
         model = OrderItem
         fields = [
-            'id', 'product', 'product_name', 'product_image', 'product_image_url', 'sku', 'quantity', 'unit_price', 'total_price',
+            'id', 'product', 'product_name', 'product_image', 'product_image_url', 'sku', 'category_name', 'quantity', 'unit_price', 'total_price',
             'description', 'specifications', 'created_at', 'updated_at'
         ]
         read_only_fields = ['total_price', 'created_at', 'updated_at']
@@ -107,6 +108,32 @@ class OrderItemSerializer(serializers.ModelSerializer):
                         image = self._get_image_from_product(product)
                         if image:
                             return image
+            except Exception:
+                pass
+        
+        return None
+    
+    def get_category_name(self, obj):
+        """Get category name from linked product"""
+        # Try to get category from linked product FK
+        if obj.product and obj.product.category:
+            return obj.product.category.name
+        
+        # If no linked product, try to find product by SKU
+        if obj.sku:
+            try:
+                matched_product = Product.objects.select_related('category').filter(sku__iexact=obj.sku).first()
+                if matched_product and matched_product.category:
+                    return matched_product.category.name
+            except Exception:
+                pass
+        
+        # Try to find product by name match
+        if obj.product_name:
+            try:
+                matched_product = Product.objects.select_related('category').filter(product__iexact=obj.product_name).first()
+                if matched_product and matched_product.category:
+                    return matched_product.category.name
             except Exception:
                 pass
         

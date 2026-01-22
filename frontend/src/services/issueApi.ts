@@ -417,7 +417,7 @@ export const issueApi = {
   },
 
   sendManualMessage: async (issueId: string, data: {
-    subject: string;
+    subject?: string;
     message: string;
     to_email?: string;
   }) => {

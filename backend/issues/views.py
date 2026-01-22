@@ -66,8 +66,12 @@ class IssueViewSet(viewsets.ModelViewSet):
                 loop.close()
                 
                 if result.get('success'):
-                    # Add Issue ID to subject
-                    subject = f"[Issue #{issue.get_issue_slug()}] {result['subject']}"
+                    # Use urgent subject with order reference
+                    subject = result['subject']
+                    if issue.order and issue.order.po_number:
+                        subject = f"Critical Issue Report: {subject} - Immediate Attention Required (Order #{issue.order.po_number})"
+                    else:
+                        subject = f"Critical Issue Report: {subject} - Immediate Attention Required"
                     body = result['body']
                     
                     # Send email with HTML template (initial report)
@@ -178,7 +182,11 @@ class IssueViewSet(viewsets.ModelViewSet):
         
         # Validate required fields
         message = request.data.get('message', '')
-        subject = request.data.get('subject', f'Re: Issue #{issue.get_issue_slug()}')
+        # Default subject with order reference
+        default_subject = 'Urgent: Issue Update - Immediate Attention Required'
+        if issue.order and issue.order.po_number:
+            default_subject = f'Urgent: Issue Update - Immediate Attention Required (Order #{issue.order.po_number})'
+        subject = request.data.get('subject', default_subject)
         from_email = request.data.get('from_email', issue.vendor.email if issue.vendor else '')
         
         if not message:
@@ -229,11 +237,11 @@ class IssueViewSet(viewsets.ModelViewSet):
     def send_manual_message(self, request, pk=None):
         """Send a manual message to vendor without AI processing"""
         issue = self.get_object()
-        # Ensure Issue ID is in subject
-        issue_slug = issue.get_issue_slug()
-        subject = request.data.get('subject', f'Re: Issue #{issue_slug}')
-        if f'Issue #{issue_slug}' not in subject and f'[Issue #{issue_slug}]' not in subject:
-            subject = f'[Issue #{issue_slug}] {subject}'
+        # Use urgent subject with order reference
+        default_subject = 'Urgent: Immediate Attention Required - Order Update'
+        if issue.order and issue.order.po_number:
+            default_subject = f'Urgent: Immediate Attention Required - Order #{issue.order.po_number}'
+        subject = request.data.get('subject', default_subject)
         message = request.data.get('message', '')
         to_email = request.data.get('to_email', issue.vendor.email if issue.vendor else '')
         

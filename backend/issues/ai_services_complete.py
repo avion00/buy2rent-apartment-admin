@@ -215,7 +215,7 @@ class OpenAIService(AIServiceInterface):
             
             return {
                 'success': True,
-                'subject': result.get('subject', f"Re: Issue #{issue_id}"),
+                'subject': result.get('subject', 'Response to Your Message'),
                 'body': result.get('body', ''),
                 'confidence': 0.9
             }
@@ -223,7 +223,7 @@ class OpenAIService(AIServiceInterface):
             return {
                 'success': False,
                 'error': str(e),
-                'subject': f"Re: Issue #{issue_id}",
+                'subject': 'Response to Your Message',
                 'body': "Thank you for your response. We will review and get back to you shortly."
             }
     
@@ -349,13 +349,13 @@ Procurement Team - Buy2Rent (MOCK MODE)
         }
     
     async def draft_reply(self, issue_data: Dict[str, Any], conversation_history: List[Dict], vendor_message: str) -> Dict[str, Any]:
-        issue_id = issue_data.get('issue_id', 'N/A')
+        order_ref = issue_data.get('order_reference', 'N/A')
         return {
             'success': True,
-            'subject': f"Re: Issue #{issue_id}",
+            'subject': f"Urgent: Response Required - Order #{order_ref}" if order_ref != 'N/A' else "Urgent: Response to Your Message - Immediate Action Required",
             'body': f"""Dear {issue_data.get('vendor_name', 'Vendor')},
 
-[MOCK REPLY] Thank you for your response regarding Issue #{issue_id}.
+[MOCK REPLY] Thank you for your response regarding Order #{order_ref}.
 
 We acknowledge your message and will process accordingly.
 

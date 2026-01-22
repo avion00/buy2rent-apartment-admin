@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Reply - Buy2Rent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            line-height: 1.6;
+        }
+        .email-wrapper {
+            width: 100%;
+            background-color: #f5f7fa;
+            padding: 0;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            padding: 40px 60px;
+            text-align: center;
+        }
+        .logo {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        .header-subtitle {
+            color: #bdc3c7;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        .status-banner {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            padding: 25px 60px;
+            text-align: center;
+            border-bottom: 4px solid #1e8449;
+        }
+        .status-banner h2 {
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .content {
+            padding: 50px 60px;
+            background-color: #ffffff;
+        }
+        .greeting {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #2c3e50;
+        }
+        .message-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ecf0f1 100%);
+            padding: 30px;
+            border-radius: 8px;
+            border-left: 5px solid #27ae60;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .message-body {
+            font-size: 15px;
+            color: #2c3e50;
+            line-height: 1.9;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .closing-section {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid #ecf0f1;
+        }
+        .closing-text {
+            font-size: 15px;
+            color: #34495e;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+        .signature {
+            margin-top: 25px;
+            font-size: 15px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .signature-line {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: 400;
+            margin-top: 5px;
+        }
+        .footer-reference {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            padding: 25px 60px;
+            text-align: center;
+        }
+        .reference-code {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1.5px;
+        }
+        .reference-note {
+            color: #95a5a6;
+            font-size: 12px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+        .footer {
+            background-color: #ecf0f1;
+            padding: 30px 60px;
+            text-align: center;
+        }
+        .footer-brand {
+            font-weight: 700;
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+        .footer-text {
+            color: #7f8c8d;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 6px 0;
+        }
+        .footer-contact {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #bdc3c7;
+        }
+        .contact-email {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        @media only screen and (max-width: 600px) {
+            .header, .content, .status-banner, .footer-reference, .footer {
+                padding-left: 25px;
+                padding-right: 25px;
+            }
+            .message-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-container">
+            <div class="header">
+                <img src="https://procurement.buy2rent.eu/static/buy2rent-logo.png" alt="Buy2Rent" class="logo">
+                <div class="header-subtitle">Procurement System</div>
+            </div>
+
+            <div class="status-banner">
+                <h2>💬 Re: Issue #{{ issue_slug }}</h2>
+            </div>
+
+            <div class="content">
+                <div class="greeting">Dear {{ vendor_name }} team,</div>
+                
+                <div class="message-section">
+                    <div class="message-body">{% if message_body_html %}{{ message_body_html|safe }}{% else %}{{ message_body }}{% endif %}</div>
+                </div>
+
+                <div class="closing-section">
+                    <div class="closing-text">
+                        We appreciate your prompt attention to this matter and look forward to your continued cooperation in resolving this issue.
+                    </div>
+                    <div class="closing-text">
+                        Should you have any questions or require additional information, please do not hesitate to reach out to us directly.
+                    </div>
+                    
+                    <div class="signature">
+                        Best regards,<br>
+                        <span class="signature-line">Buy2Rent Procurement Team</span><br>
+                        <span class="signature-line">Email: procurement@buy2rent.eu</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-reference">
+                <div class="reference-code">Reference: Issue #{{ issue_slug }}</div>
+                <div class="reference-note">Please keep this reference in your reply for tracking purposes</div>
+            </div>
+
+            <div class="footer">
+                <div class="footer-brand">Buy2Rent Procurement System</div>
+                <div class="footer-text">This message is part of an ongoing conversation regarding your order.</div>
+                <div class="footer-text">All communications are tracked and logged for quality assurance.</div>
+                <div class="footer-contact">
+                    <div class="footer-text">
+                        For urgent matters, contact us at: <a href="mailto:procurement@buy2rent.eu" class="contact-email">procurement@buy2rent.eu</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

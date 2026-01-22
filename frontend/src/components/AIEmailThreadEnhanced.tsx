@@ -76,7 +76,6 @@ export const AIEmailThreadEnhanced: React.FC<AIEmailThreadProps> = ({
   const [vendorMessage, setVendorMessage] = useState('');
   const [generatingReply, setGeneratingReply] = useState(false);
   const [messageMode, setMessageMode] = useState<'vendor' | 'manual'>('manual');
-  const [manualSubject, setManualSubject] = useState(`Re: Issue #${issueId}`);
   const [manualMessage, setManualMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
 
@@ -122,7 +121,7 @@ export const AIEmailThreadEnhanced: React.FC<AIEmailThreadProps> = ({
     try {
       const response = await api.post(`/issues/${issueId}/add_vendor_response/`, {
         message: vendorMessage,
-        subject: `Re: Issue #${issueId}`,
+        subject: 'Response to Your Message',
         from_email: 'vendor@example.com'
       });
       
@@ -149,7 +148,6 @@ export const AIEmailThreadEnhanced: React.FC<AIEmailThreadProps> = ({
     setSendingMessage(true);
     try {
       const response = await api.post(`/issues/${issueId}/send_manual_message/`, {
-        subject: manualSubject,
         message: manualMessage,
         to_email: messages.find(m => m.sender === 'Vendor')?.email_from || 'vendor@example.com',
       });
@@ -157,7 +155,6 @@ export const AIEmailThreadEnhanced: React.FC<AIEmailThreadProps> = ({
       if (response.data.success) {
         toast.success('Message sent successfully');
         setManualMessage('');
-        setManualSubject(`Re: Issue #${issueId}`);
         fetchEmailThread();
       } else {
         toast.error(response.data.message || 'Failed to send message');
@@ -368,13 +365,10 @@ export const AIEmailThreadEnhanced: React.FC<AIEmailThreadProps> = ({
           </div>
           
           <TabsContent value="manual" className="px-4 pb-4 space-y-3">
+            <div className="text-xs text-muted-foreground mb-2">
+              Subject will be automatically generated with order reference
+            </div>
             <div className="space-y-2">
-              <Input
-                value={manualSubject}
-                onChange={(e) => setManualSubject(e.target.value)}
-                placeholder="Subject"
-                className="text-sm"
-              />
               <Textarea
                 value={manualMessage}
                 onChange={(e) => setManualMessage(e.target.value)}

@@ -411,7 +411,9 @@ class IMAPService:
                 
                 # Get reply text from draft_result
                 reply_text = draft_result.get('reply', draft_result.get('body', ''))
-                reply_subject = f"Re: Issue #{issue.get_issue_slug()}"
+                reply_subject = 'Urgent: Response to Your Message - Immediate Action Required'
+                if issue.order and issue.order.po_number:
+                    reply_subject = f'Urgent: Response Required - Order #{issue.order.po_number}'
                 
                 # Check if we should auto-send or create draft
                 should_auto_send = auto_approve and confidence >= confidence_threshold

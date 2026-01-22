@@ -589,23 +589,24 @@ const ApartmentView = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-16">Image</TableHead>
-                        <TableHead>Product Name</TableHead>
-                        <TableHead>Vendor</TableHead>
-                        <TableHead>SKU</TableHead>
-                        <TableHead className="text-right">Unit Price</TableHead>
-                        <TableHead className="text-center">Qty</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
-                        <TableHead>Product Status</TableHead>
-                        <TableHead>Delivery Status</TableHead>
+                        <TableHead className="min-w-[140px]">Product Name</TableHead>
+                        <TableHead className="min-w-[140px]">Vendor</TableHead>
+                        <TableHead className="min-w-[140px]">SKU</TableHead>
+                        <TableHead className="text-right min-w-[140px]">Unit Price</TableHead>
+                        <TableHead className="text-center min-w-[140px]">Qty</TableHead>
+                        <TableHead className="text-right min-w-[140px]">Total</TableHead>
+                        <TableHead className="min-w-[140px]">Product Status</TableHead>
+                        <TableHead className="min-w-[140px]">Ordered On</TableHead>
+                        <TableHead className="min-w-[140px]">Delivery Status</TableHead>
                         <TableHead className="min-w-[140px]">Expected Delivery</TableHead>
                         <TableHead className="min-w-[200px]">Delivery Location</TableHead>
                         <TableHead className="min-w-[140px]">Actual Delivery</TableHead>
-                        <TableHead>Payment Status</TableHead>
-                        <TableHead>Payment Due</TableHead>
-                        <TableHead>Issue State</TableHead>
-                        <TableHead>Actions / Chatbot</TableHead>
-                        <TableHead>Ordered On</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="min-w-[140px]">Payment Status</TableHead>
+                        <TableHead className="min-w-[140px]">Payment Due</TableHead>
+                        <TableHead className="min-w-[140px]">Issue State</TableHead>
+                        <TableHead className="min-w-[140px]">Actions / Chatbot</TableHead>
+                        
+                        <TableHead className="text-center min-w-[140px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -802,6 +803,59 @@ const ApartmentView = () => {
                                 )}
                               </div>
                             </TableCell>
+
+                            <TableCell>
+                              <div className="space-y-1">
+                                {product.order_status_info && product.order_status_info.length > 0 ? (
+                                  product.order_status_info.map((orderInfo: any, idx: number) => (
+                                    <Popover key={idx}>
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-auto p-1 hover:bg-muted flex items-center gap-2"
+                                        >
+                                          <CalendarIcon className="h-3 w-3 text-muted-foreground" />
+                                          <span className="text-xs">
+                                            {orderInfo.placed_on ? format(new Date(orderInfo.placed_on), "MMM dd, yyyy") : "Set date"}
+                                          </span>
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                          mode="single"
+                                          selected={orderInfo.placed_on ? new Date(orderInfo.placed_on) : undefined}
+                                          onSelect={async (date) => {
+                                            if (date) {
+                                              try {
+                                                await orderApi.updateOrder(orderInfo.order_id, { 
+                                                  placed_on: formatDateForAPI(date) 
+                                                });
+                                                toast({
+                                                  title: "Success",
+                                                  description: "Order placed date updated",
+                                                });
+                                                refetch();
+                                              } catch (error) {
+                                                toast({
+                                                  title: "Error",
+                                                  description: "Failed to update order placed date",
+                                                  variant: "destructive",
+                                                });
+                                              }
+                                            }
+                                          }}
+                                          initialFocus
+                                        />
+                                      </PopoverContent>
+                                    </Popover>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">-</span>
+                                )}
+                              </div>
+                            </TableCell>
+
                             <TableCell>
                               <div className="space-y-1 min-w-[200px]">
                                 {/* Delivery Status Information - Click to open detailed modal */}
@@ -1145,9 +1199,8 @@ const ApartmentView = () => {
                                     : "AI Chatbot"}
                               </Button>
                             </TableCell>
-                            <TableCell>
-                              {product.ordered_on ? new Date(product.ordered_on).toLocaleDateString() : "-"}
-                            </TableCell>
+
+                            
 
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">

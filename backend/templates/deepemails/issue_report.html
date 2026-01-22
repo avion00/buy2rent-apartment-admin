@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Report - Buy2Rent Procurement</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f7f9fc;
+            line-height: 1.6;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Main Container */
+        .email-wrapper {
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Header */
+        .email-header {
+            background: linear-gradient(135deg, #1a2b6d 0%, #2c3e50 100%);
+            padding: 40px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
+        }
+
+        .logo-container {
+            position: relative;
+            z-index: 2;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            max-width: 180px;
+            height: auto;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .header-title {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 10px 0 5px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Status Banner */
+        .status-banner {
+            background: linear-gradient(90deg, #ff7e5f 0%, #feb47b 100%);
+            padding: 22px 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-icon {
+            background-color: rgba(255, 255, 255, 0.2);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 18px;
+        }
+
+        .status-icon i {
+            font-size: 22px;
+            color: white;
+        }
+
+        .status-text h2 {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 3px;
+        }
+
+        .status-text p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            margin: 0;
+        }
+
+        /* Content Sections */
+        .email-content {
+            padding: 45px 50px;
+        }
+
+        .section {
+            margin-bottom: 35px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f3f7;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-right: 12px;
+            color: #3498db;
+        }
+
+        /* Greeting */
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .message-text {
+            font-size: 15px;
+            color: #5a6c7d;
+            margin-bottom: 25px;
+            line-height: 1.7;
+        }
+
+        /* Details Grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .detail-card {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 22px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .detail-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .detail-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #7b8a8b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .detail-label i {
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* Priority Badge */
+        .priority-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .priority-badge i {
+            margin-right: 6px;
+            font-size: 10px;
+        }
+
+        .priority-critical {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: #ffffff;
+        }
+
+        .priority-high {
+            background: linear-gradient(135deg, #ffa726 0%, #f57c00 100%);
+            color: #ffffff;
+        }
+
+        .priority-medium {
+            background: linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);
+            color: #ffffff;
+        }
+
+        .priority-low {
+            background: linear-gradient(135deg, #66bb6a 0%, #388e3c 100%);
+            color: #ffffff;
+        }
+
+        /* Products Section */
+        .product-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #eef2f7;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .product-header {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .product-image-container {
+            width: 120px;
+            height: 120px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-right: 25px;
+            flex-shrink: 0;
+            border: 1px solid #eef2f7;
+            background-color: #f8fafc;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .product-meta {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            margin-right: 25px;
+            margin-bottom: 8px;
+        }
+
+        .meta-label {
+            font-size: 13px;
+            color: #7b8a8b;
+            margin-right: 6px;
+        }
+
+        .meta-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .issue-tags {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .issue-tag {
+            background: #ffeaa7;
+            color: #d35400;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .issue-tag i {
+            margin-right: 5px;
+            font-size: 10px;
+        }
+
+        .product-description {
+            background: #f8fafc;
+            border-left: 4px solid #3498db;
+            padding: 18px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .description-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2c3e50;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .description-label i {
+            margin-right: 8px;
+            color: #3498db;
+        }
+
+        .description-text {
+            font-size: 14px;
+            color: #5a6c7d;
+            line-height: 1.7;
+        }
+
+        /* Impact Box */
+        .impact-box {
+            background: linear-gradient(135deg, #fff9db 0%, #ffecb3 100%);
+            border-left: 4px solid #ffb300;
+            border-radius: 10px;
+            padding: 22px 25px;
+            margin: 25px 0;
+        }
+
+        .impact-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .impact-header i {
+            color: #ff8f00;
+            font-size: 20px;
+            margin-right: 12px;
+        }
+
+        .impact-header h3 {
+            color: #e65100;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .impact-text {
+            color: #bf360c;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            margin: 35px 0 25px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+            border-radius: 12px;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 16px 40px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .cta-button i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .cta-note {
+            color: #7b8a8b;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        /* Reference Section */
+        .reference-section {
+            background: #2c3e50;
+            padding: 25px 50px;
+            text-align: center;
+        }
+
+        .reference-code {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .reference-note {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+        }
+
+        /* Footer */
+        .email-footer {
+            background: #f1f5f9;
+            padding: 30px 50px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .footer-brand {
+            font-weight: 700;
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+
+        .footer-text {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 8px 0;
+        }
+
+        .footer-contact {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin: 0 15px 10px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .contact-item i {
+            margin-right: 8px;
+            color: #3498db;
+        }
+
+        /* Responsive */
+        @media only screen and (max-width: 650px) {
+            .email-wrapper {
+                border-radius: 0;
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+
+            .email-header,
+            .email-content,
+            .reference-section,
+            .email-footer {
+                padding-left: 25px;
+                padding-right: 25px;
+            }
+
+            .status-banner {
+                padding: 20px 25px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .product-header {
+                flex-direction: column;
+            }
+
+            .product-image-container {
+                width: 100%;
+                height: auto;
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+
+            .product-image {
+                height: 200px;
+            }
+
+            .cta-button {
+                width: 100%;
+                padding: 18px 20px;
+            }
+        }
+
+        /* Animation for email clients that support it */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Print styles */
+        @media print {
+            .email-wrapper {
+                box-shadow: none;
+                margin: 0;
+            }
+
+            .cta-button {
+                background: #3498db;
+                color: #ffffff;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-wrapper">
+        <!-- Header -->
+        <div class="email-header">
+            <div class="header-pattern"></div>
+            <div class="logo-container">
+                <img src="https://procurement.buy2rent.eu/static/buy2rent-logo.png" alt="Buy2Rent" class="logo">
+            </div>
+            <h1 class="header-title">Procurement System</h1>
+            <div class="header-subtitle">Vendor Issue Management</div>
+        </div>
+
+        <!-- Status Banner -->
+        <div class="status-banner">
+            <div class="status-content">
+                <div class="status-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="status-text">
+                    <h2>New Issue Reported</h2>
+                    <p>Action required from your team</p>
+                </div>
+            </div>
+            <div class="priority-badge priority-{{ priority_class }}">
+                <i class="fas fa-flag"></i>
+                {{ priority }}
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="email-content">
+            <!-- Greeting -->
+            <div class="greeting fade-in">
+                Dear {{ vendor_name }} team,
+            </div>
+
+            <!-- Opening Message -->
+            <div class="message-text fade-in">
+                {{ opening_message }}
+            </div>
+
+            <!-- Issue Details -->
+            <div class="section fade-in">
+                <h2 class="section-title">
+                    <i class="fas fa-clipboard-list"></i>
+                    Issue Details
+                </h2>
+
+                <div class="details-grid">
+                    <div class="detail-card">
+                        <div class="detail-label">
+                            <i class="fas fa-hashtag"></i>
+                            Issue ID
+                        </div>
+                        <div class="detail-value">#{{ issue_slug }}</div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-label">
+                            <i class="fas fa-calendar-alt"></i>
+                            Reported Date
+                        </div>
+                        <div class="detail-value">{{ reported_date }}</div>
+                    </div>
+
+                    {% if order_reference %}
+                    <div class="detail-card">
+                        <div class="detail-label">
+                            <i class="fas fa-file-invoice"></i>
+                            Order Reference
+                        </div>
+                        <div class="detail-value">{{ order_reference }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Affected Products -->
+            <div class="section fade-in">
+                <h2 class="section-title">
+                    <i class="fas fa-box-open"></i>
+                    Affected Products ({{ affected_products|length }})
+                </h2>
+
+                {% for product in affected_products %}
+                <div class="product-card">
+                    <div class="product-header">
+                        {% if product.image_url %}
+                        <div class="product-image-container">
+                            <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image">
+                        </div>
+                        {% endif %}
+
+                        <div class="product-info">
+                            <h3 class="product-name">{{ product.name }}</h3>
+
+                            <div class="product-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Quantity Affected:</span>
+                                    <span class="meta-value">{{ product.quantity }}</span>
+                                </div>
+
+                                {% if product.sku %}
+                                <div class="meta-item">
+                                    <span class="meta-label">SKU:</span>
+                                    <span class="meta-value">{{ product.sku }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% if product.issue_types %}
+                            <div class="issue-tags">
+                                <span class="issue-tag">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ product.issue_types }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if product.description %}
+                    <div class="product-description">
+                        <div class="description-label">
+                            <i class="fas fa-align-left"></i>
+                            Issue Description
+                        </div>
+                        <div class="description-text">
+                            {{ product.description }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Impact Section -->
+            {% if impact %}
+            <div class="impact-box fade-in">
+                <div class="impact-header">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>Business Impact</h3>
+                </div>
+                <p class="impact-text">{{ impact }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Closing Message -->
+            <div class="message-text fade-in">
+                {{ closing_message }}
+            </div>
+
+            <!-- CTA Section -->
+            <div class="cta-section fade-in">
+                <a href="mailto:{{ reply_email }}" class="cta-button">
+                    <i class="fas fa-reply"></i>
+                    Respond to Issue
+                </a>
+                <p class="cta-note">Please respond within 48 hours to ensure timely resolution</p>
+            </div>
+        </div>
+
+        <!-- Reference Section -->
+        <div class="reference-section">
+            <div class="reference-code">REF: ISSUE-#{{ issue_slug }}</div>
+            <div class="reference-note">Include this reference in all communications</div>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <div class="footer-brand">Buy2Rent Procurement Team</div>
+            <div class="footer-text">This is an automated message from our procurement system.</div>
+            <div class="footer-text">For urgent matters, please contact us immediately.</div>
+
+            <div class="footer-contact">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    {{ reply_email }}
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    +1 (555) 123-4567
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-globe"></i>
+                    procurement.buy2rent.eu
+                </div>
+            </div>
+
+            <div class="footer-text" style="margin-top: 20px; font-size: 11px;">
+                &copy; 2023 Buy2Rent Procurement. All rights reserved.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple animation trigger for email clients that support JavaScript
+        // Note: Most email clients strip JavaScript, but this can help with webmail viewers
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('.fade-in');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+
+</html>

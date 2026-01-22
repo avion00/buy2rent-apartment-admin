@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AITextEnhancer } from "@/components/ui/AITextEnhancer";
 import { cn } from "@/lib/utils";
 import { format, parse } from "date-fns";
 import { CalendarIcon, CheckCircle, Truck, Clock, XCircle, RotateCcw, Package, Loader2 } from "lucide-react";
@@ -335,13 +336,20 @@ export function DeliveryStatusUpdateModal({
             <Label htmlFor="delayReason">
               Delay Reason <span className="text-red-500">*</span>
             </Label>
-            <Textarea
-              id="delayReason"
-              placeholder="Explain the reason for delay"
-              value={delayReason}
-              onChange={(e) => setDelayReason(e.target.value)}
-              rows={3}
-            />
+            <div className="relative">
+              <Textarea
+                id="delayReason"
+                placeholder="Explain the reason for delay"
+                value={delayReason}
+                onChange={(e) => setDelayReason(e.target.value)}
+                rows={3}
+              />
+              <AITextEnhancer
+                text={delayReason}
+                onEnhanced={setDelayReason}
+                context="delivery delay reason"
+              />
+            </div>
           </div>
         );
 
@@ -351,13 +359,20 @@ export function DeliveryStatusUpdateModal({
             <Label htmlFor="returnReason">
               Return Reason <span className="text-red-500">*</span>
             </Label>
-            <Textarea
-              id="returnReason"
-              placeholder="Explain why the delivery was returned"
-              value={returnReason}
-              onChange={(e) => setReturnReason(e.target.value)}
-              rows={3}
-            />
+            <div className="relative">
+              <Textarea
+                id="returnReason"
+                placeholder="Explain why the delivery was returned"
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                rows={3}
+              />
+              <AITextEnhancer
+                text={returnReason}
+                onEnhanced={setReturnReason}
+                context="delivery return reason"
+              />
+            </div>
           </div>
         );
 
@@ -367,13 +382,20 @@ export function DeliveryStatusUpdateModal({
             <Label htmlFor="cancellationReason">
               Cancellation Reason <span className="text-red-500">*</span>
             </Label>
-            <Textarea
-              id="cancellationReason"
-              placeholder="Explain why the delivery was cancelled"
-              value={cancellationReason}
-              onChange={(e) => setCancellationReason(e.target.value)}
-              rows={3}
-            />
+            <div className="relative">
+              <Textarea
+                id="cancellationReason"
+                placeholder="Explain why the delivery was cancelled"
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                rows={3}
+              />
+              <AITextEnhancer
+                text={cancellationReason}
+                onEnhanced={setCancellationReason}
+                context="delivery cancellation reason"
+              />
+            </div>
           </div>
         );
 
@@ -455,13 +477,20 @@ export function DeliveryStatusUpdateModal({
           {selectedStatus !== "Returned" && selectedStatus !== "Cancelled" && selectedStatus !== "Confirmed" && (
             <div className="space-y-2">
               <Label htmlFor="notes">Additional Notes</Label>
-              <Textarea
-                id="notes"
-                placeholder="Add any additional notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-              />
+              <div className="relative">
+                <Textarea
+                  id="notes"
+                  placeholder="Add any additional notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                />
+                <AITextEnhancer
+                  text={notes}
+                  onEnhanced={setNotes}
+                  context="delivery additional notes"
+                />
+              </div>
             </div>
           )}
         </div>

@@ -43,6 +43,7 @@ export interface OrderItem {
   product_image?: string;
   product_image_url?: string;
   sku?: string;
+  category_name?: string;
   quantity: number;
   unit_price: string | number;
   total_price: string | number;
@@ -98,6 +99,7 @@ export interface CreateOrderData {
 
 export interface UpdateOrderData {
   status?: string;
+  placed_on?: string;
   expected_delivery?: string;
   actual_delivery?: string;
   shipping_address?: string;

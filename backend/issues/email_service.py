@@ -202,12 +202,11 @@ class EmailService:
                 context = {
                     'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
                     'issue_id': str(issue.id),
-                    'issue_slug': issue.get_issue_slug(),
+                    'order_reference': issue.order.po_number if issue.order else 'N/A',
                     'issue_type': issue.type,
                     'priority': issue.priority or 'Medium',
                     'priority_class': priority_class,
                     'product_name': issue.get_product_name(),
-                    'order_reference': f"Order #{issue.order.po_number}" if issue.order else None,
                     'reported_date': issue.reported_on.strftime('%B %d, %Y') if issue.reported_on else timezone.now().strftime('%B %d, %Y'),
                     'description': issue.description,
                     'impact': issue.impact if hasattr(issue, 'impact') and issue.impact else None,
@@ -224,7 +223,7 @@ class EmailService:
                 context = {
                     'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
                     'issue_id': str(issue.id),
-                    'issue_slug': issue.get_issue_slug(),
+                    'order_reference': issue.order.po_number if issue.order else 'N/A',
                     'message_body': normalized_body,
                     'message_body_html': _format_message_html(normalized_body),
                 }
@@ -332,12 +331,8 @@ class EmailService:
         if not vendor_email:
             raise ValueError("Vendor email not found")
         
-        issue_slug = issue.get_issue_slug()
-        if subject:
-            subject = subject.replace(f'Issue #{issue.id}', f'Issue #{issue_slug}')
-        if f'Issue #{issue_slug}' not in (subject or '') and f'[Issue #{issue_slug}]' not in (subject or ''):
-            subject = f'[Issue #{issue_slug}] {subject}'
-
+        # Keep subject clean - no issue slug/UUID needed
+        # Subject should already contain meaningful business information
         normalized_body = (body or '').strip()
         
         try:
@@ -345,7 +340,7 @@ class EmailService:
             context = {
                 'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
                 'issue_id': str(issue.id),
-                'issue_slug': issue.get_issue_slug(),
+                'order_reference': issue.order.po_number if issue.order else 'N/A',
                 'message_body': normalized_body,
                 'message_body_html': _format_message_html(normalized_body),
             }

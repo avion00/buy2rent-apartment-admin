@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Report - Buy2Rent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 100%;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            padding: 30px 40px;
+            text-align: center;
+        }
+        .logo {
+            max-width: 180px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .header-subtitle {
+            color: #95a5a6;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .status-banner {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            padding: 20px 40px;
+            text-align: center;
+            border-bottom: 3px solid #1e8449;
+        }
+        .status-banner h2 {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+        .content {
+            padding: 40px;
+            max-width: 100%;
+        }
+        .greeting {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        .message-text {
+            font-size: 15px;
+            color: #34495e;
+            margin-bottom: 25px;
+            line-height: 1.7;
+        }
+        .details-grid {
+            display: table;
+            width: 100%;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 4px solid #3498db;
+        }
+        .details-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .detail-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        .detail-label {
+            display: table-cell;
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 13px;
+            width: 35%;
+            padding: 8px 15px 8px 0;
+        }
+        .detail-value {
+            display: table-cell;
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 0;
+        }
+        .priority-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .priority-critical {
+            background: #e74c3c;
+            color: #ffffff;
+        }
+        .priority-high {
+            background: #e67e22;
+            color: #ffffff;
+        }
+        .priority-medium {
+            background: #f39c12;
+            color: #ffffff;
+        }
+        .priority-low {
+            background: #95a5a6;
+            color: #ffffff;
+        }
+        .products-section {
+            margin: 30px 0;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .product-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            display: table;
+            width: 100%;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+        .product-image-container {
+            display: table-cell;
+            width: 160px;
+            vertical-align: top;
+            padding-right: 25px;
+        }
+        .product-image {
+            width: 160px;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .product-details {
+            display: table-cell;
+            vertical-align: top;
+        }
+        .product-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .product-meta {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 12px;
+            padding: 8px 0;
+        }
+        .product-meta strong {
+            color: #495057;
+            font-weight: 600;
+        }
+        .product-issue-types {
+            display: inline-block;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #dc2626;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin: 4px 6px 4px 0;
+            border: 1px solid #fca5a5;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .product-description {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            border-left: 4px solid #3498db;
+            padding: 18px 20px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #2c3e50;
+            line-height: 1.8;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+        }
+        .product-description strong {
+            display: block;
+            color: #1e3a8a;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .impact-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 6px;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+        .impact-box p {
+            margin: 0;
+            color: #856404;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .impact-box strong {
+            font-weight: 700;
+            color: #664d03;
+        }
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #3498db;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px 35px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .footer-reference {
+            background: #34495e;
+            padding: 20px 40px;
+            text-align: center;
+        }
+        .reference-code {
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+        .reference-note {
+            color: #95a5a6;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+        .footer {
+            background-color: #ecf0f1;
+            padding: 25px 40px;
+            text-align: center;
+        }
+        .footer-brand {
+            font-weight: 700;
+            font-size: 15px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .footer-text {
+            color: #7f8c8d;
+            font-size: 12px;
+            line-height: 1.5;
+            margin: 5px 0;
+        }
+        @media only screen and (max-width: 600px) {
+            .content, .status-banner, .footer-reference, .footer {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+            .details-grid, .product-card {
+                padding: 15px;
+            }
+            .detail-label {
+                width: 40%;
+            }
+            .product-image-container {
+                display: block;
+                width: 100%;
+                padding-right: 0;
+                margin-bottom: 15px;
+            }
+            .product-details {
+                display: block;
+            }
+            .product-image {
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="https://procurement.buy2rent.eu/static/buy2rent-logo.png" alt="Buy2Rent" class="logo">
+            <div class="header-subtitle">Procurement System</div>
+        </div>
+
+        <div class="status-banner">
+            <h2>🔔 New Issue Report</h2>
+        </div>
+
+        <div class="content">
+            <div class="greeting">Dear {{ vendor_name }} team,</div>
+            <div class="message-text">{{ opening_message }}</div>
+
+            <div class="details-grid">
+                <div class="details-title">📋 Issue Details</div>
+                
+                <div class="detail-row">
+                    <div class="detail-label">Issue ID</div>
+                    <div class="detail-value"><strong>#{{ issue_slug }}</strong></div>
+                </div>
+                
+                <div class="detail-row">
+                    <div class="detail-label">Priority Level</div>
+                    <div class="detail-value">
+                        <span class="priority-badge priority-{{ priority_class }}">{{ priority }}</span>
+                    </div>
+                </div>
+                
+                {% if order_reference %}
+                <div class="detail-row">
+                    <div class="detail-label">Order Reference</div>
+                    <div class="detail-value">{{ order_reference }}</div>
+                </div>
+                {% endif %}
+                
+                <div class="detail-row">
+                    <div class="detail-label">Reported Date</div>
+                    <div class="detail-value">{{ reported_date }}</div>
+                </div>
+            </div>
+
+            <div class="products-section">
+                <div class="section-title">🛍️ Affected Products ({{ affected_products|length }})</div>
+                
+                {% for product in affected_products %}
+                <div class="product-card">
+                    {% if product.image_url %}
+                    <div class="product-image-container">
+                        <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="product-details">
+                        <div class="product-name">{{ product.name }}</div>
+                        
+                        <div class="product-meta">
+                            <strong>Quantity Affected:</strong> {{ product.quantity }}
+                        </div>
+                        
+                        {% if product.issue_types %}
+                        <div class="product-meta">
+                            <strong>Issue Types:</strong><br>
+                            <span class="product-issue-types">{{ product.issue_types }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if product.description %}
+                        <div class="product-description">
+                            <strong>Description:</strong><br>
+                            {{ product.description }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if impact %}
+            <div class="impact-box">
+                <p><strong>⚠️ Business Impact:</strong> {{ impact }}</p>
+            </div>
+            {% endif %}
+
+            <div class="message-text">{{ closing_message }}</div>
+
+            <div class="cta-section">
+                <a href="mailto:{{ reply_email }}" class="cta-button">📧 Reply to this Issue</a>
+            </div>
+        </div>
+
+        <div class="footer-reference">
+            <div class="reference-code">Reference: Issue #{{ issue_slug }}</div>
+            <div class="reference-note">Please keep this reference in your reply for tracking purposes</div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-brand">Buy2Rent Procurement Team</div>
+            <div class="footer-text">This is an automated message from our procurement system.</div>
+            <div class="footer-text">For urgent matters, please contact us at {{ reply_email }}</div>
+        </div>
+    </div>
+</body>
+</html>

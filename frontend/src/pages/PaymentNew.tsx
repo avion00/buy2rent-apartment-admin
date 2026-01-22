@@ -650,7 +650,7 @@ const PaymentNew = () => {
                             </TableCell>
                             <TableCell>
                               <Badge variant="outline" className="font-normal">
-                                {(item as any).category_name || 'N/A'}
+                                {item.category_name || 'N/A'}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-center font-medium">
