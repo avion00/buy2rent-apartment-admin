@@ -68,9 +68,19 @@ class OpenAIService(AIServiceInterface):
         2. Clear about the issue and impact
         3. Request for resolution with timeline based on priority
         4. Politely request missing evidence if needed (photos, invoice, tracking)
-        5. Sign off as "Procurement Team - Buy2Rent"
         
-        Return ONLY valid JSON with 'subject' and 'body' fields.
+        Return ONLY valid JSON with these fields:
+        - "subject": A clear subject line
+        - "body": The full email body
+        - "opening_message": A DETAILED, comprehensive message body that includes:
+          * A professional introduction mentioning the issue ID and order reference
+          * A bullet-point list of ALL specific issues/problems identified from the description
+          * The business impact of these issues
+          * A clear resolution request (refund, replacement, etc.)
+          * A request for confirmation of next steps and timeline
+          This should be the FULL email body content (multiple paragraphs), NOT just 1-2 sentences.
+          Do NOT include "Dear..." greeting or signature - those are added separately.
+        - "closing_message": A polite closing paragraph (2-3 sentences) thanking them for attention and requesting swift response
         """
         
         try:
@@ -78,7 +88,7 @@ class OpenAIService(AIServiceInterface):
                 self.client.chat.completions.create,
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a professional procurement specialist. Always return valid JSON with 'subject' and 'body' fields. Be deterministic and safe."},
+                    {"role": "system", "content": "You are a professional procurement specialist. Always return valid JSON with 'subject', 'body', 'opening_message', and 'closing_message' fields. Be deterministic and safe."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
@@ -88,18 +98,34 @@ class OpenAIService(AIServiceInterface):
             content = response.choices[0].message.content
             result = json.loads(content)
             
+            # Build detailed fallback opening_message if AI didn't provide one
+            body_text = result.get('body', '')
+            opening_msg = result.get('opening_message', '')
+            
+            if not opening_msg and body_text:
+                # Use body as opening_message if opening_message is empty
+                opening_msg = body_text
+            elif not opening_msg:
+                # Generate detailed fallback
+                opening_msg = self._generate_detailed_opening(issue_data)
+            
             return {
                 'success': True,
                 'subject': result.get('subject', f"Quality Issue Report - {issue_data.get('type')}"),
-                'body': result.get('body', ''),
+                'body': body_text,
+                'opening_message': opening_msg,
+                'closing_message': result.get('closing_message', 'We appreciate your urgent attention and a swift response to this matter. If you require any additional evidence, please let us know.'),
                 'confidence': 0.95
             }
         except Exception as e:
+            fallback_opening = self._generate_detailed_opening(issue_data)
             return {
                 'success': False,
                 'error': str(e),
                 'subject': f"Quality Issue Report - {issue_data.get('type')}",
-                'body': self._generate_fallback_email(issue_data)
+                'body': self._generate_fallback_email(issue_data),
+                'opening_message': fallback_opening,
+                'closing_message': 'We appreciate your urgent attention and a swift response to this matter. If you require any additional evidence, please let us know.'
             }
     
     async def analyze_vendor_reply(self, issue_data: Dict[str, Any], vendor_email_text: str) -> Dict[str, Any]:
@@ -309,6 +335,32 @@ Please keep the Issue Reference #{issue_id} in your reply for tracking purposes.
 Best regards,
 Procurement Team - Buy2Rent
 """
+    
+    def _generate_detailed_opening(self, issue_data: Dict[str, Any]) -> str:
+        """Generate detailed opening message for email template"""
+        issue_id = issue_data.get('issue_id', 'N/A')
+        priority = issue_data.get('priority', 'Medium')
+        product_name = issue_data.get('product_name', 'the product')
+        order_ref = issue_data.get('order_reference', 'N/A')
+        description = issue_data.get('description', '')
+        impact = issue_data.get('impact', '')
+        issue_type = issue_data.get('type', 'quality issue')
+        
+        opening = f"""I am writing to formally report a {priority.lower()} priority issue (Issue #{issue_id}) concerning our recent order with reference {order_ref} for {product_name}.
+
+Upon receipt, we identified the following issues with the products delivered:
+{description}
+
+{f"These problems have severely impacted our operations: {impact}" if impact else "These issues require your immediate attention."}
+
+We kindly request the following actions:
+1. Immediate investigation and resolution of this matter.
+2. Confirmation of next steps and timeline for resolution.
+3. If applicable, please arrange for replacement or refund as appropriate.
+
+Please confirm the next steps and provide a timeline for resolution given the {priority.lower()} priority of this issue. If you require any additional evidence, such as photographs of the damaged products, copies of the invoice, or tracking information, kindly let us know so we can provide these promptly."""
+        
+        return opening
 
 
 class MockAIService(AIServiceInterface):
@@ -316,6 +368,26 @@ class MockAIService(AIServiceInterface):
     
     async def generate_issue_email(self, issue_data: Dict[str, Any]) -> Dict[str, Any]:
         issue_id = issue_data.get('issue_id', 'N/A')
+        priority = issue_data.get('priority', 'Medium')
+        product_name = issue_data.get('product_name', 'the product')
+        order_ref = issue_data.get('order_reference', 'N/A')
+        description = issue_data.get('description', '')
+        impact = issue_data.get('impact', '')
+        
+        opening_message = f"""I am writing to formally report a {priority.lower()} priority issue (Issue #{issue_id}) concerning our recent order with reference {order_ref} for {product_name}.
+
+Upon receipt, we identified the following issues with the products delivered:
+{description}
+
+{f"These problems have severely impacted our operations: {impact}" if impact else "These issues require your immediate attention."}
+
+We kindly request the following actions:
+1. Immediate investigation and resolution of this matter.
+2. Confirmation of next steps and timeline for resolution.
+3. If applicable, please arrange for replacement or refund as appropriate.
+
+Please confirm the next steps and provide a timeline for resolution given the {priority.lower()} priority of this issue."""
+        
         return {
             'success': True,
             'subject': f"[MOCK] Quality Issue Report - {issue_data.get('type')}",
@@ -325,16 +397,18 @@ class MockAIService(AIServiceInterface):
 
 Issue Reference: #{issue_id}
 Type: {issue_data.get('type')}
-Product: {issue_data.get('product_name')}
-Priority: {issue_data.get('priority')}
+Product: {product_name}
+Priority: {priority}
 
-Description: {issue_data.get('description')}
+Description: {description}
 
 Please respond with your proposed resolution.
 
 Best regards,
 Procurement Team - Buy2Rent (MOCK MODE)
 """,
+            'opening_message': opening_message,
+            'closing_message': 'We appreciate your urgent attention and a swift response to this matter. If you require any additional evidence, please let us know.',
             'confidence': 1.0
         }
     

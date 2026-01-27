@@ -71,12 +71,17 @@ class OpenAIService(AIServiceInterface):
         
         Return as JSON with these fields:
         - "subject": A clear, concise subject line
-        - "opening_message": A brief, professional opening paragraph (1-2 sentences)
-        - "closing_message": A polite closing paragraph requesting action and timeline (2-3 sentences)
+        - "opening_message": A DETAILED, comprehensive message body that includes:
+          * A professional introduction mentioning the issue ID and order reference
+          * A bullet-point list of ALL specific issues/problems identified
+          * The business impact of these issues
+          * A clear resolution request (refund, replacement, etc.)
+          * A request for confirmation of next steps and timeline
+          This should be the FULL email body content (multiple paragraphs), NOT just 1-2 sentences.
+        - "closing_message": A polite closing paragraph (2-3 sentences) thanking them for their attention and requesting swift response
         
         Do NOT include greetings like "Dear..." or signatures in the opening/closing messages.
-        The opening should introduce the issue briefly.
-        The closing should request resolution and provide contact information.
+        The opening_message should contain ALL the detailed information about the issue.
         """
         
         try:
@@ -84,7 +89,7 @@ class OpenAIService(AIServiceInterface):
                 self.client.chat.completions.create,
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a professional procurement specialist writing to vendors about issues. Always return valid JSON with 'subject' and 'body' fields."},
+                    {"role": "system", "content": "You are a professional procurement specialist writing to vendors about issues. Always return valid JSON with 'subject', 'opening_message', and 'closing_message' fields."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7
@@ -95,31 +100,84 @@ class OpenAIService(AIServiceInterface):
             try:
                 result = json.loads(content)
             except json.JSONDecodeError:
-                # If not valid JSON, create structure from content
+                # If not valid JSON, create structure from content with detailed message
+                issue_types = issue_data.get('type', 'quality issue')
+                product_name = issue_data.get('product_name', 'the product')
+                order_ref = issue_data.get('order_reference', 'N/A')
+                description = issue_data.get('description', '')
+                impact = issue_data.get('impact', '')
+                priority = issue_data.get('priority', 'Medium')
+                
+                detailed_opening = f"""We are writing to formally report a {priority.lower()} priority issue concerning our recent order with reference {order_ref} for {product_name}.
+
+Upon receipt, we identified the following issues with the products delivered:
+{description}
+
+{f"These problems have severely impacted our operations: {impact}" if impact else "These issues require your immediate attention."}
+
+We request an immediate resolution to this matter. Please confirm the next steps and provide a timeline for resolution given the {priority.lower()} priority of this issue."""
+                
                 result = {
                     'subject': f"Issue Report: {issue_data.get('type')}",
-                    'opening_message': 'We are writing to report an issue with our recent order.',
-                    'closing_message': 'We kindly request your urgent attention to resolve this matter. Please provide us with a resolution timeline at your earliest convenience.'
+                    'opening_message': detailed_opening,
+                    'closing_message': 'We appreciate your urgent attention and a swift response to this matter. If you require any additional evidence, such as photographs of the damaged products or copies of the invoice, please let us know.'
                 }
+            
+            # Build a detailed fallback if AI didn't provide opening_message
+            if not result.get('opening_message'):
+                issue_types = issue_data.get('type', 'quality issue')
+                product_name = issue_data.get('product_name', 'the product')
+                order_ref = issue_data.get('order_reference', 'N/A')
+                description = issue_data.get('description', '')
+                impact = issue_data.get('impact', '')
+                priority = issue_data.get('priority', 'Medium')
+                
+                default_opening = f"""We are writing to formally report a {priority.lower()} priority issue concerning our recent order with reference {order_ref} for {product_name}.
+
+Upon receipt, we identified the following issues with the products delivered:
+{description}
+
+{f"These problems have severely impacted our operations: {impact}" if impact else "These issues require your immediate attention."}
+
+We request an immediate resolution to this matter. Please confirm the next steps and provide a timeline for resolution given the {priority.lower()} priority of this issue."""
+            else:
+                default_opening = result.get('opening_message')
             
             return {
                 'success': True,
                 'subject': result.get('subject', f"Issue Report: {issue_data.get('type')}"),
                 'body': result.get('body', ''),  # Keep for backward compatibility
-                'opening_message': result.get('opening_message', 'We are writing to report an issue with our recent order.'),
-                'closing_message': result.get('closing_message', 'We kindly request your urgent attention to resolve this matter. Please provide us with a resolution timeline at your earliest convenience.'),
+                'opening_message': default_opening,
+                'closing_message': result.get('closing_message', 'We appreciate your urgent attention and a swift response to this matter. If you require any additional evidence, such as photographs of the damaged products or copies of the invoice, please let us know.'),
                 'confidence': 0.95,
                 'model': self.model
             }
         except Exception as e:
             fallback_body = self._generate_fallback_email(issue_data)
+            # Generate detailed opening message for fallback
+            issue_types = issue_data.get('type', 'quality issue')
+            product_name = issue_data.get('product_name', 'the product')
+            order_ref = issue_data.get('order_reference', 'N/A')
+            description = issue_data.get('description', '')
+            impact = issue_data.get('impact', '')
+            priority = issue_data.get('priority', 'Medium')
+            
+            detailed_opening = f"""We are writing to formally report a {priority.lower()} priority issue concerning our recent order with reference {order_ref} for {product_name}.
+
+Upon receipt, we identified the following issues with the products delivered:
+{description}
+
+{f"These problems have severely impacted our operations: {impact}" if impact else "These issues require your immediate attention."}
+
+We request an immediate resolution to this matter. Please confirm the next steps and provide a timeline for resolution given the {priority.lower()} priority of this issue."""
+            
             return {
                 'success': False,
                 'error': str(e),
                 'subject': f"Issue Report: {issue_data.get('type')}",
                 'body': fallback_body,
-                'opening_message': 'We are writing to report an issue with our recent order that requires your immediate attention.',
-                'closing_message': 'We kindly request your urgent attention to resolve this matter. Please provide us with a resolution timeline at your earliest convenience. Thank you for your cooperation.'
+                'opening_message': detailed_opening,
+                'closing_message': 'We appreciate your urgent attention and a swift response to this matter. If you require any additional evidence, such as photographs of the damaged products or copies of the invoice, please let us know.'
             }
     
     async def draft_reply(self, issue_data: Dict[str, Any], conversation_history: List[Dict], vendor_message: str) -> Dict[str, Any]:
@@ -329,15 +387,29 @@ class MockAIService(AIServiceInterface):
     async def generate_issue_email(self, issue_data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate mock issue report email"""
         
-        # Generate structured messages for HTML template
-        opening_message = f"We are writing to report a {issue_data.get('priority', 'Medium').lower()} priority issue regarding {issue_data.get('product_name')}. The products received do not meet our quality standards and require your immediate attention."
+        # Generate detailed structured messages for HTML template
+        priority = issue_data.get('priority', 'Medium')
+        product_name = issue_data.get('product_name', 'the product')
+        order_ref = issue_data.get('order_reference', 'N/A')
+        description = issue_data.get('description', '')
+        impact = issue_data.get('impact', '')
+        issue_type = issue_data.get('type', 'quality issue')
         
-        closing_message = f"We kindly request your urgent attention to resolve this matter. Please provide us with a resolution timeline at your earliest convenience. For any questions or clarifications, please reach out to us at procurement@buy2rent.eu. Your prompt action on this issue is highly appreciated."
+        opening_message = f"""We are writing to formally report a {priority.lower()} priority issue concerning our recent order with reference {order_ref} for {product_name}.
+
+Upon receipt, we identified the following issues with the products delivered:
+{description}
+
+{f"These problems have severely impacted our operations: {impact}" if impact else "These issues require your immediate attention."}
+
+We request an immediate resolution to this matter. Please confirm the next steps and provide a timeline for resolution given the {priority.lower()} priority of this issue."""
+        
+        closing_message = "We appreciate your urgent attention and a swift response to this matter. If you require any additional evidence, such as photographs of the damaged products or copies of the invoice, please let us know."
         
         return {
             'success': True,
-            'subject': f"Critical {issue_data.get('type')} - {issue_data.get('product_name')}",
-            'body': f"Issue with {issue_data.get('product_name')}: {issue_data.get('description')}",
+            'subject': f"Critical {issue_type} - {product_name}",
+            'body': f"Issue with {product_name}: {description}",
             'opening_message': opening_message,
             'closing_message': closing_message,
             'confidence': 1.0,
@@ -484,12 +556,14 @@ class IssueAIManager:
             # Send email
             vendor_email = issue.vendor.email if issue.vendor else issue.vendor_contact
             if vendor_email:
-                # Use urgent subject with order reference
-                subject = email_result['subject']
+                # Simple, clean subject: Order #PO, Product, Priority
+                priority_label = issue.priority or 'Medium'
+                product_name = issue.get_product_name()
+                
                 if issue.order and issue.order.po_number:
-                    subject = f"Critical Issue Report: {subject} - Immediate Attention Required (Order #{issue.order.po_number})"
+                    subject = f"{priority_label} Issues - Order {issue.order.po_number} - {product_name}"
                 else:
-                    subject = f"Critical Issue Report: {subject} - Immediate Attention Required"
+                    subject = f"{priority_label} Issues - {product_name}"
                 
                 # Prepare AI data for template
                 ai_email_data = {

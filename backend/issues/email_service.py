@@ -202,6 +202,7 @@ class EmailService:
                 context = {
                     'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
                     'issue_id': str(issue.id),
+                    'issue_slug': issue.get_issue_slug() if hasattr(issue, 'get_issue_slug') else str(issue.id),
                     'order_reference': issue.order.po_number if issue.order else 'N/A',
                     'issue_type': issue.type,
                     'priority': issue.priority or 'Medium',
@@ -223,6 +224,7 @@ class EmailService:
                 context = {
                     'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
                     'issue_id': str(issue.id),
+                    'issue_slug': issue.get_issue_slug() if hasattr(issue, 'get_issue_slug') else str(issue.id),
                     'order_reference': issue.order.po_number if issue.order else 'N/A',
                     'message_body': normalized_body,
                     'message_body_html': _format_message_html(normalized_body),
@@ -340,6 +342,7 @@ class EmailService:
             context = {
                 'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
                 'issue_id': str(issue.id),
+                'issue_slug': issue.get_issue_slug() if hasattr(issue, 'get_issue_slug') else str(issue.id),
                 'order_reference': issue.order.po_number if issue.order else 'N/A',
                 'message_body': normalized_body,
                 'message_body_html': _format_message_html(normalized_body),

@@ -293,10 +293,12 @@ export function ReportIssueFromProductDialog({
       };
 
       await onSubmit(issueData, existingIssueId);
-      toast.success(existingIssueId ? 'Issue updated successfully' : `Issue reported for ${selectedOrders.length} order(s)`);
+      // Success toast is handled by parent component (ApartmentView)
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to report issue');
+      // Error toast is handled by parent component (ApartmentView)
+      // Just log for debugging
+      console.error('Issue submission error:', error);
     } finally {
       setSubmitting(false);
     }

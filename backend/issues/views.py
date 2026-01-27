@@ -38,56 +38,71 @@ class IssueViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """Override to auto-send AI email on issue creation"""
+        import threading
+        
         issue = serializer.save()
         
         # Auto-send AI email if enabled and vendor exists
         auto_activate = getattr(settings, 'AI_EMAIL_AUTO_ACTIVATE', True)
         if auto_activate and issue.vendor and issue.auto_notify_vendor:
-            # TODO: Move to Celery background task for production
-            try:
-                # Generate AI email
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                
-                issue_data = {
-                    'issue_id': str(issue.id),
-                    'vendor_name': issue.vendor.name,
-                    'type': issue.type,
-                    'priority': issue.priority,
-                    'product_name': issue.get_product_name(),
-                    'description': issue.description,
-                    'impact': issue.impact,
-                    'order_reference': f"Order #{issue.order.po_number}" if issue.order else None
-                }
-                
-                result = loop.run_until_complete(
-                    ai_service.generate_issue_email(issue_data)
-                )
-                loop.close()
-                
-                if result.get('success'):
-                    # Use urgent subject with order reference
-                    subject = result['subject']
-                    if issue.order and issue.order.po_number:
-                        subject = f"Critical Issue Report: {subject} - Immediate Attention Required (Order #{issue.order.po_number})"
-                    else:
-                        subject = f"Critical Issue Report: {subject} - Immediate Attention Required"
-                    body = result['body']
+            # Send email in background thread to avoid blocking the response
+            def send_email_background(issue_id):
+                try:
+                    # Re-fetch issue in new thread context
+                    from .models import Issue
+                    issue_obj = Issue.objects.select_related('vendor', 'order').get(id=issue_id)
                     
-                    # Send email with HTML template (initial report)
-                    email_service.send_issue_email(
-                        issue=issue,
-                        subject=subject,
-                        body=body,
-                        is_initial_report=True,
-                        ai_data=result
+                    # Generate AI email
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    
+                    issue_data = {
+                        'issue_id': str(issue_obj.id),
+                        'vendor_name': issue_obj.vendor.name,
+                        'type': issue_obj.type,
+                        'priority': issue_obj.priority,
+                        'product_name': issue_obj.get_product_name(),
+                        'description': issue_obj.description,
+                        'impact': issue_obj.impact,
+                        'order_reference': f"Order #{issue_obj.order.po_number}" if issue_obj.order else None
+                    }
+                    
+                    result = loop.run_until_complete(
+                        ai_service.generate_issue_email(issue_data)
                     )
-                    logger.info(f"Auto-sent AI email for issue {issue.id}")
-                else:
-                    logger.error(f"Failed to generate AI email for issue {issue.id}: {result.get('error')}")
+                    loop.close()
                     
-            except Exception as e:
-                logger.error(f"Failed to auto-send email for issue {issue.id}: {e}")
+                    if result.get('success'):
+                        # Simple, clean subject: Order #PO, Product, Priority
+                        priority_label = issue_obj.priority or 'Medium'
+                        product_name = issue_obj.get_product_name()
+                        
+                        if issue_obj.order and issue_obj.order.po_number:
+                            subject = f"Order #{issue_obj.order.po_number}, {product_name}, {priority_label} Priority"
+                        else:
+                            subject = f"{product_name}, {priority_label} Priority"
+                        
+                        body = result['body']
+                        
+                        # Send email with HTML template (initial report)
+                        email_service.send_issue_email(
+                            issue=issue_obj,
+                            subject=subject,
+                            body=body,
+                            is_initial_report=True,
+                            ai_data=result
+                        )
+                        logger.info(f"Auto-sent AI email for issue {issue_obj.id}")
+                    else:
+                        logger.error(f"Failed to generate AI email for issue {issue_obj.id}: {result.get('error')}")
+                        
+                except Exception as e:
+                    logger.error(f"Failed to auto-send email for issue {issue_id}: {e}")
+            
+            # Start background thread for email sending
+            email_thread = threading.Thread(target=send_email_background, args=(issue.id,), daemon=True)
+            email_thread.start()
+            logger.info(f"Issue {issue.id} created, email sending started in background")
     
     @action(detail=True, methods=['post'])
     def activate_ai_email(self, request, pk=None):
@@ -182,10 +197,10 @@ class IssueViewSet(viewsets.ModelViewSet):
         
         # Validate required fields
         message = request.data.get('message', '')
-        # Default subject with order reference
-        default_subject = 'Urgent: Issue Update - Immediate Attention Required'
+        # Simple default subject
+        default_subject = 'Issue Update'
         if issue.order and issue.order.po_number:
-            default_subject = f'Urgent: Issue Update - Immediate Attention Required (Order #{issue.order.po_number})'
+            default_subject = f'Order #{issue.order.po_number} - Issue Update'
         subject = request.data.get('subject', default_subject)
         from_email = request.data.get('from_email', issue.vendor.email if issue.vendor else '')
         
@@ -237,10 +252,10 @@ class IssueViewSet(viewsets.ModelViewSet):
     def send_manual_message(self, request, pk=None):
         """Send a manual message to vendor without AI processing"""
         issue = self.get_object()
-        # Use urgent subject with order reference
-        default_subject = 'Urgent: Immediate Attention Required - Order Update'
+        # Simple default subject
+        default_subject = 'Order Update'
         if issue.order and issue.order.po_number:
-            default_subject = f'Urgent: Immediate Attention Required - Order #{issue.order.po_number}'
+            default_subject = f'Order #{issue.order.po_number} - Update'
         subject = request.data.get('subject', default_subject)
         message = request.data.get('message', '')
         to_email = request.data.get('to_email', issue.vendor.email if issue.vendor else '')
