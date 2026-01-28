@@ -28,6 +28,7 @@ import { useVendors } from "@/hooks/useVendorApi";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import ProductEditSkeleton from "@/components/skeletons/ProductEditSkeleton";
+import { MultiSelectTags } from "@/components/ui/multi-select-tags";
 
 const ProductEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -71,7 +72,7 @@ const ProductEdit = () => {
     
     // Status
     availability: "In Stock",
-    status: "Design Approved",
+    status: ["Design Approved"] as string[],
     
     // Excel/Measurement Fields
     room: "",
@@ -211,7 +212,7 @@ const ProductEdit = () => {
         discount: productData.discount || "0",
         currency: productData.currency || "HUF",
         availability: productData.availability || "In Stock",
-        status: Array.isArray(productData.status) ? productData.status[0] || "Design Approved" : (productData.status || "Design Approved"),
+        status: Array.isArray(productData.status) ? productData.status : (productData.status ? [productData.status] : ["Design Approved"]),
         room: productData.room || "",
         link: productData.link || "",
         size: productData.size || "",
@@ -383,7 +384,7 @@ const ProductEdit = () => {
         formDataToSend.append("unit_price", formData.unit_price);
         formDataToSend.append("qty", formData.qty.toString());
         formDataToSend.append("availability", formData.availability);
-        formDataToSend.append("status", formData.status);
+        formDataToSend.append("status", JSON.stringify(formData.status));
         formDataToSend.append("payment_status", formData.payment_status);
         formDataToSend.append("paid_amount", formData.paid_amount);
         formDataToSend.append("currency", formData.currency);
@@ -917,30 +918,24 @@ const ProductEdit = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="status">Product Status *</Label>
-                      <Select
-                        value={formData.status}
-                        onValueChange={(value: any) =>
-                          setFormData({ ...formData, status: value })
+                      <MultiSelectTags
+                        options={[
+                          'Design Approved',
+                          'Ready To Order',
+                          'Ordered',
+                          'Waiting For Stock',
+                          'Shipped',
+                          'Delivered',
+                          'Damaged',
+                          'Wrong Item',
+                          'Missing Parts',
+                        ]}
+                        value={Array.isArray(formData.status) ? formData.status : []}
+                        onChange={(values) =>
+                          setFormData({ ...formData, status: values })
                         }
-                      >
-                        <SelectTrigger id="status">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Design Approved">
-                            Design Approved
-                          </SelectItem>
-                          <SelectItem value="Ready To Order">
-                            Ready To Order
-                          </SelectItem>
-                          <SelectItem value="Ordered">Ordered</SelectItem>
-                          <SelectItem value="Shipped">Shipped</SelectItem>
-                          <SelectItem value="Delivered">Delivered</SelectItem>
-                          <SelectItem value="Damaged">Damaged</SelectItem>
-                          <SelectItem value="Wrong Item">Wrong Item</SelectItem>
-                          <SelectItem value="Missing">Missing</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        placeholder="Add status..."
+                      />
                     </div>
                   </div>
                 </TabsContent>

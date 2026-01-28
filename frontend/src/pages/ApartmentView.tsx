@@ -65,9 +65,11 @@ import {
   Settings,
   CreditCard,
   MapPin,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -159,6 +161,61 @@ const ApartmentView = () => {
   // AI Communication Dialog state
   const [aiCommunicationDialogOpen, setAiCommunicationDialogOpen] = useState(false);
   const [selectedProductForAI, setSelectedProductForAI] = useState<any>(null);
+  
+  // Horizontal scroll ref and handler for product table
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  
+  const updateScrollButtons = useCallback(() => {
+    const wrapper = document.getElementById('product-table-wrapper');
+    const container = wrapper?.querySelector('div.overflow-auto') as HTMLElement;
+    if (container) {
+      const { scrollLeft, scrollWidth, clientWidth } = container;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+    }
+  }, []);
+  
+  const scrollTable = (direction: 'left' | 'right') => {
+    const container = tableScrollRef.current;
+    if (!container) return;
+    
+    const scrollAmount = 300;
+    const targetScroll = direction === 'left' 
+      ? container.scrollLeft - scrollAmount
+      : container.scrollLeft + scrollAmount;
+    
+    // Direct scrollLeft assignment with smooth behavior from CSS
+    container.scrollLeft = targetScroll;
+    
+    // Update button visibility after scroll
+    setTimeout(updateScrollButtons, 100);
+  };
+  
+  // Listen for scroll events to update button visibility
+  useEffect(() => {
+    // Small delay to ensure DOM is ready after products render
+    const timer = setTimeout(() => {
+      const wrapper = document.getElementById('product-table-wrapper');
+      const scrollContainer = wrapper?.querySelector('div.overflow-auto') as HTMLElement;
+      if (scrollContainer) {
+        updateScrollButtons();
+        scrollContainer.addEventListener('scroll', updateScrollButtons);
+        window.addEventListener('resize', updateScrollButtons);
+      }
+    }, 200);
+    
+    return () => {
+      clearTimeout(timer);
+      const wrapper = document.getElementById('product-table-wrapper');
+      const scrollContainer = wrapper?.querySelector('div.overflow-auto') as HTMLElement;
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', updateScrollButtons);
+        window.removeEventListener('resize', updateScrollButtons);
+      }
+    };
+  }, [updateScrollButtons, products]);
   
   // Fetch payments for this apartment
   const { data: paymentsData } = usePayments({ apartment: id });
@@ -584,7 +641,49 @@ const ApartmentView = () => {
           ) : (
             <Card>
               <CardContent className="p-0">
-                <div className="overflow-x-auto">
+                {/* Horizontal scroll buttons at top */}
+                <div className="flex items-center justify-end gap-2 p-2 border-b bg-muted/30">
+                  <span className="text-xs text-muted-foreground mr-auto">Scroll table:</span>
+                  {canScrollLeft && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0 rounded-full"
+                      onClick={() => {
+                        // Target the Table's internal scroll container (first child div)
+                        const wrapper = document.getElementById('product-table-wrapper');
+                        const container = wrapper?.querySelector('div.overflow-auto') as HTMLElement;
+                        if (container) {
+                          container.scrollTo({ left: container.scrollLeft - 300, behavior: 'smooth' });
+                          setTimeout(updateScrollButtons, 350);
+                        }
+                      }}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {canScrollRight && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0 rounded-full"
+                      onClick={() => {
+                        // Target the Table's internal scroll container (first child div)
+                        const wrapper = document.getElementById('product-table-wrapper');
+                        const container = wrapper?.querySelector('div.overflow-auto') as HTMLElement;
+                        if (container) {
+                          container.scrollTo({ left: container.scrollLeft + 300, behavior: 'smooth' });
+                          setTimeout(updateScrollButtons, 350);
+                        }
+                      }}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <div id="product-table-wrapper">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -751,56 +850,39 @@ const ApartmentView = () => {
                               })()}
                             </TableCell>
                             <TableCell>
-                              <div className="space-y-1 min-w-[200px]">
-                                {/* Order Status Information - Editable */}
-                                {product.order_status_info && product.order_status_info.length > 0 ? (
-                                  product.order_status_info.map((orderInfo: any, idx: number) => (
-                                    <div key={idx} className="flex items-center gap-2 flex-wrap">
-                                      <Select
-                                        value={orderInfo.status}
-                                        onValueChange={async (newStatus) => {
-                                          try {
-                                            await orderApi.updateStatus(orderInfo.order_id, newStatus);
-                                            toast({
-                                              title: "Success",
-                                              description: `Order status updated to ${newStatus}`,
-                                            });
-                                            refetch();
-                                          } catch (error) {
-                                            toast({
-                                              title: "Error",
-                                              description: "Failed to update order status",
-                                              variant: "destructive",
-                                            });
-                                          }
-                                        }}
-                                      >
-                                        <SelectTrigger className="h-7 w-[100px] text-xs">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="draft">Draft</SelectItem>
-                                          <SelectItem value="sent">Sent</SelectItem>
-                                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                      <a
-                                        href={`/orders/${orderInfo.order_id}`}
-                                        className="text-xs text-primary hover:underline"
-                                        title={`View order ${orderInfo.po_number}`}
-                                      >
-                                        {orderInfo.po_number}
-                                      </a>
-                                      <span className="text-xs text-muted-foreground">
-                                        (Qty: {orderInfo.quantity})
-                                      </span>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <p className="text-xs text-muted-foreground italic">
-                                    Not ordered yet
-                                  </p>
-                                )}
+                              <div className="min-w-[200px]">
+                                {/* Product Status - Multi-select tags */}
+                                <MultiSelectTags
+                                  options={[
+                                    'Design Approved',
+                                    'Ready To Order',
+                                    'Ordered',
+                                    'Waiting For Stock',
+                                    'Shipped',
+                                    'Delivered',
+                                    'Damaged',
+                                    'Wrong Item',
+                                    'Missing Parts',
+                                  ]}
+                                  value={Array.isArray(product.status) ? product.status : []}
+                                  onChange={async (newStatuses) => {
+                                    try {
+                                      await updateProduct(product.id, { status: newStatuses });
+                                      toast({
+                                        title: "Success",
+                                        description: "Product status updated",
+                                      });
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to update product status",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  }}
+                                  placeholder="Add status..."
+                                  className="w-full"
+                                />
                               </div>
                             </TableCell>
 
@@ -857,61 +939,69 @@ const ApartmentView = () => {
                             </TableCell>
 
                             <TableCell>
-                              <div className="space-y-1 min-w-[200px]">
-                                {/* Delivery Status Information - Click to open detailed modal */}
-                                {product.delivery_status_info && product.delivery_status_info.length > 0 ? (
-                                  product.delivery_status_info.map((deliveryInfo: any, idx: number) => (
-                                    <div key={idx} className="flex items-center gap-2 flex-wrap">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-7 text-xs"
-                                        onClick={() => {
-                                          setSelectedDeliveryForStatus(deliveryInfo);
-                                          setDeliveryStatusModalOpen(true);
-                                        }}
-                                      >
-                                        <Badge
-                                          variant={
-                                            deliveryInfo.status === 'Received' ? 'default' :
-                                            deliveryInfo.status === 'Returned' ? 'destructive' :
-                                            deliveryInfo.status === 'In Transit' ? 'secondary' :
-                                            deliveryInfo.status === 'Delayed' ? 'secondary' :
-                                            'outline'
-                                          }
-                                          className={cn(
-                                            "text-xs",
-                                            deliveryInfo.status === 'Received' && "bg-green-500/10 text-green-500",
-                                            deliveryInfo.status === 'In Transit' && "bg-blue-500/10 text-blue-500",
-                                            deliveryInfo.status === 'Confirmed' && "bg-yellow-500/10 text-yellow-500",
-                                            deliveryInfo.status === 'Delayed' && "bg-orange-500/10 text-orange-500",
-                                            deliveryInfo.status === 'Returned' && "bg-red-500/10 text-red-500"
-                                          )}
+                              <div className="space-y-2 min-w-[200px]">
+                                {/* Individual Product Delivery Status - Multi-select tags */}
+                                <MultiSelectTags
+                                  options={[
+                                    'Scheduled',
+                                    'Shipped',
+                                    'In Transit',
+                                    'Delivered',
+                                    'Partially Delivered',
+                                    'Issue Reported',
+                                    'Return Scheduled',
+                                    'Return Received',
+                                  ]}
+                                  value={Array.isArray(product.delivery_status_tags) ? product.delivery_status_tags : []}
+                                  onChange={async (newStatuses) => {
+                                    try {
+                                      await updateProduct(product.id, { delivery_status_tags: newStatuses });
+                                      toast({
+                                        title: "Success",
+                                        description: "Delivery status updated",
+                                      });
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to update delivery status",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  }}
+                                  placeholder="Add status..."
+                                  className="w-full"
+                                />
+                                {/* Order Delivery Info (from Delivery records) */}
+                                {product.delivery_status_info && product.delivery_status_info.length > 0 && (
+                                  <div className="pt-1 border-t border-dashed">
+                                    {product.delivery_status_info.map((deliveryInfo: any, idx: number) => (
+                                      <div key={idx} className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-5 px-1 text-xs"
+                                          onClick={() => {
+                                            setSelectedDeliveryForStatus(deliveryInfo);
+                                            setDeliveryStatusModalOpen(true);
+                                          }}
                                         >
-                                          {deliveryInfo.status}
-                                        </Badge>
-                                      </Button>
-                                      <a
-                                        href={`/deliveries`}
-                                        className="text-xs text-primary hover:underline"
-                                        title={`View delivery ${deliveryInfo.order_reference}`}
-                                      >
-                                        {deliveryInfo.order_reference}
-                                      </a>
-                                      {deliveryInfo.tracking_number && (
-                                        <span className="text-xs text-muted-foreground">
-                                          (Track: {deliveryInfo.tracking_number})
-                                        </span>
-                                      )}
-                                      {deliveryInfo.expected_date && (
-                                        <span className="text-xs text-muted-foreground">
-                                          ETA: {new Date(deliveryInfo.expected_date).toLocaleDateString()}
-                                        </span>
-                                      )}
-                                    </div>
-                                  ))
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">-</span>
+                                          <Badge variant="outline" className="text-[10px]">
+                                            {deliveryInfo.status}
+                                          </Badge>
+                                        </Button>
+                                        <a
+                                          href={`/deliveries`}
+                                          className="text-primary hover:underline"
+                                          title={`View delivery ${deliveryInfo.order_reference}`}
+                                        >
+                                          {deliveryInfo.order_reference}
+                                        </a>
+                                        {deliveryInfo.tracking_number && (
+                                          <span>(Track: {deliveryInfo.tracking_number})</span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
                             </TableCell>

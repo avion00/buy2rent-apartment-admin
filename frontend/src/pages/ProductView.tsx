@@ -344,7 +344,7 @@ const ProductView = () => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {product.status_tags?.map((tag) => (
+            {(Array.isArray(product.status) ? product.status : []).map((tag) => (
               <Badge key={tag} className={getStatusColor(tag)}>
                 {tag}
               </Badge>
@@ -493,6 +493,24 @@ const ProductView = () => {
                   <Badge variant={product.availability === "In Stock" ? "default" : "secondary"}>
                     {product.availability}
                   </Badge>
+                </div>
+                
+                <div className="p-3 bg-background rounded-lg border col-span-full sm:col-span-2 lg:col-span-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Product Status</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(Array.isArray(product.status) ? product.status : []).length > 0 ? (
+                      (Array.isArray(product.status) ? product.status : []).map((tag) => (
+                        <Badge key={tag} className={getStatusColor(tag)}>
+                          {tag}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-muted-foreground text-sm">No status set</span>
+                    )}
+                  </div>
                 </div>
                 
                 {product.brand && (

@@ -356,7 +356,7 @@ const Orders = () => {
             </SelectContent>
           </Select>
 
-          <Button onClick={() => navigate('/orders/import')} variant="outline">
+          <Button onClick={() => navigate('/orders/import')} variant="outlineSecondary">
             <Upload className="h-4 w-4 mr-2" />
             Import Orders
           </Button>
