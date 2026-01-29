@@ -168,7 +168,7 @@ export const AIEmailDashboard: React.FC = () => {
       medium: 'bg-yellow-500',
       low: 'bg-blue-500',
     };
-    return <Badge className={colors[priority.toLowerCase()] || 'bg-gray-500'}>{priority}</Badge>;
+    return <Badge className={colors[(priority || '').toLowerCase()] || 'bg-gray-500'}>{priority}</Badge>;
   };
 
   if (loading) {

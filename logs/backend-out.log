@@ -275,3 +275,42 @@
 2026-01-27 17:41:23 +01:00: Successfully processed 10 orders
 2026-01-27 17:52:27 +01:00: Found 10 recent orders
 2026-01-27 17:52:27 +01:00: Successfully processed 10 orders
+2026-01-28 08:07:10 +01:00: Found 10 recent orders
+2026-01-28 08:07:10 +01:00: Successfully processed 10 orders
+2026-01-28 08:07:10 +01:00: Found 10 recent orders
+2026-01-28 08:07:10 +01:00: Successfully processed 10 orders
+2026-01-28 08:07:10 +01:00: Found 10 recent orders
+2026-01-28 08:07:10 +01:00: Successfully processed 10 orders
+2026-01-28 08:07:10 +01:00: Found 10 recent orders
+2026-01-28 08:07:10 +01:00: Successfully processed 10 orders
+2026-01-28 08:07:10 +01:00: Found 10 recent orders
+2026-01-28 08:07:10 +01:00: Successfully processed 10 orders
+2026-01-28 08:07:10 +01:00: Found 10 recent orders
+2026-01-28 08:07:10 +01:00: Successfully processed 10 orders
+2026-01-28 08:21:23 +01:00: Found 10 recent orders
+2026-01-28 08:21:23 +01:00: Successfully processed 10 orders
+2026-01-28 08:21:23 +01:00: 🔍 DEBUG: Received vendor_id: d0b0ba81-efee-466a-aa13-43cec1bf088f
+2026-01-28 08:21:23 +01:00: 🔍 DEBUG: Request data: <QueryDict: {'apartment_id': ['8b8b79c5-74a9-421a-996d-32a8730cdc27'], 'vendor_id': ['d0b0ba81-efee-466a-aa13-43cec1bf088f'], 'file': [<InMemoryUploadedFile: apartment-template.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)>]}>
+2026-01-28 08:21:23 +01:00: 🔍 DEBUG: About to call process_import with vendor_id: d0b0ba81-efee-466a-aa13-43cec1bf088f
+2026-01-28 20:00:52 +01:00: Found 10 recent orders
+2026-01-28 20:00:52 +01:00: Successfully processed 10 orders
+2026-01-28 20:00:52 +01:00: Found 10 recent orders
+2026-01-28 20:00:52 +01:00: Successfully processed 10 orders
+2026-01-28 20:00:52 +01:00: Found 10 recent orders
+2026-01-28 20:00:52 +01:00: Successfully processed 10 orders
+2026-01-28 20:00:52 +01:00: Found 10 recent orders
+2026-01-28 20:00:52 +01:00: Successfully processed 10 orders
+2026-01-28 20:00:52 +01:00: Found 10 recent orders
+2026-01-28 20:00:52 +01:00: Successfully processed 10 orders
+2026-01-28 21:02:45 +01:00: Found 5 recent orders
+2026-01-28 21:02:45 +01:00: Successfully processed 5 orders
+2026-01-28 22:26:07 +01:00: Found 2 recent orders
+2026-01-28 22:26:07 +01:00: Successfully processed 2 orders
+2026-01-28 22:26:07 +01:00: Found 2 recent orders
+2026-01-28 22:26:07 +01:00: Successfully processed 2 orders
+2026-01-28 22:26:07 +01:00: Found 2 recent orders
+2026-01-28 22:26:07 +01:00: Successfully processed 2 orders
+2026-01-28 22:26:07 +01:00: Found 2 recent orders
+2026-01-28 22:26:07 +01:00: Successfully processed 2 orders
+2026-01-29 11:13:49 +01:00: Found 2 recent orders
+2026-01-29 11:13:49 +01:00: Successfully processed 2 orders

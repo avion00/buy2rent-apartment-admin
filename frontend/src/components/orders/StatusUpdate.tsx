@@ -39,7 +39,7 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
 
   if (!order) return null;
 
-  const currentStatus = order.status.toLowerCase();
+  const currentStatus = (order.status || '').toLowerCase();
   const nextStatus = statusFlow[order.status] || statusFlow[currentStatus];
   const isTerminalStatus = currentStatus === 'sent'; // Sent is the final order status
   
@@ -71,7 +71,7 @@ export const StatusUpdate = ({ open, onOpenChange, order, onStatusUpdate }: Stat
   };
 
   const getStatusColor = (status: string) => {
-    const normalizedStatus = status.toLowerCase();
+    const normalizedStatus = (status || '').toLowerCase();
     const colors: Record<string, string> = {
       'draft': 'bg-gray-500/10 text-gray-500',
       'sent': 'bg-blue-500/10 text-blue-500',

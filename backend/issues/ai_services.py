@@ -502,24 +502,157 @@ class EmailServiceWrapper:
             ai_data=ai_data
         )
     
-    async def process_vendor_reply(self, issue, email_data: Dict[str, Any]) -> None:
-        """Process incoming vendor email reply"""
+    async def process_vendor_reply(self, issue, email_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process incoming vendor email reply with AI analysis and response generation
+        
+        Args:
+            issue: Issue model instance
+            email_data: Dictionary containing email details (body, subject, from, message_id, etc.)
+        
+        Returns:
+            Dictionary with processing results including analysis and generated response
+        """
         from .models import AICommunicationLog
         
+        vendor_message = email_data.get('body', '')
+        
         # Store vendor reply
-        AICommunicationLog.objects.create(
+        vendor_log = AICommunicationLog.objects.create(
             issue=issue,
             sender='Vendor',
-            message=email_data.get('body', ''),
+            message=vendor_message,
             message_type='email',
             subject=email_data.get('subject', ''),
             email_from=email_data.get('from', ''),
-            email_to=self.from_email,
+            email_to=self.email_service.email_service.from_email,
             status='received',
             email_thread_id=f"issue-{issue.id}",
             email_message_id=email_data.get('message_id', ''),
             in_reply_to=email_data.get('in_reply_to', '')
         )
+        
+        # Get conversation history for context
+        conversation_history = []
+        previous_messages = AICommunicationLog.objects.filter(
+            issue=issue,
+            message_type='email'
+        ).order_by('timestamp')
+        
+        for msg in previous_messages:
+            conversation_history.append({
+                'sender': msg.sender,
+                'message': msg.message,
+                'timestamp': msg.timestamp.isoformat()
+            })
+        
+        # Analyze vendor reply using AI
+        issue_data = {
+            'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
+            'type': issue.type,
+            'priority': issue.priority,
+            'product_name': issue.get_product_name(),
+            'description': issue.description,
+            'order_reference': issue.order.po_number if issue.order else None
+        }
+        
+        # Get AI manager instance to access AI service
+        from . import ai_services
+        ai_manager = ai_services.IssueAIManager()
+        
+        # Analyze vendor response
+        analysis = await ai_manager.ai_service.analyze_vendor_reply(issue_data, vendor_message)
+        
+        # Update vendor log with analysis
+        vendor_log.ai_analysis = analysis
+        vendor_log.save()
+        
+        # Update issue status based on analysis
+        sentiment = analysis.get('sentiment', 'neutral')
+        intent = analysis.get('intent', 'unknown')
+        
+        if intent == 'resolution_offered':
+            issue.status = 'Pending Resolution'
+        elif intent == 'information_request':
+            issue.status = 'Awaiting Information'
+        elif intent == 'rejection':
+            issue.status = 'Disputed'
+        elif intent == 'acknowledgment':
+            issue.status = 'Acknowledged'
+        
+        issue.save()
+        
+        # Generate AI response if auto-reply is enabled
+        auto_reply_enabled = getattr(settings, 'AI_AUTO_REPLY_ENABLED', False)
+        auto_approve = getattr(settings, 'AI_EMAIL_AUTO_APPROVE', False)
+        
+        response_result = None
+        if auto_reply_enabled or analysis.get('requires_response', False):
+            # Draft AI reply
+            reply_result = await ai_manager.ai_service.draft_reply(
+                issue_data, 
+                conversation_history, 
+                vendor_message
+            )
+            
+            # Create draft response
+            subject = f"Re: {email_data.get('subject', f'Issue {issue.id}')}"
+            
+            # Determine if auto-approve based on confidence
+            confidence = reply_result.get('confidence', 0.5)
+            confidence_threshold = getattr(settings, 'AI_EMAIL_CONFIDENCE_THRESHOLD', 0.8)
+            
+            status = 'sent' if (auto_approve and confidence >= confidence_threshold) else 'pending_approval'
+            
+            ai_response_log = AICommunicationLog.objects.create(
+                issue=issue,
+                sender='AI',
+                message=reply_result.get('message', ''),
+                message_type='email',
+                subject=subject,
+                email_from=self.email_service.email_service.from_email,
+                email_to=email_data.get('from', ''),
+                email_thread_id=f"issue-{issue.id}",
+                in_reply_to=email_data.get('message_id', ''),
+                ai_generated=True,
+                ai_confidence=confidence,
+                status=status,
+                timestamp=timezone.now()
+            )
+            
+            # If auto-approved, send immediately
+            if status == 'sent':
+                try:
+                    self.email_service.send_issue_email(
+                        issue=issue,
+                        subject=subject,
+                        body=reply_result.get('message', ''),
+                        is_initial_report=False,
+                        ai_data=reply_result
+                    )
+                    response_result = {
+                        'sent': True,
+                        'log_id': str(ai_response_log.id)
+                    }
+                except Exception as e:
+                    ai_response_log.status = 'failed'
+                    ai_response_log.save()
+                    response_result = {
+                        'sent': False,
+                        'error': str(e)
+                    }
+            else:
+                response_result = {
+                    'pending_approval': True,
+                    'log_id': str(ai_response_log.id)
+                }
+        
+        return {
+            'vendor_log_id': str(vendor_log.id),
+            'analysis': analysis,
+            'issue_status': issue.status,
+            'response': response_result
+        }
 
 
 class IssueAIManager:

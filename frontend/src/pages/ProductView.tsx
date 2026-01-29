@@ -290,7 +290,7 @@ const ProductView = () => {
   };
 
   const getStatusColor = (status: string) => {
-    const lowerStatus = status.toLowerCase();
+    const lowerStatus = (status || '').toLowerCase();
     if (lowerStatus.includes("delivered") || lowerStatus.includes("closed") || lowerStatus.includes("paid"))
       return "bg-success text-success-foreground";
     if (

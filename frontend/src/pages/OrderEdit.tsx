@@ -16,7 +16,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Package, Building2, Store, ShoppingCart, DollarSign, Loader2, ArrowLeft, Save, RefreshCw, AlertCircle, Minus, X, Image } from 'lucide-react';
+import { Plus, Trash2, Package, Building2, Store, ShoppingCart, DollarSign, Loader2, ArrowLeft, Save, RefreshCw, AlertCircle, Minus, X, Image, CheckSquare } from 'lucide-react';
 import { apartmentApi, Apartment } from '@/services/apartmentApi';
 import { vendorApi, Vendor } from '@/services/vendorApi';
 import { useProducts } from '@/hooks/useProductApi';
@@ -162,7 +162,7 @@ const OrderEdit = () => {
         productId: candidate.id,
         productName: candidate.product,
         sku: candidate.sku || '',
-        quantity: 1,
+        quantity: candidate.qty || 1,
         unitPrice: defaultPrice,
       },
     ]);
@@ -180,7 +180,7 @@ const OrderEdit = () => {
       productId: p.id,
       productName: p.product,
       sku: p.sku || '',
-      quantity: 1,
+      quantity: p.qty || 1,
       unitPrice: Math.round(Number(p.unit_price) || 0),
     }));
 
@@ -557,9 +557,21 @@ const OrderEdit = () => {
               {/* Available Products - 50% width */}
               <Card className="lg:col-span-1">
                 <CardHeader className="py-3 px-4 border-b">
-                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                    <Package className="h-4 w-4 text-primary" />
-                    Available Products ({products.length})
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      <Package className="h-4 w-4 text-primary" />
+                      Available Products ({products.length})
+                    </span>
+                    {products.length > 0 && !loadingProducts && (
+                      <button
+                        type="button"
+                        onClick={addAllProducts}
+                        className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <CheckSquare className="h-4 w-4" />
+                        Select All
+                      </button>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-2">

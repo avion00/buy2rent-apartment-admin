@@ -111,7 +111,7 @@ const Orders = () => {
   };
 
   const getStatusColor = (status: string) => {
-    const statusLower = status.toLowerCase();
+    const statusLower = (status || '').toLowerCase();
     const colors: Record<string, string> = {
       'draft': 'bg-gray-500/10 text-gray-500',
       'sent': 'bg-blue-500/10 text-blue-500',
@@ -181,7 +181,7 @@ const Orders = () => {
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Pending</p>
                   <p className="text-2xl font-bold">
-                    {statistics?.pending_orders || orders.filter(o => o.status.toLowerCase() === 'sent').length}
+                    {statistics?.pending_orders || orders.filter(o => (o.status || '').toLowerCase() === 'sent').length}
                   </p>
                   <p className="text-xs text-muted-foreground">Sent to vendor</p>
                 </div>
@@ -503,7 +503,7 @@ const Orders = () => {
                               <Truck className="mr-3 h-4 w-4 text-muted-foreground" />
                               <span>Delivery Tracking</span>
                             </DropdownMenuItem>
-                            {order.status.toLowerCase() === 'draft' && (
+                            {(order.status || '').toLowerCase() === 'draft' && (
                               <DropdownMenuItem 
                                 onClick={() => updateStatus(String(order.id), 'sent')}
                                 className="cursor-pointer py-2.5"
@@ -516,7 +516,7 @@ const Orders = () => {
                             <DropdownMenuSeparator />
                             
                             {/* Danger Zone */}
-                            {(order.status.toLowerCase() === 'draft' || order.status.toLowerCase() === 'sent') && (
+                            {((order.status || '').toLowerCase() === 'draft' || (order.status || '').toLowerCase() === 'sent') && (
                               <DropdownMenuItem 
                                 onClick={() => updateStatus(String(order.id), 'cancelled')}
                                 className="cursor-pointer py-2.5 text-orange-600 focus:text-orange-600 focus:bg-orange-500/10"

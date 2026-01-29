@@ -75,6 +75,15 @@ class Issue(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['resolution_status']),
+            models.Index(fields=['status']),
+            models.Index(fields=['priority']),
+            models.Index(fields=['ai_activated']),
+            models.Index(fields=['vendor']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['-created_at']),
+        ]
     
     def __str__(self):
         if self.product:

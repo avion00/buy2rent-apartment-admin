@@ -8,7 +8,7 @@ from django.conf import settings
 import asyncio
 from config.swagger_utils import add_viewset_tags
 from .models import Issue, IssueItem, IssuePhoto, AICommunicationLog
-from .serializers import IssueSerializer, IssuePhotoSerializer, AICommunicationLogSerializer
+from .serializers import IssueSerializer, IssueListSerializer, IssuePhotoSerializer, AICommunicationLogSerializer
 from .ai_services_complete import ai_service
 from .ai_services import ai_manager
 from .email_service import email_service
@@ -19,22 +19,42 @@ logger = logging.getLogger(__name__)
 
 @add_viewset_tags('Issues', 'Issue')
 class IssueViewSet(viewsets.ModelViewSet):
-    queryset = Issue.objects.select_related(
-        'apartment', 'product', 'vendor', 'order', 'order_item', 'order_item__product'
-    ).prefetch_related(
-        'photos', 
-        'ai_communication_log',
-        Prefetch(
-            'items',
-            queryset=IssueItem.objects.select_related('order_item', 'order_item__product', 'product')
-        )
-    ).all()
+    queryset = Issue.objects.all()  # Required for router registration
     serializer_class = IssueSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['apartment', 'product', 'vendor', 'order', 'order_item', 'status', 'priority', 'ai_activated']
     search_fields = ['type', 'description', 'product__product', 'vendor__name', 'product_name']
     ordering_fields = ['reported_on', 'expected_resolution', 'created_at']
     ordering = ['-created_at']
+    
+    def get_queryset(self):
+        """Optimize queryset based on action - lighter queries for list view"""
+        if self.action == 'list':
+            # Lightweight query for list view
+            return Issue.objects.select_related(
+                'apartment', 'vendor'
+            ).prefetch_related('items').only(
+                'id', 'type', 'description', 'status', 'priority', 'resolution_status',
+                'vendor_id', 'apartment_id', 'product_name', 'ai_activated',
+                'created_at', 'reported_on'
+            )
+        # Full query for detail views
+        return Issue.objects.select_related(
+            'apartment', 'product', 'vendor', 'order', 'order_item', 'order_item__product'
+        ).prefetch_related(
+            'photos', 
+            'ai_communication_log',
+            Prefetch(
+                'items',
+                queryset=IssueItem.objects.select_related('order_item', 'order_item__product', 'product')
+            )
+        )
+    
+    def get_serializer_class(self):
+        """Use lightweight serializer for list view"""
+        if self.action == 'list':
+            return IssueListSerializer
+        return IssueSerializer
     
     def perform_create(self, serializer):
         """Override to auto-send AI email on issue creation"""
@@ -72,29 +92,32 @@ class IssueViewSet(viewsets.ModelViewSet):
                     )
                     loop.close()
                     
+                    # Send email even if AI generation failed (use fallback content)
+                    # Simple, clean subject: Order #PO, Product, Priority
+                    priority_label = issue_obj.priority or 'Medium'
+                    product_name = issue_obj.get_product_name()
+                    
+                    if issue_obj.order and issue_obj.order.po_number:
+                        subject = f"Order #{issue_obj.order.po_number}, {product_name}, {priority_label} Priority"
+                    else:
+                        subject = f"{product_name}, {priority_label} Priority"
+                    
+                    # Use AI-generated body or fallback body
+                    body = result.get('body', result.get('opening_message', issue_obj.description))
+                    
+                    # Send email with HTML template (initial report)
+                    email_service.send_issue_email(
+                        issue=issue_obj,
+                        subject=subject,
+                        body=body,
+                        is_initial_report=True,
+                        ai_data=result
+                    )
+                    
                     if result.get('success'):
-                        # Simple, clean subject: Order #PO, Product, Priority
-                        priority_label = issue_obj.priority or 'Medium'
-                        product_name = issue_obj.get_product_name()
-                        
-                        if issue_obj.order and issue_obj.order.po_number:
-                            subject = f"Order #{issue_obj.order.po_number}, {product_name}, {priority_label} Priority"
-                        else:
-                            subject = f"{product_name}, {priority_label} Priority"
-                        
-                        body = result['body']
-                        
-                        # Send email with HTML template (initial report)
-                        email_service.send_issue_email(
-                            issue=issue_obj,
-                            subject=subject,
-                            body=body,
-                            is_initial_report=True,
-                            ai_data=result
-                        )
                         logger.info(f"Auto-sent AI email for issue {issue_obj.id}")
                     else:
-                        logger.error(f"Failed to generate AI email for issue {issue_obj.id}: {result.get('error')}")
+                        logger.warning(f"Sent email with fallback content for issue {issue_obj.id}. AI generation error: {result.get('error')}")
                         
                 except Exception as e:
                     logger.error(f"Failed to auto-send email for issue {issue_id}: {e}")

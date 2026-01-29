@@ -110,7 +110,7 @@ export const autoMapColumns = (headers: string[]): Record<string, string> => {
   };
   
   headers.forEach((header) => {
-    const normalized = header.toLowerCase().trim();
+    const normalized = (header || '').toLowerCase().trim();
     
     for (const [field, keywords] of Object.entries(patterns)) {
       if (keywords.some(keyword => normalized.includes(keyword))) {
@@ -154,7 +154,7 @@ export const validateProductRow = (
   const apartmentValue = getValue('apartment');
   if (apartmentValue) {
     const aptExists = apartments.some(
-      a => a.id === apartmentValue || a.name.toLowerCase() === String(apartmentValue).toLowerCase()
+      a => a.id === apartmentValue || (a.name || '').toLowerCase() === String(apartmentValue || '').toLowerCase()
     );
     if (!aptExists) {
       errors.push('Apartment not found');

@@ -117,7 +117,10 @@ class EmailService:
 
         normalized_body = (body or '').strip()
 
-        recently = timezone.now() - timedelta(minutes=2)
+        # Duplicate prevention: Check for identical emails sent recently
+        # Using 5 minutes window to prevent accidental double-sends while allowing legitimate follow-ups
+        duplicate_window_minutes = getattr(settings, 'EMAIL_DUPLICATE_PREVENTION_MINUTES', 5)
+        recently = timezone.now() - timedelta(minutes=duplicate_window_minutes)
         existing_sent = AICommunicationLog.objects.filter(
             issue=issue,
             sender='AI',
@@ -130,7 +133,8 @@ class EmailService:
         ).order_by('-timestamp').first()
         if existing_sent:
             logger.warning(
-                f"Duplicate send prevented for issue {issue.id} to {vendor_email} subject={subject!r}"
+                f"Duplicate send prevented for issue {issue.id} to {vendor_email} subject={subject!r} "
+                f"(within {duplicate_window_minutes} minutes)"
             )
             return existing_sent.email_message_id or ''
         
@@ -165,7 +169,6 @@ class EmailService:
                         image_url = item.get_product_image()
                         if image_url and not image_url.startswith('http'):
                             # Convert relative path to absolute URL
-                            from django.conf import settings
                             domain = getattr(settings, 'SITE_DOMAIN', 'https://procurement.buy2rent.eu')
                             image_url = f"{domain}{image_url}"
                         
@@ -187,7 +190,6 @@ class EmailService:
                     
                     # Convert to absolute URL if needed
                     if product_image and not product_image.startswith('http'):
-                        from django.conf import settings
                         domain = getattr(settings, 'SITE_DOMAIN', 'https://procurement.buy2rent.eu')
                         product_image = f"{domain}{product_image}"
                     
@@ -231,8 +233,26 @@ class EmailService:
                 }
                 html_content = render_to_string('emails/issue_reply.html', context)
             
-            # Create plain text version
+            # Create plain text version for email body
             plain_text = strip_tags(html_content)
+            
+            # Create clean message text for chat UI display (no HTML/CSS cruft)
+            if is_initial_report:
+                # For initial reports: greeting + AI message + issue summary
+                chat_message = f"Dear {issue.vendor.name if issue.vendor else 'Vendor'},\n\n"
+                chat_message += f"{opening_message}\n\n"
+                chat_message += f"Issue Details:\n"
+                chat_message += f"- Priority: {issue.priority or 'Medium'}\n"
+                chat_message += f"- Order Reference: {issue.order.po_number if issue.order else 'N/A'}\n"
+                chat_message += f"- Product: {issue.get_product_name()}\n"
+                chat_message += f"- Reported Date: {issue.reported_on.strftime('%B %d, %Y') if issue.reported_on else timezone.now().strftime('%B %d, %Y')}\n"
+                if issue.description:
+                    chat_message += f"\nDescription: {issue.description}\n"
+                if closing_message:
+                    chat_message += f"\n{closing_message}"
+            else:
+                # For replies: just the message body
+                chat_message = f"Dear {issue.vendor.name if issue.vendor else 'Vendor'},\n\n{normalized_body}"
             
             # Create email message with HTML
             email = EmailMultiAlternatives(
@@ -247,29 +267,27 @@ class EmailService:
             email.attach_alternative(html_content, "text/html")
             
             # Add custom headers for tracking
-
-            
             email.extra_headers = {
                 'X-Issue-ID': str(issue.id),
                 'X-Issue-Thread': f'issue-{issue.id}',
             }
             
-            # Send email
-            email.send(fail_silently=False)
+            # Send email and verify it was actually sent
+            sent_count = email.send(fail_silently=False)
+            
+            if sent_count == 0:
+                raise RuntimeError(f"Email send returned 0 - email was not sent to {vendor_email}")
+            
+            logger.info(f"Email successfully sent to {vendor_email} (sent_count={sent_count})")
             
             # Get Message-ID (Django doesn't expose this easily, so we generate one)
             email_message_id = f"<issue-{issue.id}-{timezone.now().timestamp()}@buy2rent.eu>"
             
-            # Create communication log (store plain text for UI, HTML for email template)
-            # Extract just the message body from plain_text (remove template wrapper)
-            import re
-            # Try to extract the actual message content from the plain text
-            message_only = normalized_body
-            
+            # Create communication log with clean chat message for UI display
             log_entry = AICommunicationLog.objects.create(
                 issue=issue,
                 sender='AI',
-                message=message_only,  # Plain text message for UI display
+                message=chat_message,  # Clean message for chat UI display
                 html_content=html_content,  # Full HTML template for email reference
                 message_type='email',
                 subject=subject,
@@ -369,8 +387,13 @@ class EmailService:
                 'X-Issue-Thread': f'issue-{issue.id}',
             }
             
-            # Send email
-            email.send(fail_silently=False)
+            # Send email and verify
+            sent_count = email.send(fail_silently=False)
+            
+            if sent_count == 0:
+                raise RuntimeError(f"Email send returned 0 - email was not sent to {vendor_email}")
+            
+            logger.info(f"Manual email successfully sent to {vendor_email} (sent_count={sent_count})")
             
             email_message_id = f"<issue-{issue.id}-{timezone.now().timestamp()}@buy2rent.eu>"
             
@@ -429,7 +452,9 @@ class EmailService:
                 'vendor_name': issue.vendor.name if issue.vendor else 'Vendor',
                 'issue_id': str(issue.id),
                 'issue_slug': issue.get_issue_slug(),
+                'order_reference': issue.order.po_number if issue.order else 'N/A',
                 'message_body': communication_log.message,
+                'message_body_html': _format_message_html(communication_log.message),
             }
             
             # Render HTML template
@@ -453,8 +478,13 @@ class EmailService:
                 'X-Issue-Thread': f'issue-{issue.id}',
             }
             
-            # Send email
-            email.send(fail_silently=False)
+            # Send email and verify
+            sent_count = email.send(fail_silently=False)
+            
+            if sent_count == 0:
+                raise RuntimeError(f"Email send returned 0 - email was not sent to {vendor_email}")
+            
+            logger.info(f"Approved draft successfully sent to {vendor_email} (sent_count={sent_count})")
             
             # Update communication log
             communication_log.status = 'sent'

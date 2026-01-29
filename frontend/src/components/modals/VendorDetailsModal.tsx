@@ -46,7 +46,7 @@ export const VendorDetailsModal = ({ open, onOpenChange, vendorName, productId, 
       setVendors(response.results);
       
       // Find vendor by name
-      const vendor = response.results.find(v => v.name.toLowerCase() === vendorName.toLowerCase());
+      const vendor = response.results.find(v => (v.name || '').toLowerCase() === (vendorName || '').toLowerCase());
       if (vendor) {
         setSelectedVendor(vendor);
         setNewVendorId(vendor.id);

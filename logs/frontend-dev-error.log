@@ -9,3 +9,6 @@
 2025-12-22 06:30:35 +01:00: 
 2025-12-22 06:30:35 +01:00: Refer to docs https://vite.dev/config/server-options.html#server-fs-allow for configurations and more details.
 2025-12-22 06:30:35 +01:00: 
+2026-01-28 09:43:48 +01:00: Browserslist: browsers data (caniuse-lite) is 15 months old. Please run:
+2026-01-28 09:43:48 +01:00:   npx update-browserslist-db@latest
+2026-01-28 09:43:48 +01:00:   Why you should do it regularly: https://github.com/browserslist/update-db#readme

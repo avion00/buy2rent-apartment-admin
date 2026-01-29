@@ -31,6 +31,21 @@ module.exports = {
       autorestart: true,
       max_restarts: 10,
       min_uptime: '10s'
+    },
+    {
+      name: 'email-monitor',
+      cwd: '/root/buy2rent/backend',
+      script: './email_monitor_pm2.sh',
+      interpreter: 'bash',
+      env: {
+        DJANGO_SETTINGS_MODULE: 'config.settings'
+      },
+      error_file: '/root/buy2rent/logs/email-monitor-error.log',
+      out_file: '/root/buy2rent/logs/email-monitor-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      autorestart: true,
+      max_restarts: 10,
+      min_uptime: '10s'
     }
   ]
 };

@@ -50,7 +50,7 @@ const OrderView = () => {
   const { order, loading, error } = useOrder(id || '');
 
   const getStatusColor = (status: string) => {
-    const statusLower = status.toLowerCase();
+    const statusLower = (status || '').toLowerCase();
     const colors: Record<string, string> = {
       'draft': 'bg-gray-500/10 text-gray-500',
       'pending': 'bg-yellow-500/10 text-yellow-500',

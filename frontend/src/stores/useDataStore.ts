@@ -725,7 +725,7 @@ export const useDataStore = create<DataStore>()(
 
         getVendorByName: (name) => {
           return get().vendors.find((v) => 
-            v.name.toLowerCase() === name.toLowerCase()
+            (v.name || '').toLowerCase() === (name || '').toLowerCase()
           );
         },
 

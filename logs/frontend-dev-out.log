@@ -29,3 +29,14 @@
 2025-12-21 18:21:12 +01:00: 6:21:12 PM [vite] hmr update /src/pages/Clients.tsx, /src/index.css
 2025-12-21 18:24:09 +01:00: 6:24:09 PM [vite] hmr update /src/pages/Clients.tsx, /src/index.css
 2025-12-21 18:24:17 +01:00: 6:24:17 PM [vite] hmr update /src/pages/Clients.tsx, /src/index.css
+2026-01-28 09:25:34 +01:00: 
+2026-01-28 09:25:34 +01:00: > vite_react_shadcn_ts@0.0.0 dev
+2026-01-28 09:25:34 +01:00: > vite --host 0.0.0.0
+2026-01-28 09:25:34 +01:00: 
+2026-01-28 09:25:35 +01:00: 
+2026-01-28 09:25:35 +01:00:   VITE v5.4.10  ready in 865 ms
+2026-01-28 09:25:35 +01:00: 
+2026-01-28 09:25:35 +01:00:   ➜  Local:   http://localhost:8080/
+2026-01-28 09:25:35 +01:00:   ➜  Network: http://194.163.180.84:8080/
+2026-01-28 09:43:55 +01:00: 9:43:55 AM [vite] ✨ new dependencies optimized: @radix-ui/react-accordion
+2026-01-28 09:43:55 +01:00: 9:43:55 AM [vite] ✨ optimized dependencies changed. reloading

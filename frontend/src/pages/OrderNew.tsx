@@ -160,12 +160,12 @@ const OrderNew = () => {
       return;
     }
 
-    // Add product directly to order items
+    // Add product directly to order items with available quantity
     const newItem: OrderItem = {
       productId: product.id,
       productName: product.product,
       sku: product.sku || '',
-      quantity: 1,
+      quantity: product.qty || 1,
       unitPrice: Math.round(Number(product.unit_price) || 0),
     };
 
@@ -237,6 +237,35 @@ const OrderNew = () => {
     toast({
       title: 'Products added',
       description: `Added ${uniqueNewItems.length} product(s) to the order.`,
+    });
+  };
+
+  const addAllProductsToOrder = () => {
+    const existingIds = new Set(items.map((i) => i.productId));
+    const productsToAdd = filteredProducts.filter((p) => !existingIds.has(p.id));
+
+    if (productsToAdd.length === 0) {
+      toast({
+        title: 'All products already added',
+        description: 'All available products are already in the order.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const newItems: OrderItem[] = productsToAdd.map((product) => ({
+      productId: product.id,
+      productName: product.product,
+      sku: product.sku || '',
+      quantity: product.qty || 1,
+      unitPrice: Math.round(Number(product.unit_price) || 0),
+    }));
+
+    setItems((prev) => [...prev, ...newItems]);
+
+    toast({
+      title: 'All products added',
+      description: `Added ${newItems.length} product(s) to the order.`,
     });
   };
 
@@ -573,9 +602,21 @@ const OrderNew = () => {
               {/* Available Products - 50% width */}
               <Card className="lg:col-span-1">
                 <CardHeader className="py-3 px-4 border-b">
-                  <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                    <Package className="h-4 w-4 text-primary" />
-                    Available Products ({filteredProducts.length})
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      <Package className="h-4 w-4 text-primary" />
+                      Available Products ({filteredProducts.length})
+                    </span>
+                    {filteredProducts.length > 0 && !loadingProducts && (
+                      <button
+                        type="button"
+                        onClick={addAllProductsToOrder}
+                        className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <CheckSquare className="h-4 w-4" />
+                        Select All
+                      </button>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-2">

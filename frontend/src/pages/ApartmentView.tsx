@@ -343,7 +343,7 @@ const ApartmentView = () => {
   const overduePayments = statistics?.overdue_payments || 0;
 
   const getStatusColor = (status: string) => {
-    const lowerStatus = status.toLowerCase();
+    const lowerStatus = (status || '').toLowerCase();
     if (lowerStatus.includes("delivered") || lowerStatus.includes("closed") || lowerStatus.includes("paid") || lowerStatus.includes("completed"))
       return "bg-green-500/10 text-green-500";
     if (

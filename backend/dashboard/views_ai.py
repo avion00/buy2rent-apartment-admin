@@ -8,12 +8,15 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count, Q, Avg
 from django.db import models
 from django.utils import timezone
-from django.core.mail import send_mail
 from django.conf import settings
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from issues.models import Issue, AICommunicationLog
+from issues.email_service import EmailService
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AIEmailDashboardView(APIView):
@@ -182,35 +185,33 @@ class AIEmailApprovalView(APIView):
             
             approved_count = 0
             failed_count = 0
+            errors = []
+            email_service = EmailService()
             
             for msg in messages:
                 try:
-                    # Update message status
-                    msg.approved_by = request.user
-                    msg.approved_at = timezone.now()
-                    msg.status = 'sent'
-                    msg.save()
-                    
-                    # Send actual email
-                    send_mail(
-                        subject=msg.subject,
-                        message=msg.message,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[msg.email_to],
-                        fail_silently=False,
-                    )
+                    # Use proper EmailService with HTML templates and tracking
+                    email_service.send_approved_draft(msg, request.user)
                     approved_count += 1
+                    logger.info(f"Approved and sent email {msg.id} for issue {msg.issue.id}")
                 except Exception as e:
-                    msg.status = 'failed'
-                    msg.save()
                     failed_count += 1
+                    error_msg = f"Failed to send message {msg.id}: {str(e)}"
+                    errors.append(error_msg)
+                    logger.error(error_msg)
             
-            return Response({
+            response_data = {
                 'approved': approved_count,
                 'failed': failed_count,
                 'message': f'Successfully approved {approved_count} messages'
-            })
+            }
+            
+            if errors:
+                response_data['errors'] = errors
+            
+            return Response(response_data)
         except Exception as e:
+            logger.error(f"Email approval error: {str(e)}")
             return Response({
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

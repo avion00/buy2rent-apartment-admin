@@ -151,6 +151,38 @@ class AICommunicationLogSerializer(serializers.ModelSerializer):
         read_only_fields = ['timestamp']
 
 
+class IssueListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for list views - much faster loading"""
+    vendor_name = serializers.CharField(source='vendor.name', read_only=True)
+    apartment_name = serializers.CharField(source='apartment.name', read_only=True)
+    display_product_name = serializers.SerializerMethodField()
+    items_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Issue
+        fields = [
+            'id', 'type', 'description', 'status', 'priority', 'resolution_status',
+            'vendor', 'vendor_name', 'apartment', 'apartment_name',
+            'display_product_name', 'items_count', 'ai_activated',
+            'created_at', 'reported_on'
+        ]
+    
+    def get_display_product_name(self, obj):
+        # Use prefetched items if available
+        if hasattr(obj, '_prefetched_objects_cache') and 'items' in obj._prefetched_objects_cache:
+            items = obj._prefetched_objects_cache['items']
+            if items:
+                if len(items) == 1:
+                    return items[0].product_name or obj.get_product_name()
+                return f"{items[0].product_name or 'Multiple Products'} (+{len(items) - 1} more)"
+        return obj.get_product_name()
+    
+    def get_items_count(self, obj):
+        if hasattr(obj, '_prefetched_objects_cache') and 'items' in obj._prefetched_objects_cache:
+            return len(obj._prefetched_objects_cache['items'])
+        return 0
+
+
 class IssueSerializer(serializers.ModelSerializer):
     apartment_details = ApartmentSerializer(source='apartment', read_only=True)
     product_details = ProductSerializer(source='product', read_only=True)

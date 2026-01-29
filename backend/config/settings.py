@@ -358,17 +358,19 @@ logging.getLogger('drf_spectacular').setLevel(logging.ERROR)
 
 # Vendor Communication Settings
 OPENAI_API_KEY = config('OPENAI_API_KEY', default='sk-proj-test-key')  # Add your real API key in .env file
-OPENAI_MODEL = config('OPENAI_MODEL', default='gpt-4.1')  # Override in .env if needed
+OPENAI_MODEL = config('OPENAI_MODEL', default='gpt-3.5-turbo')  # Override in .env if needed (options: gpt-3.5-turbo, gpt-4, gpt-4-turbo)
 USE_MOCK_AI = config('USE_MOCK_AI', default=False, cast=bool)  # Use real OpenAI for production
 
 # AI Email Settings
 AI_EMAIL_CONFIDENCE_THRESHOLD = config('AI_EMAIL_CONFIDENCE_THRESHOLD', default=0.8, cast=float)
 AI_EMAIL_AUTO_APPROVE = config('AI_EMAIL_AUTO_APPROVE', default=False, cast=bool)
 AI_EMAIL_AUTO_ACTIVATE = config('AI_EMAIL_AUTO_ACTIVATE', default=True, cast=bool)
+AI_AUTO_REPLY_ENABLED = config('AI_AUTO_REPLY_ENABLED', default=False, cast=bool)  # Auto-generate replies to vendor emails
 
 # Email Service Settings
 EMAIL_SERVICE_BACKEND = config('EMAIL_SERVICE_BACKEND', default='mock')  # Options: 'django', 'sendgrid', 'mock'
 EMAIL_DOMAIN = config('EMAIL_DOMAIN', default='localhost')
+EMAIL_DUPLICATE_PREVENTION_MINUTES = config('EMAIL_DUPLICATE_PREVENTION_MINUTES', default=5, cast=int)  # Prevent duplicate emails within this window
 
 # SMTP Settings for Outgoing Emails
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
